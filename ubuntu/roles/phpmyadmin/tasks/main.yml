@@ -1,0 +1,25 @@
+---
+
+- name: Install PHPMyAdmin
+  apt: name=phpmyadmin state=present
+
+- name: PHP-INI file for PHPMyAdmin
+  template:
+      src: php.ini
+      dest: "/etc/php/{{php_version}}/apache2/php.ini"
+      owner: root
+      group: root
+      mode: '0644'
+
+- name: Apache-Conf file for PHPMyAdmin
+  template:
+      src: apache2.conf
+      dest: "/etc/apache2/apache2.conf"
+      owner: root
+      group: root
+      mode: '0644'
+
+- name: Restart Apache
+  service:
+      name: apache2
+      state: reloaded

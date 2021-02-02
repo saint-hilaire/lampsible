@@ -1,0 +1,9 @@
+[servers]
+10.10.10.10 ansible_python_interpreter=/usr/bin/python3
+
+[servers:vars]
+remote_user=alice
+php_version=7.4
+wordpress_version=5.6
+wordpress_database=wordpress
+table_prefix=wp_
