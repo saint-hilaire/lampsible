@@ -1,2 +1,46 @@
 ---
+- name: Ensure Snap is up to date
+  raw: snap install core; snap refresh core
 
+- name: Remove old Certbot packages
+  raw: apt-get remove certbot
+
+- name: Install Snap
+  raw: snap install --classic certbot
+
+- name: Prepare Certbot command
+  file:
+      src: /snap/bin/certbot
+      dest: /usr/bin/certbot
+      state: link
+
+- name: Rename WordPress folder
+  raw: "mv /var/www/html/wordpress /var/www/html/{{ domain }}"
+  ignore_errors: yes
+
+
+  #####################################################
+      # Probably won't do this
+      #- name: Provide Apache config-file to sites-available
+      #template:
+      #src: apache.conf
+      #dest: "/etc/apache2/sites-available/{{ domain }}.conf"
+      #owner: root
+      #group: root
+      #mode: '0644'
+
+
+  # This stuff probably won't work either.
+  #- name: Enable domain
+  #raw: "a2ensite {{ domain }}.conf"
+
+  #- name: Restart Apache
+  #service:
+  #    name: apache2
+  #    state: reloaded
+  ##########################################################
+ 
+  # Probably just do this instead
+  # domain.com and www.domain.com need to be set. Also some other CLI-options
+- name: Run Certbot
+    raw: certbot certonly --test-cert

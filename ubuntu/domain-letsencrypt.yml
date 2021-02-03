@@ -1,0 +1,10 @@
+---
+# This playbook requires --extra-vars: domain
+- hosts: 
+  - servers
+  remote_user: "{{remote_user}}"
+  become: true
+  gather_facts: false
+  roles:
+      - domain-letsencrypt
+
