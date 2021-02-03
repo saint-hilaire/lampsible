@@ -28,3 +28,27 @@
       group: nogroup
       mode: '0644'
 
+- name: Give wp-content/ to www-data, so that it can install themes and plugins
+  file:
+      path: /var/www/html/wordpress/wp-content/
+      state: directory
+      recurse: yes
+      owner: www-data
+      group: www-data
+
+- name: Make Apache point to wordpress directory
+  lineinfile:
+      path: '/etc/apache2/sites-available/{{ item }}'
+      regexp: 'DocumentRoot '
+      line: 'DocumentRoot /var/www/html/wordpress'
+      backrefs: yes
+  loop:
+      - 000-default-le-ssl.conf
+      - 000-default.conf
+      - default-ssl.conf
+  ignore_errors: yes
+
+- name: Restart Apache
+  service:
+      name: apache2
+      state: reloaded

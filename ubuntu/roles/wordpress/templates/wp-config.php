@@ -79,6 +79,9 @@ $table_prefix = '{{ table_prefix }}';
  */
 define( 'WP_DEBUG', false );
 
+# This is to allow theme and plugin installations without FTP.
+define( 'FS_METHOD', 'direct' );
+
 /* That's all, stop editing! Happy publishing. */
 
 /** Absolute path to the WordPress directory. */

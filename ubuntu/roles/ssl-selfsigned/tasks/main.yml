@@ -44,13 +44,6 @@
       owner: root
       group: root
       mode: '0644'
-- name: Modify virtual host to redirect to HTTPS
-  template:
-      src: "000-default.conf"
-      dest: /etc/apache2/sites-available/000-default.conf
-      owner: root
-      group: root
-      mode: '0644'
 
 - name: Enable Apache module SSL
   raw: a2enmod ssl
