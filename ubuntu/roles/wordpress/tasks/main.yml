@@ -28,3 +28,10 @@
       group: nogroup
       mode: '0644'
 
+- name: Give wp-content/ to www-data, so that it can install themes and plugins
+  file:
+      path: /var/www/html/wordpress/wp-content/
+      state: directory
+      recurse: yes
+      owner: www-data
+      group: www-data
