@@ -1,5 +1,5 @@
 [servers]
-10.10.10.10 ansible_python_interpreter=/usr/bin/python3
+123.123.123.123   ansible_python_interpreter=/usr/bin/python3
 
 [servers:vars]
 remote_user=alice

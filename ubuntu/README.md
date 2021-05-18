@@ -1,5 +1,5 @@
-# yap
-## Yet Another Playbook
+# yap-wordpress
+## Yet Another Playbook: WordPress
 
 These are Ansible Playbooks that I find useful. Right now, only Ubuntu stuff works, so cd into that directory and run the playbooks.  
 
@@ -32,10 +32,10 @@ Now, configure Wordpress to use your domain. This requires that you had finalise
 
 ### Alternative workflow, if you want to skip the testing-environment-self-signed-stuff and go straight to production with a real domain:  
 Set up a LAMP-stack.  
-`ansible-playbook lamp-stack.yml --extra-vars "mysql_user=[alice] mysql_password=[ecila]"`  
+`ansible-playbook lamp-stack.yml --extra-vars "mysql_user=alice mysql_password=ecila"`  
 
 Install Wordpress.  
-`ansible-playbook wordpress.yml --extra-vars "mysql_user=[alice] mysql_password=[ecila]"`  
+`ansible-playbook wordpress.yml --extra-vars "mysql_user=alice mysql_password=ecila"`  
 
 Get an SSL-Certificate from Let's Encrypt:  
 `ansible-playbook domain-letsencrypt.yml --extra-vars "domain=example.com admin_email=admin@example.com"`  
