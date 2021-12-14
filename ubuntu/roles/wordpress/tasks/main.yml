@@ -47,3 +47,8 @@
       - 000-default.conf
       - default-ssl.conf
   ignore_errors: yes
+
+- name: Restart Apache
+  service:
+      name: apache2
+      state: reloaded
