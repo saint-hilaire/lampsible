@@ -35,3 +35,15 @@
       recurse: yes
       owner: www-data
       group: www-data
+
+- name: Make Apache point to wordpress directory
+  lineinfile:
+      path: '/etc/apache2/sites-available/{{ item }}'
+      regexp: 'DocumentRoot '
+      line: 'DocumentRoot /var/www/html/wordpress'
+      backrefs: yes
+  loop:
+      - 000-default-le-ssl.conf
+      - 000-default.conf
+      - default-ssl.conf
+  ignore_errors: yes
