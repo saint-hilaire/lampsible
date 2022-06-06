@@ -4,6 +4,6 @@
 [servers:vars]
 remote_user=alice
 php_version=7.4
-wordpress_version=5.8.2
+wordpress_version=6.0
 wordpress_database=wordpress
 table_prefix=wp_
