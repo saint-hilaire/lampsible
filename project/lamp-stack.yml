@@ -1,0 +1,9 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  roles:
+    - apt-update
+    - apache2
+    - php
+    - mysql

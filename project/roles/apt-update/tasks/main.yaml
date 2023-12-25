@@ -1,0 +1,4 @@
+---
+- name: Update APT
+  # TODO: Do this better.
+  raw: apt update

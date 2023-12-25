@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  roles:
+    - apt-update
+    - mysql
+      # TODO: phpmyadmin option
