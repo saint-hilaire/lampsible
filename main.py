@@ -274,15 +274,12 @@ def main():
 
     parser.add_argument('--database-table-prefix', default='')
 
-    # TODO: Disregard the comment below! The only reason that this
-    # worked (sometimes) was that we had installed phpmyadmin along
-    # with php. Otherwise, the php-mysqli will always be missing. 
-    # TODO: PHP 8.2 on Ubuntu 23 worked out of the box.
-    # PHP 8.2 on Ubuntu 22 fails to install because it's not available
-    # in the repository.
-    # PHP 8.1 on Ubuntu installs, but results in a WordPress error about
-    # a "missing MySQL extension required by WordPress".
-    parser.add_argument('--php-version', default='8.1')
+    # TODO: PHP is not working out of the box. At least for WordPress, likely for Laravel
+    # and other frameworks, it will complain about missing extensions, at least -mysql,
+    # probably others. The reason it worked before in other tests was that we happened
+    # to also install phpmyadmin via Ansible. phpmyadmin apparently installs the
+    # necessary PHP extensions onto the system.
+    parser.add_argument('--php-version', default='8.2')
 
     # TODO: Figure this out, and a better way to validate this.
     # parser.add_argument('--wordpress-version', choices=['?'], default='latest?')
