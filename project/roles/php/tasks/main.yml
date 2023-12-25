@@ -1,0 +1,5 @@
+---
+- name: Install PHP
+  apt: 
+    name: "php{{ php_version }}"
+    state: present
