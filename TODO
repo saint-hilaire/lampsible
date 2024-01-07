@@ -1,4 +1,4 @@
-* FIX PHP
+* FIX APACHE
 * FIX MYSQL
 * SSL
 * DEAL WITH CREDENTIALS AND SECRETS:
@@ -7,6 +7,7 @@
   * Maybe sudo passwords / SSH login passwords
 * MAKE EVERYTHING IDEMPOTENT
 * BETTER ACTION PARSING
+* Warnings are printed twice.
 * Use Ansible's tags to control which playbooks/roles should run. ( https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_tags.html )
 * Properly use Ansible Runner's Input Directory Hierarchy (i.e. implement/refactor
   the method init_directories). ( https://ansible.readthedocs.io/projects/runner/en/stable/intro/ )
@@ -65,3 +66,6 @@
 # tags=TODO
 # skip_tags=TODO
 # TODO: container stuff
+
+"admin:!t^1)M*hHX*SvENlwA"@tmp-ubuntu-20
+"admin:nouL2uvExI49e^trpx"@tmp-ubuntu-22
