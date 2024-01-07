@@ -1,4 +1,5 @@
 ---
+# TODO: feature/fix-mysql
 - name: Provide Wordpress with the URL
   template:
     src: wp.sql
@@ -6,16 +7,14 @@
     owner: root
     group: root
     mode: '0644'
-
-
 - name: Provide Wordpress with the URL
   raw: mysql < /tmp/wp.sql
-
 - name: Clean up MySQL-file
   file:
     path: /tmp/wp.sql
     state: absent
 
+# TODO: feature/fix-apache
 - name: Make Apache point to wordpress directory
   lineinfile:
     path: '/etc/apache2/sites-available/{{ item }}'

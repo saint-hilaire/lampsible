@@ -1,6 +1,5 @@
 <?php
-// TODO: Get rid of this, it's a very bad way of doing this,
-// set environment variables instead.
+// TODO: feature/fix-secrets
 /**
  * The base configuration for WordPress
  *

@@ -268,6 +268,7 @@ def main():
 
     # TODO: Constants for default values
     parser.add_argument('--database-username', default='db-username')
+    # TODO: feature/fix-secrets
     parser.add_argument('--database-password', default='db-password')
     parser.add_argument('--database-name', default='db_name')
     # TODO; Right now, this is not possible. To enable this, you have to dive

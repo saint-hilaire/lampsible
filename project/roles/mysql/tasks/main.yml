@@ -1,4 +1,5 @@
 ---
+# TODO: feature/fix-mysql
 
 - name: Install MySQL
   apt: name=mysql-server state=present
@@ -11,8 +12,6 @@
     group: root
     mode: '0644'
 
-# TODO: This is not idempotent and generally
-# a very bad practice
 - name: Run MySQL-configuration for users
   raw: mysql < /tmp/mysql-config.sql
   ignore_errors: yes
