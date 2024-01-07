@@ -1,52 +1,52 @@
 ---
 - name: Prepare directories
   file:
-      path: "{{ item }}"
-      state: directory
-      owner: root
-      group: root
-      mode: '0755'
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
   loop:
-      - /etc/ssl/certs
-      - /etc/ssl/private
-      - /etc/ssl/csr
-      - /etc/apache2/conf-available
+    - /etc/ssl/certs
+    - /etc/ssl/private
+    - /etc/ssl/csr
+    # TODO: feature/fix-apache
+    - /etc/apache2/conf-available
 
 - name: Generate SSL private key
   openssl_privatekey:
-      path: /etc/ssl/private/selfsigned.key
-      size: 2048
+    path: /etc/ssl/private/selfsigned.key
+    size: 2048
 - name: Self-signing
   openssl_csr:
-      path: /etc/ssl/csr/selfsigned.csr
-      privatekey_path: /etc/ssl/private/selfsigned.key
+    path: /etc/ssl/csr/selfsigned.csr
+    privatekey_path: /etc/ssl/private/selfsigned.key
 - name: Certificate
   openssl_certificate:
-      path: /etc/ssl/certs/selfsigned.crt
-      privatekey_path: /etc/ssl/private/selfsigned.key
-      csr_path: /etc/ssl/csr/selfsigned.csr
-      provider: selfsigned
+    path: /etc/ssl/certs/selfsigned.crt
+    privatekey_path: /etc/ssl/private/selfsigned.key
+    csr_path: /etc/ssl/csr/selfsigned.csr
+    provider: selfsigned
 
 - name: Create Diffie-Hellman group for forward secrecy
   raw: openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
 
+####################################
+# TODO: feature/fix-apache
 - name: Load ssl-params.conf
   template:
-      src: ssl-params.conf
-      dest: /etc/apache2/conf-available/ssl-params.conf
-      owner: root
-      group: root
-      mode: '0644'
+    src: ssl-params.conf
+    dest: /etc/apache2/conf-available/ssl-params.conf
+    owner: root
+    group: root
+    mode: '0644'
 - name: Load default-ssl.conf
   template:
-      src: default-ssl.conf
-      dest: /etc/apache2/sites-available/default-ssl.conf
-      owner: root
-      group: root
-      mode: '0644'
-
-# TODO: See if you can do this with some Apache module
-# instead of running raw commands.
+    src: default-ssl.conf
+    dest: /etc/apache2/sites-available/default-ssl.conf
+    owner: root
+    group: root
+    mode: '0644'
 - name: Enable Apache module SSL
   raw: a2enmod ssl
 - name: Enable Apache module headers
@@ -56,9 +56,10 @@
   raw: a2ensite default-ssl
 - name: Enable SSL configurations
   raw: a2enconf ssl-params
+####################################
 
 
 - name: Restart Apache
   service:
-      name: apache2
-      state: reloaded
+    name: apache2
+    state: reloaded

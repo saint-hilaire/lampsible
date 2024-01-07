@@ -5,9 +5,7 @@
     dest: "/var/www/html/"
     remote_src: yes
 
-# TODO: Refactor this, it's a very bad way of doing this.
-# It executes the raw CREATE DATABASE command, which is not idempotent.
-# And raw commands are generally bad practice.
+# TODO: feature/fix-mysql
 - name: Create Wordpress Database
   template:
     src: mysql-config.sql
@@ -23,17 +21,17 @@
     path: /tmp/mysql-config.sql
     state: absent
 
-# TODO: Get rid of this, it's a very bad way of doing this,
-# set environment variables instead.
-# TODO: Also beware of the likely security vulnerability we create by not providing
-# the WP_AUTH variables.
+# TODO: feature/fix-secrets
 - name: Provide WordPress config.
   template:
+    # TODO: Also beware of the likely security vulnerability we create by not providing
+    # the WP_AUTH variables.
     src: wp-config.php
     dest: /var/www/html/wordpress/wp-config.php
     owner: nobody
     group: nogroup
     mode: '0644'
+
 - name: Give wp-content/ to www-data, so that it can install themes and plugins
   file:
     path: /var/www/html/wordpress/wp-content/
@@ -41,8 +39,8 @@
     recurse: yes
     owner: www-data
     group: www-data
-# TODO: This is called a virtual host in Apache, and should
-# be implemented that way (i.e. see if Ansible has a module for that.)
+
+# TODO: feature/fix-apache
 - name: Make Apache point to wordpress directory
   lineinfile:
     path: '/etc/apache2/sites-available/{{ item }}'

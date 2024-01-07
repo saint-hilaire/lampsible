@@ -11,6 +11,7 @@
       group: root
       mode: '0644'
 
+# TODO: feature/fix-apache
 - name: Apache-Conf file for PHPMyAdmin
   template:
       src: apache2.conf
@@ -18,7 +19,6 @@
       owner: root
       group: root
       mode: '0644'
-
 - name: Restart Apache
   service:
       name: apache2
