@@ -151,6 +151,7 @@ def make_runner_configs(*, private_data_dir, project_dir, inventory,
 
         extravars={
             'php_version':           kwargs['php_version'],
+            'skip_php_extensions':   kwargs['skip_php_extensions'],
             'database_username':     kwargs['database_username'],
             'database_password':     kwargs['database_password'],
             'database_name':         kwargs['database_name'],
@@ -314,8 +315,6 @@ def main():
         or args.database_engine != 'mysql' \
         or args.database_host != 'localhost' \
         or args.php_my_admin:
-        # or args.ssl_certbot \
-        # or args.ssl_selfsigned:
 
         raise NotImplementedError()
 
@@ -399,22 +398,9 @@ def main():
         private_data_dir=private_data_dir,
         project_dir=project_dir,
         inventory=inventory,
-
-        extravars={
-            'php_version': args.php_version,
-            'skip_php_extensions': args.skip_php_extensions,
-            'database_username': args.database_username,
-            'database_password': args.database_password,
-            'database_name': args.database_name,
-            'database_table_prefix': args.database_table_prefix,
-            'wordpress_version': args.wordpress_version,
-            # TODO
-            # 'ssl_action'=ssl_action,
-            # 'email_for_ssl'=args.email_for_ssl,
-            # 'domains_for_ssl'=domains_for_ssl,
-        },
         playbook=playbook,
         php_version=args.php_version,
+        skip_php_extensions=args.skip_php_extensions,
         database_username=args.database_username,
         database_password=args.database_password,
         database_name=args.database_name,
@@ -428,6 +414,7 @@ def main():
         rc.prepare()
         r = Runner(config=rc)
         r.run()
+        # TODO: Deal with these better.
         print(r.stats)
     ########################################
 
@@ -440,6 +427,7 @@ def main():
 
     #     extravars={
     #         'php_version': args.php_version,
+    #         'skip_php_extensions': args.skip_php_extensions,
     #         'database_username': args.database_username,
     #         'database_password': args.database_password,
     #         'database_name': args.database_name,
@@ -455,12 +443,12 @@ def main():
     # r = Runner(config=rc)
     # r.run()
 
+    # # TODO: Deal with these better.
     # print(r.stats)
     ########################################
 
     cleanup_private_data_dir(private_data_dir)
     return 0
-
 
     # TODO: Some other ideas...
     # -------------------------
