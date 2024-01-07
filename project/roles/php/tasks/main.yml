@@ -3,3 +3,24 @@
   apt: 
     name: "php{{ php_version }}"
     state: present
+
+# TODO: This can be improved in the future.
+# Allow user to supply their own list of extensions.
+# Do it via separate playbook/role.
+# Etc.
+# But for now this should do.
+- name: Install PHP extensions
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    # This one for sure
+    - php{{ php_version }}-mysql
+    # These are other 'classics' whose ommission commonly causes problems.
+    # - php{{ php_version }}-mbstring
+    # - php{{ php_version }}-xml
+    # - php{{ php_version }}-zip
+    # - php{{ php_version }}-fpm
+    # - php{{ php_version }}-gd
+    # - php{{ php_version }}-curl
+  when: not skip_php_extensions

@@ -255,7 +255,12 @@ def main():
     )
     # TODO: Support other distros, validation for versions, etc.
     parser.add_argument('--distro', choices=['Ubuntu'], default='Ubuntu')
-    parser.add_argument('--distro-version', default=22)
+    # TODO: Because the OS will have been installed before this script executes,
+    # and because this script does not intend to influence the OS further, this
+    # option is superfluous.
+    # However, we do need to know the OS version for validation. So we should
+    # be able to detect it from the host somehow.
+    # parser.add_argument('--distro-version', default=22)
 
     # TODO: Apache configs, versions, etc? Nginx or others?
     # TODO: MySQL configs, versions, etc? PostgreSQL or others?
@@ -272,16 +277,17 @@ def main():
 
     parser.add_argument('--database-table-prefix', default='')
 
-    # TODO: PHP is not working out of the box. At least for WordPress, likely for Laravel
-    # and other frameworks, it will complain about missing extensions, at least -mysql,
-    # probably others. The reason it worked before in other tests was that we happened
-    # to also install phpmyadmin via Ansible. phpmyadmin apparently installs the
-    # necessary PHP extensions onto the system.
+    # NOTE:
+    # * Ubuntu versions 20 and older do not support PHP versions 8.0 or newer
+    # * Ubuntu 22 does not support PHP 8.0. PHP 8.1 is supported.
+    # To work around the above points, you would have to manually configure the
+    # APT repository.
     parser.add_argument('--php-version', default='8.2')
 
     # TODO: Figure this out, and a better way to validate this.
     # parser.add_argument('--wordpress-version', choices=['?'], default='latest?')
     parser.add_argument('--wordpress-version', default='6.0')
+    parser.add_argument('--skip-php-extensions', action='store_true')
 
     # TODO
     # parser.add_argument('--private-data-dir', default=DEFAULT_PRIVATE_DATA_DIR)
@@ -339,10 +345,19 @@ def main():
     if args.php_my_admin:
         warnings.warn("WARNING: Got --php-my-admin, which is not implemented yet. This flag will be ignored.")
     
+    if args.skip_php_extensions:
+        warnings.warn('Will not install common PHP extensions. WordPress, Laravel, and other common CMS or frameworks will probably not work.')
+
+    # TODO: We need to validate against OS type and version, but this
+    # information should be detected by the script, not supplied by the user
+    # via CLI args.
+    # if args.distro == 'Ubuntu' and int(args.distro_version) <= 20 \
+    #     and float(args.php_version) > 7.4:
+    #     warnings.warn('Trying to install a PHP version newer than 7.4 on an Ubuntu version 20 or older. This will likely not work.')
+
     private_data_dir = init_private_data_dir()
     project_dir=os.path.join(sys_path[0], 'project')
 
-    # import pdb; pdb.set_trace()
     inventory = prepare_inventory(args.users, args.hosts)
     # Now inventory is something like 'user1@host1,user2@host2' 
     # or 'user1@host1,'
@@ -408,6 +423,7 @@ def main():
 
         extravars={
             'php_version': args.php_version,
+            'skip_php_extensions': args.skip_php_extensions,
             'database_username': args.database_username,
             'database_password': args.database_password,
             'database_name': args.database_name,
