@@ -140,9 +140,6 @@ def cleanup_private_data_dir(path):
 # this will be refactored anyway.
 def make_runner_configs(*, private_data_dir, project_dir, inventory,
     playbook, **kwargs):
-    # TODO: Self-signed certificates work for WordPress, but the
-    # Apache host needs to be fixed (WordPress is only available at
-    # /wordpress, not /.
     main_rc = RunnerConfig(
         private_data_dir=private_data_dir,
         project_dir=project_dir,
@@ -157,6 +154,7 @@ def make_runner_configs(*, private_data_dir, project_dir, inventory,
             'database_name':         kwargs['database_name'],
             'database_table_prefix': kwargs['database_table_prefix'],
             'wordpress_version':     kwargs['wordpress_version'],
+            'apache_document_root':  kwargs['apache_document_root'],
         },
         playbook=playbook
     )
@@ -165,6 +163,18 @@ def make_runner_configs(*, private_data_dir, project_dir, inventory,
         assert ssl_action in ['certbot', 'selfsigned']
     except (KeyError, AssertionError) as e:
         return [main_rc]
+
+    # TODO: Implement some function to turn the domains,
+    # (if it's a WordPress site) to something like
+    # ' -d thedomain.com -d www.thedomain.com '.
+    # Also, see how it's implemented in dawn
+    # Also, see https://eff-certbot.readthedocs.io/en/latest/using.html#certbot-commands
+    # for how to do it 'right'.
+    # But overall, this try-except block needs to be replaced.
+    try:
+        domains_for_ssl = ','.join(kwargs['domains_for_ssl'])
+    except TypeError:
+        domains_for_ssl = ''
 
     return_list = [
         main_rc,
@@ -175,18 +185,20 @@ def make_runner_configs(*, private_data_dir, project_dir, inventory,
             inventory=inventory,
 
             extravars={
-                'email_for_ssl':   kwargs['email_for_ssl'],
-                'domains_for_ssl': kwargs['domains_for_ssl'],
+                'email_for_ssl':        kwargs['email_for_ssl'],
+                'domains_for_ssl':      domains_for_ssl,
+                'apache_document_root': kwargs['apache_document_root'],
             },
             playbook='ssl-{}.yml'.format(ssl_action)
         )
     ]
+
     if playbook == 'wordpress.yml' and ssl_action == 'certbot':
         # TODO: This part is especially ugly... as if it's not bad enough,
         # that we have to run 2 separate plays, because we can't get SSL
         # right on the first play, here we run a third play, and run raw SQL
         # queries as root to tweak some more configurations.
-        domain_for_wordpress = kwargs['domains_for_ssl'].split(',')[0]
+        domain_for_wordpress = kwargs['domains_for_ssl'][0]
         return_list.append(
             RunnerConfig(
                 private_data_dir=private_data_dir,
@@ -195,9 +207,10 @@ def make_runner_configs(*, private_data_dir, project_dir, inventory,
                 inventory=inventory,
 
                 extravars={
-                    'domain_for_wordpress': domain_for_wordpress,
+                    'domain_for_wordpress':  domain_for_wordpress,
                     'database_name':         kwargs['database_name'],
                     'database_table_prefix': kwargs['database_table_prefix'],
+                    'apache_document_root':  kwargs['apache_document_root'],
                 },
                 playbook='domain-for-wordpress.yml'
             )
@@ -207,6 +220,10 @@ def make_runner_configs(*, private_data_dir, project_dir, inventory,
 
 def get_ssl_action(certbot, selfsigned):
     if certbot:
+        warnings.warn('Warning! Got --ssl-certbot. This is by far the most sensible SSL configuration, but unfortunately, it is not properly working yet in this tool :-(\n\nPlease consider reaching out to me and helping me implement this feature ;-)\nhttps://github.com/saint-hilaire')
+        warnings.warn('IMPORTANT!! You have to SSH to your webserver and run Certbot there. Also, be aware that WordPress sites require www.your-example-domain.com along with your-example-domain.com to be set up - you have to pass both domains to Certbot, if you are installing a WordPress site. Until this is taken care of, YOUR SITE WILL NOT HAVE WORKING SSL-ENCRYPTION! Thank you for your understanding.')
+        from time import sleep
+        sleep(4)
         if selfsigned:
             warnings.warn('Warning: Got --ssl-certbot, but also got --ssl-selfsigned. Ignoring --ssl-selfsigned and using --ssl-certbot.')
         return 'certbot'
@@ -217,6 +234,12 @@ def get_ssl_action(certbot, selfsigned):
         warnings.warn('WARNING! Your site will not have any encryption enabled! This is very insecure, as passwords and other sensitive data will be transmitted in clear text. DO NOT use this on any remote host or over any partially untrusted network. ONLY use this for local, secure, private and trusted networks, ideally only for local development servers.')
         return None
 
+# TODO
+def get_document_root_from_action(action):
+    if action == 'wordpress':
+        return '/var/www/html/wordpress'
+    else:
+        return '/var/www/html'
 
 def main():
     parser = argparse.ArgumentParser(
@@ -256,13 +279,12 @@ def main():
         'xdebug',      # TODO
         ]
     )
-    # TODO: Support other distros, validation for versions, etc.
-    parser.add_argument('--distro', choices=['Ubuntu'], default='Ubuntu')
     # TODO: Because the OS will have been installed before this script executes,
     # and because this script does not intend to influence the OS further, this
     # option is superfluous.
     # However, we do need to know the OS version for validation. So we should
     # be able to detect it from the host somehow.
+    # parser.add_argument('--distro', choices=['Ubuntu'], default='Ubuntu')
     # parser.add_argument('--distro-version', default=22)
 
     # TODO: Apache configs, versions, etc? Nginx or others?
@@ -308,11 +330,7 @@ def main():
 
     args = parser.parse_args()
 
-    # TODO: Much of this code doesn't work :-(
-    # In particular, the SSL stuff causes trouble.
-    # It runs without throwing errors, but it breaks the server.
-    if args.distro != 'Ubuntu' \
-        or args.database_engine != 'mysql' \
+    if args.database_engine != 'mysql' \
         or args.database_host != 'localhost' \
         or args.php_my_admin:
 
@@ -335,14 +353,10 @@ def main():
     if ssl_action == 'certbot' and args.domains_for_ssl is None:
         warnings.warn('Warning! Got --ssl-certbot but no --domains-for-ssl. Defaulting to value of `hosts`.')
         # TODO: Fix this strange behavior that we have forced ourselves into.
-        args.domains_for_ssl = list(set(args.hosts))
+        args.domains_for_ssl = args.hosts.split(',')
         if args.action == 'wordpress':
             # TODO: This especially please make it better.
             args.domains_for_ssl.append('www.{}'.format(args.domains_for_ssl[0]))
-    if isinstance(args.domains_for_ssl, list):
-        domains_for_ssl = ','.join(args.domains_for_ssl)
-    else:
-        domains_for_ssl = args.hosts[0]
 
     if args.php_my_admin:
         warnings.warn("WARNING: Got --php-my-admin, which is not implemented yet. This flag will be ignored.")
@@ -381,8 +395,7 @@ def main():
         # TODO: In the future we will have to change how this is validated.
         raise NotImplementedError()
 
-
-
+    apache_document_root = get_document_root_from_action(args.action)
     # TODO
     # if roles and len(roles) > 1:
     #     roles = ','.join(roles) 
@@ -408,7 +421,8 @@ def main():
         wordpress_version=args.wordpress_version,
         ssl_action=ssl_action,
         email_for_ssl=args.email_for_ssl,
-        domains_for_ssl=domains_for_ssl,
+        domains_for_ssl=args.domains_for_ssl,
+        apache_document_root=apache_document_root,
     )
     for rc in runner_configs:
         rc.prepare()
@@ -433,6 +447,7 @@ def main():
     #         'database_name': args.database_name,
     #         'database_table_prefix': args.database_table_prefix,
     #         'wordpress_version': args.wordpress_version,
+    #         'apache_document_root': apache_document_root,
     #     },
     #     playbook=playbook,
     # )

@@ -7,25 +7,27 @@
     owner: root
     group: root
     mode: '0644'
+
 - name: Provide Wordpress with the URL
+  # TODO: Figure out the indentation for Ansible Blocks.
+  # - block:
+  #     - raw: mysql < /tmp/wp.sql
+  #   rescue:
+  #     - debug:
+  #         msg: Tried to supply WordPress domain configuration via raw MySQL command, but no tables exist, because WordPress has not been fully set up yet. Please finish setting up WordPress via web browser, then run this playbook again. Make sure to do so via an encrypted connection (you should run this script with --ssl-selfsigned), then, once WordPress is fully set up, rerun this script with --ssl-certbot. My apologies for the inconvenience, this will be improved in a future version.
+  #     - pause:
+  #         seconds: 5
   raw: mysql < /tmp/wp.sql
+  ignore_errors: true
+- debug:
+    msg: Tried to supply WordPress domain configuration via raw MySQL command. If this failed, it was because no tables exist, because WordPress has not been fully set up yet. Please finish setting up WordPress via web browser, then run this playbook again. Make sure to do so via an encrypted connection (you should run this script with --ssl-selfsigned), then, once WordPress is fully set up, rerun this script with --ssl-certbot. My apologies for the inconvenience, this will be improved in a future version.
+- pause:
+    seconds: 5
+
 - name: Clean up MySQL-file
   file:
     path: /tmp/wp.sql
     state: absent
-
-# TODO: feature/fix-apache
-- name: Make Apache point to wordpress directory
-  lineinfile:
-    path: '/etc/apache2/sites-available/{{ item }}'
-    regexp: 'DocumentRoot '
-    line: 'DocumentRoot /var/www/html/wordpress'
-    backrefs: yes
-  loop:
-    - 000-default-le-ssl.conf
-    - 000-default.conf
-    - default-ssl.conf
-  ignore_errors: yes
 
 - name: Restart Apache
   service:

@@ -1,4 +1,13 @@
 ---
+#################################################################
+# TODO: There are some open source Ansible playbooks/methods/etc. for
+# dealing with WordPress. It is particularly challenging that WordPress needs
+# to be 'installed' by the user by submitting the usual '5 Minute Install'
+# form, that is, HTML form via HTTP... But maybe the options that WordPress
+# expects from that form submission can also somehow be supplied via
+# Ansible parameters... This would solve a lot of problems!
+#################################################################
+
 - name: Download Wordpress
   unarchive:
     src: "https://wordpress.org/wordpress-{{ wordpress_version }}.tar.gz"
@@ -22,6 +31,9 @@
     state: absent
 
 # TODO: feature/fix-secrets
+# TODO: I just noticed that you can prompt for user input with Ansible,
+# this might be helpful here:
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/pause_module.html
 - name: Provide WordPress config.
   template:
     # TODO: Also beware of the likely security vulnerability we create by not providing
@@ -39,19 +51,6 @@
     recurse: yes
     owner: www-data
     group: www-data
-
-# TODO: feature/fix-apache
-- name: Make Apache point to wordpress directory
-  lineinfile:
-    path: '/etc/apache2/sites-available/{{ item }}'
-    regexp: 'DocumentRoot '
-    line: 'DocumentRoot /var/www/html/wordpress'
-    backrefs: yes
-  loop:
-    - 000-default-le-ssl.conf
-    - 000-default.conf
-    - default-ssl.conf
-  ignore_errors: yes
 
 - name: Restart Apache
   service:

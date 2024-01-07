@@ -9,3 +9,4 @@
     - mysql
     # TODO: feature/fix-apache
     - wordpress
+    - apache-document-root

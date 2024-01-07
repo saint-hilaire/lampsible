@@ -10,10 +10,14 @@
 
 - name: Prepare Certbot command
   file:
-      src: /snap/bin/certbot
-      dest: /usr/bin/certbot
-      state: link
+    src: /snap/bin/certbot
+    dest: /usr/bin/certbot
+    state: link
 
-- name: Run Certbot
-  # raw: "certbot --test-cert --noninteractive --apache --agree-tos --email {{ admin_email }} --domains {{ domain }}"
-  raw: "certbot --noninteractive --apache --agree-tos --email {{ email_for_ssl }} --domains {{ domains_for_ssl }}"
+# - name: Run Certbot
+#   # raw: "certbot --test-cert --noninteractive --apache --agree-tos --email {{ admin_email }} --domains {{ domain }}"
+#   raw: "certbot --noninteractive --apache --agree-tos --email {{ email_for_ssl }} --domains {{ domains_for_ssl }}"
+
+- name: Run Certbot - NOT WORKING :-(
+  debug:
+    msg: Unfortunately, Certbot is not working out of the box. It is particularly difficult to make it play nicely with Apache. Please log in to your webserver and run the `certbot` command there directly. That should work. Also please consider fixing this bug for me ^_^

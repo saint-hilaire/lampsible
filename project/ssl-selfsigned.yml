@@ -5,3 +5,4 @@
   roles:
     # TODO: feature/fix-apache
     - ssl-selfsigned
+    - apache-document-root

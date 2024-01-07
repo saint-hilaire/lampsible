@@ -1,0 +1,19 @@
+---
+# TODO: This is intended as a temporary workaround, until we:
+# TODO: feature/fix-apache
+- name: Configure DocumentRoot of Apache virtual hosts
+  lineinfile:
+    path: '/etc/apache2/sites-available/{{ item }}'
+    regexp: 'DocumentRoot '
+    line: 'DocumentRoot {{ apache_document_root }}'
+    backrefs: yes
+  loop:
+    - 000-default-le-ssl.conf
+    - 000-default.conf
+    - default-ssl.conf
+  ignore_errors: yes
+
+- name: Restart Apache
+  service:
+    name: apache2
+    state: reloaded
