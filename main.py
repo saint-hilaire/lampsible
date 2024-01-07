@@ -97,6 +97,10 @@ def init_inventory_file(private_data_dir, user, host):
     #     fh.write(yaml.dump(inventory))
 
 def prepare_inventory(users, hosts):
+    # TODO: Funny thing... doing hosts and users this way works for the
+    # ansible_runner module when we use it in this script, but does not work
+    # for the ansible-runner as a CLI tool... even though in the venv 
+    # they should be the same versions.
     hosts_ls = hosts.split(',')
     users_ls = users.split(',')
     l = len(hosts_ls)
@@ -372,6 +376,7 @@ def main():
     # the legacy implementation. It works, but overall, SSL does not.
     # In the short term, SSL needs to work like this, but in the long term,
     # this will be refactored anyway.
+    ########################################
     # runner_configs = make_runner_configs(
     #     private_data_dir=private_data_dir,
     #     project_dir=project_dir,
@@ -392,7 +397,9 @@ def main():
     #     r = Runner(config=rc)
     #     r.run()
     #     print(r.stats)
+    ########################################
 
+    ########################################
     rc = RunnerConfig(
         private_data_dir=private_data_dir,
         project_dir=project_dir,
@@ -417,6 +424,7 @@ def main():
     r.run()
 
     print(r.stats)
+    ########################################
 
     cleanup_private_data_dir(private_data_dir)
     return 0
