@@ -140,7 +140,9 @@ def cleanup_private_data_dir(path):
 # this will be refactored anyway.
 def make_runner_configs(*, private_data_dir, project_dir, inventory,
     playbook, **kwargs):
-    raise NotImplementedError()
+    # TODO: Self-signed certificates work for WordPress, but the
+    # Apache host needs to be fixed (WordPress is only available at
+    # /wordpress, not /.
     main_rc = RunnerConfig(
         private_data_dir=private_data_dir,
         project_dir=project_dir,
@@ -272,6 +274,9 @@ def main():
 
     parser.add_argument('--database-table-prefix', default='')
 
+    # TODO: Disregard the comment below! The only reason that this
+    # worked (sometimes) was that we had installed phpmyadmin along
+    # with php. Otherwise, the php-mysqli will always be missing. 
     # TODO: PHP 8.2 on Ubuntu 23 worked out of the box.
     # PHP 8.2 on Ubuntu 22 fails to install because it's not available
     # in the repository.
@@ -304,9 +309,9 @@ def main():
     if args.distro != 'Ubuntu' \
         or args.database_engine != 'mysql' \
         or args.database_host != 'localhost' \
-        or args.php_my_admin \
-        or args.ssl_certbot \
-        or args.ssl_selfsigned:
+        or args.php_my_admin:
+        # or args.ssl_certbot \
+        # or args.ssl_selfsigned:
 
         raise NotImplementedError()
 
@@ -377,53 +382,53 @@ def main():
     # In the short term, SSL needs to work like this, but in the long term,
     # this will be refactored anyway.
     ########################################
-    # runner_configs = make_runner_configs(
-    #     private_data_dir=private_data_dir,
-    #     project_dir=project_dir,
-    #     inventory=inventory,
-    #     playbook=playbook,
-    #     php_version=args.php_version,
-    #     database_username=args.database_username,
-    #     database_password=args.database_password,
-    #     database_name=args.database_name,
-    #     database_table_prefix=args.database_table_prefix,
-    #     wordpress_version=args.wordpress_version,
-    #     ssl_action=ssl_action,
-    #     email_for_ssl=args.email_for_ssl,
-    #     domains_for_ssl=domains_for_ssl,
-    # )
-    # for rc in runner_configs:
-    #     rc.prepare()
-    #     r = Runner(config=rc)
-    #     r.run()
-    #     print(r.stats)
-    ########################################
-
-    ########################################
-    rc = RunnerConfig(
+    runner_configs = make_runner_configs(
         private_data_dir=private_data_dir,
         project_dir=project_dir,
-
         inventory=inventory,
-
-        extravars={
-            'php_version': args.php_version,
-            'database_username': args.database_username,
-            'database_password': args.database_password,
-            'database_name': args.database_name,
-            'database_table_prefix': args.database_table_prefix,
-            'wordpress_version': args.wordpress_version,
-        },
         playbook=playbook,
+        php_version=args.php_version,
+        database_username=args.database_username,
+        database_password=args.database_password,
+        database_name=args.database_name,
+        database_table_prefix=args.database_table_prefix,
+        wordpress_version=args.wordpress_version,
+        ssl_action=ssl_action,
+        email_for_ssl=args.email_for_ssl,
+        domains_for_ssl=domains_for_ssl,
     )
-    rc.prepare()
-    # rc.prepare_env()
-    # rc.prepare_inventory()
-    # rc.prepare_command()
-    r = Runner(config=rc)
-    r.run()
+    for rc in runner_configs:
+        rc.prepare()
+        r = Runner(config=rc)
+        r.run()
+        print(r.stats)
+    ########################################
 
-    print(r.stats)
+    ########################################
+    # rc = RunnerConfig(
+    #     private_data_dir=private_data_dir,
+    #     project_dir=project_dir,
+
+    #     inventory=inventory,
+
+    #     extravars={
+    #         'php_version': args.php_version,
+    #         'database_username': args.database_username,
+    #         'database_password': args.database_password,
+    #         'database_name': args.database_name,
+    #         'database_table_prefix': args.database_table_prefix,
+    #         'wordpress_version': args.wordpress_version,
+    #     },
+    #     playbook=playbook,
+    # )
+    # rc.prepare()
+    # # rc.prepare_env()
+    # # rc.prepare_inventory()
+    # # rc.prepare_command()
+    # r = Runner(config=rc)
+    # r.run()
+
+    # print(r.stats)
     ########################################
 
     cleanup_private_data_dir(private_data_dir)
