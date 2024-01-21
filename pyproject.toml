@@ -1,0 +1,44 @@
+[build-system]
+requires = [
+    "setuptools>=69.0",
+    "setuptools-scm>=8.0"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lampsible"
+version = "0.7.5"
+authors = [
+    {name="Brian St. Hilaire", email="brian.st-hilaire@sanctus-tech.com"}
+]
+description = "Deploy and set up LAMP stacks with Ansible"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "ansible-core",
+    "ansible-runner",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Framework :: Ansible",
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: Apache Software License",
+]
+
+[project.scripts]
+# TODO: Improve this.
+lampsible = "lampsible:lampsible.main"
+
+[project.urls]
+Homepage = "https://github.com/saint-hilaire/lampsible"
+Issues = "https://github.com/saint-hilaire/lampsible/issues"
+
+# TODO: It may be possible without the following 2 tables.
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]

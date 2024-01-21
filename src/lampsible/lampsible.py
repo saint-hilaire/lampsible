@@ -5,8 +5,11 @@ import warnings
 import yaml
 from ansible_runner import Runner, RunnerConfig
 
-USER_HOME_DIR = os.path.expanduser('~')
-
+USER_HOME_DIR            = os.path.expanduser('~')
+DEFAULT_PRIVATE_DATA_DIR = os.path.join(USER_HOME_DIR, '.lampsible')
+# If the user does not supply a value, this will be overwritten by a path
+# inside the package installation, which we detect later on.
+DEFAULT_PROJECT_DIR      = ''
 # TODO
 def parse_action(action):
     return
@@ -63,9 +66,7 @@ def init_directories(hosts, private_data_dir, project_dir,):
     #         raise ValueError('{} is not a valid {}'.format(k, v))
     # return directories
 
-def init_private_data_dir():
-    # For now, just doing this in user's ~/.lampsible
-    private_data_dir = os.path.join(USER_HOME_DIR, '.lampsible')
+def init_private_data_dir(private_data_dir):
     try:
         os.makedirs(private_data_dir)
     except PermissionError:
@@ -78,6 +79,22 @@ def init_private_data_dir():
         pass
 
     return os.path.abspath(private_data_dir)
+
+def init_project_dir(project_dir):
+    if project_dir == '':
+        # TODO: There are some problems with "editable" pip installs.
+        return find_package_project_dir()
+    return project_dir
+
+def find_package_project_dir():
+    for path_str in sys_path:
+        try:
+            try_path = os.path.join(path_str, 'lampsible', 'project')
+            assert os.path.isdir(try_path)
+            return try_path
+        except AssertionError:
+            pass
+    raise RuntimeError('Got no user supplied --project-dir, and could not find one in expected package location. Your Lampsible installation is likely broken.')
 
 def init_inventory_file(private_data_dir, user, host):
     pass
@@ -315,9 +332,8 @@ def main():
     parser.add_argument('--wordpress-version', default='6.0')
     parser.add_argument('--skip-php-extensions', action='store_true')
 
-    # TODO
-    # parser.add_argument('--private-data-dir', default=DEFAULT_PRIVATE_DATA_DIR)
-    # parser.add_argument('--project-dir', default=DEFAULT_PROJECT_DIR)
+    parser.add_argument('--private-data-dir', default=DEFAULT_PRIVATE_DATA_DIR)
+    parser.add_argument('--project-dir',      default=DEFAULT_PROJECT_DIR)
 
     # TODO
     parser.add_argument('--php-my-admin', action='store_true')
@@ -371,8 +387,19 @@ def main():
     #     and float(args.php_version) > 7.4:
     #     warnings.warn('Trying to install a PHP version newer than 7.4 on an Ubuntu version 20 or older. This will likely not work.')
 
-    private_data_dir = init_private_data_dir()
-    project_dir=os.path.join(sys_path[0], 'project')
+    private_data_dir = init_private_data_dir(args.private_data_dir)
+
+    # TODO: Where to put this?
+    # Putting it directly into the package build seems the more simple and
+    # intuitive approach.
+    # However, placing it into another path on the system, for example
+    # ~/.lampsible/ offers the benefit of making the path of project_dir
+    # configurable by the user. In this case, ~/.lampsible could be the
+    # default value, but if users override this, they could provide their own
+    # playbooks.
+    # For now, let's simply bring the directory directly into the package
+    # build.
+    project_dir = init_project_dir(args.project_dir)
 
     inventory = prepare_inventory(args.users, args.hosts)
     # Now inventory is something like 'user1@host1,user2@host2' 

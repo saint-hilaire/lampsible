@@ -67,5 +67,6 @@
 # skip_tags=TODO
 # TODO: container stuff
 
-"admin:!t^1)M*hHX*SvENlwA"@tmp-ubuntu-20
-"admin:nouL2uvExI49e^trpx"@tmp-ubuntu-22
+# TODO: Set __all__ in lampsible.__init__.py.
+# See https://docs.python.org/3/tutorial/modules.html#packages
+# __all__ = ['lampsible', 'and', 'some', 'other', 'packages']
