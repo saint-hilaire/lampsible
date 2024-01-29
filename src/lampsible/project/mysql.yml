@@ -4,5 +4,6 @@
   gather_facts: false
   roles:
     - apt-update
+    - pip
     - mysql
       # TODO: phpmyadmin option

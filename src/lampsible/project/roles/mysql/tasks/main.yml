@@ -1,22 +1,43 @@
 ---
-# TODO: feature/fix-mysql
 
 - name: Install MySQL
   apt: name=mysql-server state=present
 
-- name: Template MySQL-file for users
-  template:
-    src: mysql-config.sql
-    dest: /tmp/mysql-config.sql
-    owner: root
-    group: root
-    mode: '0644'
+# TODO: Consider adding one of these
+# - name: Removes anonymous user account for localhost
+#   community.mysql.mysql_user:
+#     name: ''
+#     host: localhost
+#     state: absent
+#     login_unix_socket: /run/mysqld/mysqld.sock
+# - name: Removes all anonymous user accounts
+#   community.mysql.mysql_user:
+#     name: ''
+#     host_all: true
+#     state: absent
 
-- name: Run MySQL-configuration for users
-  raw: mysql < /tmp/mysql-config.sql
-  ignore_errors: yes
+- name: Install Python package pymysql.
+  pip:
+    name: pymysql
+    # TODO: Necessary for Ubuntu versions 23 or newer, but there
+    # might be more elegant ways to deal with this.
+    extra_args: --break-system-packages
 
-- name: Clean up MySQL-config file
-  file:
-    path: /tmp/mysql-config.sql
-    state: absent
+- name: Create database user.
+  community.mysql.mysql_user:
+    name:     "{{ database_username }}"
+    password: "{{ database_password }}"
+    # TODO: Consider using this along with a hashed password.
+    # encrypted: true
+    priv: '*.*:ALL'
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock
+    # TODO: Some other options to consider:
+    # host: localhost
+    # host_all: true
+
+- name: Create database.
+  community.mysql.mysql_db:
+    name: "{{ database_name }}"
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock

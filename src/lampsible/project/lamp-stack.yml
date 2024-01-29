@@ -7,4 +7,5 @@
     # TODO: feature/fix-apache
     - apache2
     - php
+    - pip
     - mysql

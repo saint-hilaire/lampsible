@@ -6,6 +6,7 @@
     - apt-update
     - apache2
     - php
+    - pip
     - mysql
     # TODO: feature/fix-apache
     - wordpress

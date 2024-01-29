@@ -1,3 +1,4 @@
+* MAKE EVERYTHING IDEMPOTENT
 * FIX APACHE
 * FIX MYSQL
 * SSL
@@ -5,9 +6,11 @@
   * Database
   * SSH keys
   * Maybe sudo passwords / SSH login passwords
-* MAKE EVERYTHING IDEMPOTENT
+* INSTALL ANSIBLE GALAXY MODULES (ideally at build time, alternatively at run time)
+* ENABLE LOCAL INSTALL
 * BETTER ACTION PARSING
 * Warnings are printed twice.
+* Apache envvars
 * Use Ansible's tags to control which playbooks/roles should run. ( https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_tags.html )
 * Properly use Ansible Runner's Input Directory Hierarchy (i.e. implement/refactor
   the method init_directories). ( https://ansible.readthedocs.io/projects/runner/en/stable/intro/ )

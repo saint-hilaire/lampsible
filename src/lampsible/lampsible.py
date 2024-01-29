@@ -5,11 +5,25 @@ import warnings
 import yaml
 from ansible_runner import Runner, RunnerConfig
 
+############
+# DEFAULTS #
+############
+
+# SCRIPT PATHS
 USER_HOME_DIR            = os.path.expanduser('~')
 DEFAULT_PRIVATE_DATA_DIR = os.path.join(USER_HOME_DIR, '.lampsible')
 # If the user does not supply a value, this will be overwritten by a path
 # inside the package installation, which we detect later on.
 DEFAULT_PROJECT_DIR      = ''
+
+# DATABASE
+DEFAULT_DATABASE_ENGINE       = 'mysql'
+DEFAULT_DATABASE_USERNAME     = 'db-username'
+DEFAULT_DATABASE_PASSWORD     = 'db-password'
+DEFAULT_DATABASE_NAME         = 'db_name'
+DEFAULT_DATABASE_HOST         = 'localhost'
+DEFAULT_DATABASE_TABLE_PREFIX = ''
+
 # TODO
 def parse_action(action):
     return
@@ -94,7 +108,7 @@ def find_package_project_dir():
             return try_path
         except AssertionError:
             pass
-    raise RuntimeError('Got no user supplied --project-dir, and could not find one in expected package location. Your Lampsible installation is likely broken.')
+    raise RuntimeError("Got no user supplied --project-dir, and could not find one in expected package location. Your Lampsible installation is likely broken. However, if you are running this code directly from source, this is expected behavior. You probably forgot to pass the '--project-dir' flag. The directoy you're looking for is 'src/lampsible/project/'.")
 
 def init_inventory_file(private_data_dir, user, host):
     pass
@@ -211,10 +225,12 @@ def make_runner_configs(*, private_data_dir, project_dir, inventory,
     ]
 
     if playbook == 'wordpress.yml' and ssl_action == 'certbot':
-        # TODO: This part is especially ugly... as if it's not bad enough,
-        # that we have to run 2 separate plays, because we can't get SSL
-        # right on the first play, here we run a third play, and run raw SQL
-        # queries as root to tweak some more configurations.
+        # TODO: This part should especially be refactored...
+        # By now, we will have run 2 plays to install
+        # everything and to set up SSL. Here we run a
+        # third play to configure a WordPress setting for the domain in the
+        # database. In the future, we will improve the SSL handling, and can
+        # hopefully do it all more elegantly.
         domain_for_wordpress = kwargs['domains_for_ssl'][0]
         return_list.append(
             RunnerConfig(
@@ -245,7 +261,7 @@ def get_ssl_action(certbot, selfsigned):
             warnings.warn('Warning: Got --ssl-certbot, but also got --ssl-selfsigned. Ignoring --ssl-selfsigned and using --ssl-certbot.')
         return 'certbot'
     elif selfsigned:
-        warnings.warn('Warning! Creating a self signed certificate to handle the site\'s encryption. This is less secure and will appear untrustworthy to any visitors. Only use tthis for testing environments.')
+        warnings.warn('Warning! Creating a self signed certificate to handle the site\'s encryption. This is less secure and will appear untrustworthy to any visitors. Only use this for testing environments.')
         return 'selfsigned'
     else:
         warnings.warn('WARNING! Your site will not have any encryption enabled! This is very insecure, as passwords and other sensitive data will be transmitted in clear text. DO NOT use this on any remote host or over any partially untrusted network. ONLY use this for local, secure, private and trusted networks, ideally only for local development servers.')
@@ -260,7 +276,7 @@ def get_document_root_from_action(action):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog='Lampsible',
+        prog='lampsible',
         description='Deploy and set up LAMP Stacks with Ansible',
         epilog='Currently in development...',
     )
@@ -306,19 +322,21 @@ def main():
 
     # TODO: Apache configs, versions, etc? Nginx or others?
     # TODO: MySQL configs, versions, etc? PostgreSQL or others?
-    parser.add_argument('--database-engine', default='mysql')
+    parser.add_argument('--database-engine', default=DEFAULT_DATABASE_ENGINE)
 
-    # TODO: Constants for default values
-    parser.add_argument('--database-username', default='db-username')
+    parser.add_argument('--database-username',
+        default=DEFAULT_DATABASE_USERNAME)
     # TODO: feature/fix-secrets
-    parser.add_argument('--database-password', default='db-password')
-    parser.add_argument('--database-name', default='db_name')
+    parser.add_argument('--database-password',
+        default=DEFAULT_DATABASE_PASSWORD)
+    parser.add_argument('--database-name', default=DEFAULT_DATABASE_NAME)
     # TODO; Right now, this is not possible. To enable this, you have to dive
     # a little deeper into Ansible's inventory feature... for now, the
     # database and webserver need to run on the same host.
-    parser.add_argument('--database-host', default='localhost')
+    parser.add_argument('--database-host', default=DEFAULT_DATABASE_HOST)
 
-    parser.add_argument('--database-table-prefix', default='')
+    parser.add_argument('--database-table-prefix',
+        default=DEFAULT_DATABASE_TABLE_PREFIX)
 
     # NOTE:
     # * Ubuntu versions 20 and older do not support PHP versions 8.0 or newer
@@ -346,8 +364,8 @@ def main():
 
     args = parser.parse_args()
 
-    if args.database_engine != 'mysql' \
-        or args.database_host != 'localhost' \
+    if args.database_engine != DEFAULT_DATABASE_ENGINE \
+        or args.database_host != DEFAULT_DATABASE_HOST \
         or args.php_my_admin:
 
         raise NotImplementedError()
@@ -356,10 +374,20 @@ def main():
     # TODO: Improve this. Defaults should be read from some constant.
     # We should warn the  user about this, or even ask confirmation.
     if args.action == 'wordpress':
-        if args.database_name == 'db_name':
+        if args.database_name == DEFAULT_DATABASE_NAME:
             args.database_name = 'wordpress'
-        if args.database_table_prefix == '':
+        if args.database_table_prefix == DEFAULT_DATABASE_TABLE_PREFIX:
             args.database_table_prefix = 'wp_'
+
+    # TODO: Make it DRY
+    if args.database_username == DEFAULT_DATABASE_USERNAME:
+        warnings.warn('WARNING! Got no --database-username. Defaulting to '
+            + DEFAULT_DATABASE_USERNAME + '. This is insecure!'
+        )
+    if args.database_password == DEFAULT_DATABASE_PASSWORD:
+        warnings.warn('WARNING! Got no --database-password. Defaulting to '
+            + DEFAULT_DATABASE_PASSWORD + '. This is insecure!'
+        )
 
     ssl_action = get_ssl_action(args.ssl_certbot, args.ssl_selfsigned)
 

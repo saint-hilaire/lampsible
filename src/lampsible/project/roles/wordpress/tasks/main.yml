@@ -14,26 +14,20 @@
     dest: "/var/www/html/"
     remote_src: yes
 
-# TODO: feature/fix-mysql
-- name: Create Wordpress Database
-  template:
-    src: mysql-config.sql
-    dest: /tmp/mysql-config.sql
-    owner: root
-    group: root
-    mode: '0644'
-- name: Create Wordpress Database
-  raw: mysql < /tmp/mysql-config.sql
-  ignore_errors: yes
-- name: Clean up MySQL-config file
-  file:
-    path: /tmp/mysql-config.sql
-    state: absent
+- name: Create WordPress database.
+  community.mysql.mysql_db:
+    name: "{{ database_name }}"
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock
 
 # TODO: feature/fix-secrets
 # TODO: I just noticed that you can prompt for user input with Ansible,
 # this might be helpful here:
 # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/pause_module.html
+# TODO: Instead of providing the file wp-config.php ourselves, we should simply
+# use sed or something similar to edit the file provided by WordPress, otherwise we
+# cannot guarantee the integrity of the WordPress version that we install - we would
+# overwrite WordPress' version of that file with our own, probably outdated.
 - name: Provide WordPress config.
   template:
     # TODO: Also beware of the likely security vulnerability we create by not providing

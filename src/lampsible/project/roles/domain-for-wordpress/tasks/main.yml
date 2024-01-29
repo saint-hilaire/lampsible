@@ -1,35 +1,16 @@
 ---
-# TODO: feature/fix-mysql
-- name: Provide Wordpress with the URL
-  template:
-    src: wp.sql
-    dest: /tmp/wp.sql
-    owner: root
-    group: root
-    mode: '0644'
 
 - name: Provide Wordpress with the URL
-  # TODO: Figure out the indentation for Ansible Blocks.
-  # - block:
-  #     - raw: mysql < /tmp/wp.sql
-  #   rescue:
-  #     - debug:
-  #         msg: Tried to supply WordPress domain configuration via raw MySQL command, but no tables exist, because WordPress has not been fully set up yet. Please finish setting up WordPress via web browser, then run this playbook again. Make sure to do so via an encrypted connection (you should run this script with --ssl-selfsigned), then, once WordPress is fully set up, rerun this script with --ssl-certbot. My apologies for the inconvenience, this will be improved in a future version.
-  #     - pause:
-  #         seconds: 5
-  raw: mysql < /tmp/wp.sql
+  community.mysql.mysql_query:
+    login_db: "{{ database_name }}"
+    query: "UPDATE {{ database_table_prefix }}options SET option_value = %s WHERE option_name IN ('siteurl', 'home')"
+    positional_args:
+      - "http://{{ domain_for_wordpress }}"
+    login_unix_socket: /run/mysqld/mysqld.sock
   ignore_errors: true
+
 - debug:
     msg: Tried to supply WordPress domain configuration via raw MySQL command. If this failed, it was because no tables exist, because WordPress has not been fully set up yet. Please finish setting up WordPress via web browser, then run this playbook again. Make sure to do so via an encrypted connection (you should run this script with --ssl-selfsigned), then, once WordPress is fully set up, rerun this script with --ssl-certbot. My apologies for the inconvenience, this will be improved in a future version.
+
 - pause:
     seconds: 5
-
-- name: Clean up MySQL-file
-  file:
-    path: /tmp/wp.sql
-    state: absent
-
-- name: Restart Apache
-  service:
-    name: apache2
-    state: reloaded
