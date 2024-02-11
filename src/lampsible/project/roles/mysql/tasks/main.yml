@@ -21,7 +21,7 @@
     name: pymysql
     # TODO: Necessary for Ubuntu versions 23 or newer, but there
     # might be more elegant ways to deal with this.
-    extra_args: --break-system-packages
+    extra_args: "{{ '--break-system-packages' if ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_major_version'] == '23' else '' }}"
 
 - name: Create database user.
   community.mysql.mysql_user:
