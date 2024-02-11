@@ -3,7 +3,7 @@ from sys import path as sys_path
 import argparse
 import warnings
 import yaml
-from ansible_runner import Runner, RunnerConfig
+from ansible_runner import Runner, RunnerConfig, run_command
 
 ############
 # DEFAULTS #
@@ -362,6 +362,9 @@ def main():
     parser.add_argument('--email-for-ssl')
     parser.add_argument('--domains-for-ssl')
 
+    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--keep-private-data-dir', action='store_true')
+
     args = parser.parse_args()
 
     if args.database_engine != DEFAULT_DATABASE_ENGINE \
@@ -479,12 +482,23 @@ def main():
         domains_for_ssl=args.domains_for_ssl,
         apache_document_root=apache_document_root,
     )
-    for rc in runner_configs:
-        rc.prepare()
-        r = Runner(config=rc)
-        r.run()
-        # TODO: Deal with these better.
-        print(r.stats)
+    if args.debug:
+        # TODO: Perhaps we can improve this. For example, if we refactor
+        # the handling of inventories, we could do this with Ansible Runner's
+        # 'module' feature (that is, pass the kwargs module='setup' to the
+        # configuration).
+        # However, for now, this also works quite well.
+        run_command(
+            executable_cmd='ansible',
+            cmdline_args=['-i', inventory, 'ungrouped', '-m', 'setup'],
+        )
+    else:
+        for rc in runner_configs:
+            rc.prepare()
+            r = Runner(config=rc)
+            r.run()
+            # TODO: Deal with these better.
+            print(r.stats)
     ########################################
 
     ########################################
@@ -517,7 +531,13 @@ def main():
     # print(r.stats)
     ########################################
 
-    cleanup_private_data_dir(private_data_dir)
+    if not args.keep_private_data_dir:
+        cleanup_private_data_dir(private_data_dir)
+    else:
+        print('WARNING! Got --keep-private-data-dir, probably because you are debugging something locally, so I will not delete the directory {}. Please be aware that it likely contains sensitive data, like SSH keys and so on, so you should probably delete it yourself.'.format(private_data_dir))
+        # TODO: warnings gets tripped up by strings like this :-(
+        # warnings.warn('WARNING! Got --keep-private-data-dir, probably because you are debugging something locally, so I will not delete the directory {}. Please be aware that it likely contains sensitive data, like SSH keys and so on, so you should probably delete it yourself.'.format(private_data_dir))
+
     return 0
 
     # TODO: Some other ideas...
