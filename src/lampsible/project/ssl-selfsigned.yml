@@ -1,8 +1,0 @@
----
-- hosts: all
-  become: true
-  gather_facts: true
-  roles:
-    # TODO: feature/fix-apache
-    - ssl-selfsigned
-    - apache-document-root

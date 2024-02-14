@@ -1,0 +1,16 @@
+---
+- name: Provide custom Apache configuration
+  template:
+    src: "{{ apache_custom_conf_name }}.conf.j2"
+    dest: "/etc/apache2/conf-available/{{ apache_custom_conf_name }}.conf"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable custom configuration
+  raw: "a2enconf {{ apache_custom_conf_name }}"
+
+- name: Restart Apache
+  service:
+    name: apache2
+    state: reloaded

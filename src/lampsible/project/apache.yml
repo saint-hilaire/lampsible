@@ -2,6 +2,31 @@
 - hosts: all
   become: true
   gather_facts: true
-  roles:
-    - apt-update
-    - apache2
+
+  tasks:
+    - name: "Include standard Ansible role"
+      include_role:
+        name: "{{ item }}"
+      loop:
+        - apt-update
+        - apache2
+
+    - name: Conditionally include SSL role
+      include_role:
+        name: ssl-selfsigned
+      when: ssl_selfsigned
+
+    # TODO
+    - name: Conditionally include SSL role
+      include_role:
+        name: ssl-certbot
+      when: ssl_certbot
+
+    - name: Include Apache virtual host role
+      include_role:
+        name: apache-vhosts
+
+    - name: Conditionally include custom Apache configuration
+      include_role:
+        name: apache-conf
+      when: ssl_selfsigned

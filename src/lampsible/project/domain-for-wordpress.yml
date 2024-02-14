@@ -1,9 +1,0 @@
----
-- hosts: all
-  become: true
-  gather_facts: true
-  roles:
-    # TODO: feature/fix-apache
-    - domain-for-wordpress
-    # TODO: Maybe do this directly in ssl-certbot, not here.
-    - apache-document-root

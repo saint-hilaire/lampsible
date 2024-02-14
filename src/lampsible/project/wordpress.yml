@@ -2,12 +2,46 @@
 - hosts: all
   become: true
   gather_facts: true
-  roles:
-    - apt-update
-    - apache2
-    - php
-    - pip
-    - mysql
-    # TODO: feature/fix-apache
-    - wordpress
-    - apache-document-root
+  tasks:
+    - name: "Include standard Ansible role"
+      include_role:
+        name: "{{ item }}"
+      loop:
+        - apt-update
+        - apache2
+        - php
+        - pip
+        - mysql
+        - wordpress
+
+    - name: Conditionally include SSL role
+      include_role:
+        name: ssl-selfsigned
+      when: ssl_selfsigned
+
+    # TODO
+    - name: Conditionally include SSL role
+      include_role:
+        name: ssl-certbot
+      when: ssl_certbot
+
+    # TODO: This only works if WordPress has been finished setting up
+    # via the manual "5 minute install", because otherwise, the database
+    # table that this role tries to update wouldn't exist.
+    # So to fully install WordPress, you have to install it first without
+    # --ssl-certbot - but absolutely with --ssl-selfsigned, because you're sending
+    # credentials over the network! - then, when that's taken care of, run the
+    # script once again with --ssl-certbot.
+    - name: Conditionally include WordPress domain configuration - needed for SSL
+      include_role:
+        name: domain-for-wordpress
+      when: ssl_certbot
+
+    - name: Include Apache virtual host role
+      include_role:
+        name: apache-vhosts
+
+    - name: Conditionally include custom Apache configuration
+      include_role:
+        name: apache-conf
+      when: ssl_selfsigned

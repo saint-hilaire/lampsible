@@ -11,8 +11,6 @@
     - /etc/ssl/certs
     - /etc/ssl/private
     - /etc/ssl/csr
-    # TODO: feature/fix-apache
-    - /etc/apache2/conf-available
 
 - name: Generate SSL private key
   openssl_privatekey:
@@ -32,33 +30,10 @@
 - name: Create Diffie-Hellman group for forward secrecy
   raw: openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
 
-####################################
-# TODO: feature/fix-apache
-- name: Load ssl-params.conf
-  template:
-    src: ssl-params.conf
-    dest: /etc/apache2/conf-available/ssl-params.conf
-    owner: root
-    group: root
-    mode: '0644'
-- name: Load default-ssl.conf
-  template:
-    src: default-ssl.conf
-    dest: /etc/apache2/sites-available/default-ssl.conf
-    owner: root
-    group: root
-    mode: '0644'
 - name: Enable Apache module SSL
   raw: a2enmod ssl
 - name: Enable Apache module headers
   raw: a2enmod headers
-
-- name: Enable SSL virtual host
-  raw: a2ensite default-ssl
-- name: Enable SSL configurations
-  raw: a2enconf ssl-params
-####################################
-
 
 - name: Restart Apache
   service:

@@ -36,6 +36,8 @@
     # host: localhost
     # host_all: true
 
+# TODO: This should run conditionally, only when the user wants to
+# create a database.
 - name: Create database.
   community.mysql.mysql_db:
     name: "{{ database_name }}"

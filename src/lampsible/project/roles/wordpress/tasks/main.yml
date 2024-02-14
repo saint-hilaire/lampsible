@@ -14,7 +14,7 @@
     dest: "/var/www/html/"
     remote_src: yes
 
-- name: Create WordPress database.
+- name: Create WordPress database
   community.mysql.mysql_db:
     name: "{{ database_name }}"
     state: present
@@ -28,7 +28,7 @@
 # use sed or something similar to edit the file provided by WordPress, otherwise we
 # cannot guarantee the integrity of the WordPress version that we install - we would
 # overwrite WordPress' version of that file with our own, probably outdated.
-- name: Provide WordPress config.
+- name: Provide WordPress config
   template:
     # TODO: Also beware of the likely security vulnerability we create by not providing
     # the WP_AUTH variables.
@@ -38,7 +38,7 @@
     group: nogroup
     mode: '0644'
 
-- name: Give wp-content/ to www-data, so that it can install themes and plugins
+- name: Set file ownership for wp-content/
   file:
     path: /var/www/html/wordpress/wp-content/
     state: directory

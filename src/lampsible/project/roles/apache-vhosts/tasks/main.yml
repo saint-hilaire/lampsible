@@ -1,0 +1,20 @@
+---
+- name: Configure Apache virtual hosts
+  template:
+    src: "{{ item.base_vhost_file }}.j2"
+    dest: "/etc/apache2/sites-available/{{ item.vhost_name }}.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ apache_vhosts }}"
+
+- name: Disable default Apache virtual host...
+  raw: "a2dissite 000-default"
+- name: ... and enable our own Apache virtual hosts
+  raw: "a2ensite {{ item.vhost_name }}"
+  loop: "{{ apache_vhosts }}"
+
+- name: Restart Apache
+  service:
+    name: apache2
+    state: reloaded

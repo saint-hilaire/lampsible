@@ -9,6 +9,12 @@
 # Do it via separate playbook/role.
 # Etc.
 # But for now this should do.
+# TODO:
+# [WARNING]: TASK: php : Install PHP extensions: The loop variable 'item' is
+# already in use. You should set the `loop_var` value in the `loop_control`
+# option for the task to something else to avoid variable collisions and
+# unexpected behavior.
+#
 - name: Install PHP extensions
   apt:
     name: "{{ item }}"
