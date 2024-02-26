@@ -203,16 +203,13 @@ def main():
     parser.add_argument('--apache-document-root',
         default=DEFAULT_APACHE_DOCUMENT_ROOT)
 
-    # MYSQL
+    # DATABASE
     #######
     # TODO: MySQL configs, versions, etc? PostgreSQL or others?
     parser.add_argument('--database-engine', default=DEFAULT_DATABASE_ENGINE)
-    parser.add_argument('--database-username',
-        default=DEFAULT_DATABASE_USERNAME)
-    # TODO: feature/fix-secrets
-    parser.add_argument('--database-password',
-        default=DEFAULT_DATABASE_PASSWORD)
-    parser.add_argument('--database-name', default=DEFAULT_DATABASE_NAME)
+    parser.add_argument('--database-username')
+    parser.add_argument('--database-password')
+    parser.add_argument('--database-name')
     # TODO; Right now, this is not possible. To enable this, you have to dive
     # a little deeper into Ansible's inventory feature... for now, the
     # database and webserver need to run on the same host.
@@ -233,6 +230,14 @@ def main():
     # TODO: Figure this out, and a better way to validate this.
     # parser.add_argument('--wordpress-version', choices=['?'], default='latest?')
     parser.add_argument('--wordpress-version', default='6.0')
+    parser.add_argument('--wordpress-auth-key')
+    parser.add_argument('--wordpress-secure-auth-key')
+    parser.add_argument('--wordpress-logged-in-key')
+    parser.add_argument('--wordpress-nonce-key')
+    parser.add_argument('--wordpress-auth-salt')
+    parser.add_argument('--wordpress-secure-auth-salt')
+    parser.add_argument('--wordpress-logged-in-salt')
+    parser.add_argument('--wordpress-nonce-salt')
 
     # ANSIBLE RUNNER
     ################
@@ -246,6 +251,10 @@ def main():
     parser.add_argument('--ssl-selfsigned', action='store_true')
     parser.add_argument('--email-for-ssl', default=DEFAULT_APACHE_SERVER_ADMIN)
     parser.add_argument('--domains-for-ssl')
+
+    # MISC
+    ######
+    parser.add_argument('--insecure-cli-password', action='store_true')
 
     args = parser.parse_args()
 
@@ -304,6 +313,8 @@ def main():
     apache_vhosts = validator.get_apache_vhosts()
     apache_custom_conf_name = validator.get_apache_custom_conf_name()
 
+    wordpress_auth_vars = validator.get_wordpress_auth_vars()
+
     # TODO
     # if roles and len(roles) > 1:
     #     roles = ','.join(roles) 
@@ -317,15 +328,17 @@ def main():
         inventory=inventory,
 
         extravars={
-            'php_version': args.php_version,
-            'skip_php_extensions': args.skip_php_extensions,
-            'database_username': args.database_username,
-            'database_password': args.database_password,
-            'database_name': args.database_name,
-            'database_table_prefix': args.database_table_prefix,
-            'wordpress_version': args.wordpress_version,
             'apache_vhosts': apache_vhosts,
             'apache_custom_conf_name': apache_custom_conf_name,
+            'database_username': args.database_username,
+            'database_password': args.database_password,
+            'database_host': args.database_host,
+            'database_name': args.database_name,
+            'database_table_prefix': args.database_table_prefix,
+            'php_version': args.php_version,
+            'skip_php_extensions': args.skip_php_extensions,
+            'wordpress_version': args.wordpress_version,
+            'wordpress_auth_vars': wordpress_auth_vars,
             'ssl_certbot': args.ssl_certbot,
             'ssl_selfsigned': args.ssl_selfsigned,
             'email_for_ssl': args.email_for_ssl,

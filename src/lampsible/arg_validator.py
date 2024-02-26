@@ -1,5 +1,7 @@
 from copy import copy
+from secrets import token_hex
 from warnings import warn
+from getpass import getpass
 from lampsible.constants import *
 
 
@@ -32,11 +34,51 @@ class ArgValidator():
         except AttributeError:
             return ''
 
+
+    def get_wordpress_auth_vars(self):
+        auth_var_names = [
+            'auth_key',
+            'secure_auth_key',
+            'logged_in_key',
+            'nonce_key',
+            'auth_salt',
+            'secure_auth_salt',
+            'logged_in_salt',
+            'nonce_salt',
+        ]
+        auth_vars = {}
+
+        for var in auth_var_names:
+            must_generate = False
+            warn_user     = False
+
+            if not getattr(self.args, 'wordpress_{}'.format(var)):
+                must_generate = True
+            elif len(getattr(self.args, 'wordpress_{}'.format(var))) < 32:
+                must_generate = True
+                warn_user     = True
+
+            if must_generate:
+                auth_vars[var.upper()] = token_hex(64)
+            else:
+                auth_vars[var.upper()] = getattr(
+                    self.args,
+                    'wordpress_{}'.format(var)
+                )
+
+            if warn_user:
+                print('The value you passed for {} is too short! I will automatically generate a value for you, and use that. If in doubt, you should leave this argument blank, to use automatically generated values. See the file wp-config.php on your server.'.format(
+                    self.var_name_to_cli_arg('wordpress_{}'.format(var))
+                ))
+
+        return auth_vars
+
+
     def handle_defaults(
         self,
         default_args,
-        set_vals=True,
-        print_warnings=False
+        ask_user=False,
+        verbose=False
     ):
         """Handles defaults in various cases, optionally setting values with
         application wide defaults or overriding values, and optionally
@@ -59,15 +101,15 @@ class ArgValidator():
                 'override_default_value': 'some use case specific default',
             }
 
-        set_vals -- Optional. If True, set the values of the args passed in.
-                    Defaults to True. Set it to False if you only want to warn
-                    the user about default arguments (like insecure database
-                    credentials), without setting the default values
-                    (assuming that the defaults were set by argparse itself
-                    in the main method).
+        ask_user -- Optional. If True, then if we got default values,
+                    prompt the user to input their own value,
+                    and if they leave it blank,
+                    fall back to default values. Defaults to False.
 
-        print_warnings -- Optional. If True, print a warning if we get a
-                          default value. Default value is False.
+        verbose --  Optional. If True, then if we are using some
+                    default value, warn the user about this. This is useful
+                    for credentials, in case we're falling back to some
+                    insecure value.
         """
         for arg_dict in default_args:
             try:
@@ -77,20 +119,45 @@ class ArgValidator():
             user_value = getattr(self.args, arg_dict['arg_name'])
 
             if user_value == arg_dict['cli_default_value']:
-                if set_vals:
-                    setattr(
-                        self.args,
-                        arg_dict['arg_name'],
-                        default_value
+                if ask_user:
+                    tmp_val = input(
+                        'Got no {}. Please enter a value now, or leave blank to default to \'{}\': '.format(
+
+                            self.var_name_to_cli_arg(arg_dict['arg_name']),
+                            default_value
+                        )
                     )
-                if print_warnings:
-                    warn('WARNING! Got no ' \
-                        + self.var_name_to_cli_arg(arg_dict['arg_name']) \
-                        + '. Defaulting to ' + default_value)
+                    if tmp_val == '':
+                        tmp_val = default_value
+                    default_value = tmp_val
+
+                setattr(
+                    self.args,
+                    arg_dict['arg_name'],
+                    default_value
+                )
+
+                if verbose:
+                    print('Using {} value \'{}\'.'.format(
+                        self.var_name_to_cli_arg(arg_dict['arg_name']),
+                        default_value
+                    ))
 
 
     def var_name_to_cli_arg(self, var_name):
         return '--{}'.format(var_name.replace('_', '-'))
+
+
+    def get_pass_and_check(self, prompt, min_length):
+        password = getpass(prompt)
+        while len(password) < min_length:
+            password = getpass('That password is too short. Please enter another password: ')
+        double_check = getpass('Please retype password: ')
+        if password == double_check:
+            return password
+        else:
+            print('Passwords don\'t match. Please try again.')
+            return self.get_pass_and_check(prompt, min_length)
 
 
     def validate_apache_args(self):
@@ -128,6 +195,7 @@ class ArgValidator():
         # if ssl_action:
         #     # TODO: Does not work for Certbot, unless the client is
         #     # run with the flag --register-unsafely-without-email.
+        #     # TODO: This method has been refactored, so this is now broken.
         #     self.handle_defaults([{
         #         'arg_name': 'email_for_ssl',
         #         'cli_default_value': self.args.apache_server_admin,
@@ -136,36 +204,47 @@ class ArgValidator():
 
     def validate_database_args(self):
 
+        # TODO: Sanity check database username and database name.
+
         if self.args.database_engine != DEFAULT_DATABASE_ENGINE \
             or self.args.database_host != DEFAULT_DATABASE_HOST \
             or self.args.php_my_admin:
 
             raise NotImplementedError()
 
+        if self.args.database_password \
+            and not self.args.insecure_cli_password:
+
+            exit('It\'s insecure to pass passwords via CLI args! If you are sure that you want to do this, rerun this command with the --insecure-cli-password flag.')
+
+        # TODO: Add some option like --wordpress-defaults, to improve user
+        # experience. Otherwise, the user would always be asked about defaulting
+        # to 'wordpress' and 'wp_' for database name and table prefix, which
+        # might be a little annoying.
         if self.args.action == 'wordpress':
             self.handle_defaults([
                 {
                     'arg_name': 'database_name',
-                    'cli_default_value': DEFAULT_DATABASE_NAME,
+                    'cli_default_value': None,
                     'override_default_value': 'wordpress',
+                },
+                {
+                    'arg_name': 'database_username',
+                    'cli_default_value': None,
+                    'override_default_value': DEFAULT_DATABASE_USERNAME,
                 },
                 {
                     'arg_name': 'database_table_prefix',
                     'cli_default_value': DEFAULT_DATABASE_TABLE_PREFIX,
                     'override_default_value': 'wp_',
-                }
+                },
             ], True, True)
 
-        self.handle_defaults([
-            {
-                'arg_name': 'database_username',
-                'cli_default_value': DEFAULT_DATABASE_USERNAME,
-            },
-            {
-                'arg_name': 'database_password',
-                'cli_default_value': DEFAULT_DATABASE_PASSWORD,
-            },
-        ], False, True)
+        if self.args.database_username and not self.args.database_password:
+            self.args.database_password = self.get_pass_and_check(
+                'Please enter a database password: ',
+                7
+            )
 
 
     def validate_ssl_args(self):

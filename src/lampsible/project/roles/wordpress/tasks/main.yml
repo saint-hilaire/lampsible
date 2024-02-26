@@ -8,6 +8,9 @@
 # Ansible parameters... This would solve a lot of problems!
 #################################################################
 
+# TODO: This is not idempotent! It overwrites an existing
+# installation, so we can't update configurations of an
+# existing installation.
 - name: Download Wordpress
   unarchive:
     src: "https://wordpress.org/wordpress-{{ wordpress_version }}.tar.gz"
@@ -20,23 +23,48 @@
     state: present
     login_unix_socket: /run/mysqld/mysqld.sock
 
-# TODO: feature/fix-secrets
-# TODO: I just noticed that you can prompt for user input with Ansible,
-# this might be helpful here:
-# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/pause_module.html
-# TODO: Instead of providing the file wp-config.php ourselves, we should simply
-# use sed or something similar to edit the file provided by WordPress, otherwise we
-# cannot guarantee the integrity of the WordPress version that we install - we would
-# overwrite WordPress' version of that file with our own, probably outdated.
-- name: Provide WordPress config
-  template:
-    # TODO: Also beware of the likely security vulnerability we create by not providing
-    # the WP_AUTH variables.
-    src: wp-config.php
+- name: Copy wp-config-sample.php to wp-config.php
+  copy:
+    remote_src: True
+    src: /var/www/html/wordpress/wp-config-sample.php
     dest: /var/www/html/wordpress/wp-config.php
-    owner: nobody
-    group: nogroup
-    mode: '0644'
+
+- name: Delete old file wp-config-sample.php
+  file:
+    path: /var/www/html/wordpress/wp-config-sample.php
+    state: absent
+
+- name: Provide database configurations
+  lineinfile:
+    path: /var/www/html/wordpress/wp-config.php
+    search_string: "'{{ item.db_var_name }}'"
+    line: "define( '{{ item.db_var_name }}', '{{ item.db_var_value }}' );"
+  loop:
+    - { db_var_name: 'DB_NAME', db_var_value: '{{ database_name }}' }
+    - { db_var_name: 'DB_USER', db_var_value: '{{ database_username }}' }
+    - { db_var_name: 'DB_PASSWORD', db_var_value: '{{ database_password }}' }
+    - { db_var_name: 'DB_HOST', db_var_value: '{{ database_host }}' }
+    # TODO: Add these also in the future.
+    # - { db_var_name: 'DB_CHARSET', db_var_value: '{{ database_charset }}' }
+    # - { db_var_name: 'DB_COLLATE', db_var_value: '{{ database_collation }}' }
+- name: Provide database table prefix
+  lineinfile:
+    path: /var/www/html/wordpress/wp-config.php
+    search_string: "table_prefix"
+    line: "$table_prefix = '{{ database_table_prefix }}';"
+
+- name: Provide authentication values
+  lineinfile:
+    path: /var/www/html/wordpress/wp-config.php
+    search_string: "'{{ item.key }}'"
+    line: "define( '{{ item.key }}', '{{ item.value }}' );"
+  loop: "{{ wordpress_auth_vars | dict2items }}"
+
+- name: Set WordPress constant FS_METHOD to 'direct' to allow theme and plugin installation.
+  lineinfile:
+    path: /var/www/html/wordpress/wp-config.php
+    line: "define( 'FS_METHOD', 'direct' );"
+    insertbefore: "/* That's all, stop editing!"
 
 - name: Set file ownership for wp-content/
   file:

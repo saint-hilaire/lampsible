@@ -35,11 +35,11 @@
     # TODO: Some other options to consider:
     # host: localhost
     # host_all: true
+  when: database_username
 
-# TODO: This should run conditionally, only when the user wants to
-# create a database.
 - name: Create database.
   community.mysql.mysql_db:
     name: "{{ database_name }}"
     state: present
     login_unix_socket: /run/mysqld/mysqld.sock
+  when: database_name
