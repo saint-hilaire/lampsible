@@ -7,42 +7,6 @@ from ansible_runner import Runner, RunnerConfig, run_command
 from lampsible.constants import *
 from lampsible.arg_validator import ArgValidator
 
-# TODO
-def parse_action(action):
-    return
-    # action_mapping = {
-    #     # lamp-stack works, the others should too.
-    #     'lamp-stack': 'lamp-stack.yml',
-    #     'phpmyadmin': 'lamp-stack.yml',
-    #     'wordpress': 'wordpress.yml',
-    #     # TODO: These don't work.
-    #     # # This implies 'roles'
-    #     # 'apache': [
-    #     #     'apt-update',
-    #     #     'apache2',
-    #     # ],
-    #     # 'mysql': [
-    #     #     'apt-update',
-    #     #     'mysql',
-    #     # ],
-    #     # 'php': [
-    #     #     'apt-update',
-    #     #     'apache2',
-    #     #     'mysql',
-    #     # ],
-    # }
-
-    # if action not in action_mapping:
-    #     raise ValueError('Got bad action')
-
-    # result = action_mapping[action]
-    # if '.yml' in result:
-    #     return {'playbook': result}
-    # # TODO Not working
-    # # elif isinstance(result, list):
-    # #     return {'roles': result}
-    # else:
-    #     raise ValueError('Got bad action')
 
 # TODO
 def init_directories(hosts, private_data_dir, project_dir,):
@@ -63,6 +27,7 @@ def init_directories(hosts, private_data_dir, project_dir,):
     #         raise ValueError('{} is not a valid {}'.format(k, v))
     # return directories
 
+
 def init_private_data_dir(private_data_dir):
     try:
         os.makedirs(private_data_dir)
@@ -77,10 +42,12 @@ def init_private_data_dir(private_data_dir):
 
     return os.path.abspath(private_data_dir)
 
+
 def init_project_dir(project_dir):
     if project_dir == '':
         return find_package_project_dir()
     return project_dir
+
 
 def find_package_project_dir():
     for path_str in sys_path:
@@ -91,6 +58,7 @@ def find_package_project_dir():
         except AssertionError:
             pass
     raise RuntimeError("Got no user supplied --project-dir, and could not find one in expected package location. Your Lampsible installation is likely broken. However, if you are running this code directly from source, this is expected behavior. You probably forgot to pass the '--project-dir' flag. The directoy you're looking for is 'src/lampsible/project/'.")
+
 
 def init_inventory_file(private_data_dir, user, host):
     pass
@@ -108,6 +76,7 @@ def init_inventory_file(private_data_dir, user, host):
     # }
     # with open(os.path.join(private_data_dir, 'inventory', 'hosts'), 'w') as fh:
     #     fh.write(yaml.dump(inventory))
+
 
 def prepare_inventory(users, hosts):
     # TODO: Funny thing... doing hosts and users this way works for the
@@ -141,6 +110,7 @@ def prepare_inventory(users, hosts):
     # }
 
     # return inventory
+
 
 def cleanup_private_data_dir(path):
     # TODO: Do this the right way.
