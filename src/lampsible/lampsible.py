@@ -151,14 +151,13 @@ def main():
         # LAMP-Stack basics
         'lamp-stack',
         'apache',
-        'php',
         'mysql',
+        'php',
         # PHP CMS
         'wordpress',
         'typo3',       # TODO
         'joomla',      # TODO
         'drupal',      # TODO
-        'shopweezle',  # TODO
         # PHP frameworks
         'laravel',     # TODO
         'symfony',     # TODO
