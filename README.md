@@ -2,13 +2,23 @@
 
 ## About
 
-Lampsible - LAMP stacks with Ansible and a super simple CLI. You can use this tool to set up a LAMP stack with Ansible. That is, on a given Linux server, install Apache, MySQL, PHP, and some web application of your choice. Under the hood, it utilizes Ansible, a powerful server automation tool, but you don't have to worry about writing Ansible Playbooks or configuring inventories and hosts, because Lampsible does all of that for you. You just use the CLI to tell Lampsible where your server is, what you want to install on it, and Lampsible does everything for you.
+Lampsible - LAMP stacks with Ansible and a super simple CLI. You can use this tool to set up a
+LAMP stack with Ansible. That is, on a given Linux server, install Apache, MySQL, PHP,
+and some web application of your choice. Under the hood, it utilizes Ansible, a
+powerful server automation tool, but you don't have to worry about writing
+Ansible Playbooks or configuring inventories and hosts, because Lampsible
+does all of that for you. You just use the CLI to tell Lampsible where your server is,
+what you want to install on it, and Lampsible does everything for you.
 
 ## Installing
 
-Simply build it from source. Get the code, change into its root directory, and run: `python3 -m pip install .`
+Simply build it from source. Get the code, change into its root directory,
+and run: `python3 -m pip install .`
 
-(Or your platform specific equivalent of that command. You may also wish to install in a virtual environment. You can also run the code directly from source, but that's only recommended if you want to hack i.e. help me develop this tool: `python3 ./src/lampsible/lampsible.py`
+(Or your platform specific equivalent of that command. You may also wish to
+install in a virtual environment. You can also run the code directly from source,
+but that's only recommended if you want to hack i.e. help me develop this tool:
+`python3 ./src/lampsible/lampsible.py`)
 
 ## Usage
 
@@ -51,14 +61,23 @@ lampsible sampleuser your.server.com lamp-stack \
 they are created as well - otherwise they won't be created. You don't need to enter a database
 password, as it's generally insecure to do so over the CLI. Lampsible will prompt you for a password.)
 
+<br>
+
 ```
 lampsible sampleuser your.server.com wordpress \
     --ssl-selfsigned
 ```
-(Along with the underlying LAMP stack, this installs WordPress on your server, and also sets up a self signed SSL certificate, so you have a secure connection to finish setting up your WordPress site. You don't have to provide any database or Apache configurations - they will either be generated automatically, or you will be prompted to enter them.)
+(Along with the underlying LAMP stack, this installs WordPress on your server,
+and also sets up a self signed SSL certificate, so you have a secure connection
+to finish setting up your WordPress site. You don't have to provide any database
+or Apache configurations - they will either be generated automatically,
+or you will be prompted to enter them.)
 
 
-**WARNING!** Never set up a WordPress site without immediately navigating to that site in your browser and finishing the "famous 5 minute WordPress installation", in which you enter the credentials for the admin user! Otherwise, someone else will do that for you, and use your server to host malicious content!
+**WARNING!** Never set up a WordPress site without immediately navigating to that site
+in your browser and finishing the "famous 5 minute WordPress installation",
+in which you enter the credentials for the admin user!
+Otherwise, someone else will do that for you, and use your server to host malicious content!
 
 ### Note about Certbot
 
