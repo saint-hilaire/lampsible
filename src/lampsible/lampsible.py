@@ -118,6 +118,24 @@ def cleanup_private_data_dir(path):
     os.system('rm -r ' + path)
 
 
+def ensure_ansible_galaxy_dependencies(galaxy_requirements_file):
+    ok_to_install = input("I have to download and install the Ansible Galaxy dependencies 'community.mysql' and 'community.crypto' into {}. Is this OK (yes/no)? ".format(
+        os.path.join(USER_HOME_DIR, '.ansible/')
+    )).lower()
+    while ok_to_install != 'yes' and ok_to_install != 'no':
+        ok_to_install = input("Please type 'yes' or 'no': ")
+    if ok_to_install == 'yes':
+        run_command(
+            executable_cmd='ansible-galaxy',
+            cmdline_args=['collection', 'install', '-r', galaxy_requirements_file],
+        )
+        return 0
+    else:
+        print('Cannot run Ansible plays without Galaxy requirements. Aborting.')
+        return 1
+
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog='lampsible',
@@ -251,6 +269,13 @@ def main():
     inventory = prepare_inventory(args.users, args.hosts)
     # Now inventory is something like 'user1@host1,user2@host2' 
     # or 'user1@host1,'
+
+    galaxy_result = ensure_ansible_galaxy_dependencies(os.path.join(
+        project_dir, 'ansible-galaxy-requirements.yml'))
+
+    if galaxy_result is 1:
+        return 0
+
 
     if args.action == 'dump-ansible-facts':
         # TODO: Perhaps we can improve this. For example, if we refactor
