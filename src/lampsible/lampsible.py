@@ -241,6 +241,7 @@ def main():
 
     # ANSIBLE RUNNER
     ################
+    parser.add_argument('--ssh-key-file')
     parser.add_argument('--private-data-dir', default=DEFAULT_PRIVATE_DATA_DIR)
     parser.add_argument('--project-dir',      default=DEFAULT_PROJECT_DIR)
     parser.add_argument('--keep-private-data-dir', action='store_true')
@@ -348,6 +349,15 @@ def main():
         },
         playbook=playbook,
     )
+
+    if args.ssh_key_file:
+        try:
+            with open(os.path.abspath(args.ssh_key_file), 'r') as key_file:
+                key_data = key_file.read()
+            rc.ssh_key_data = key_data
+        except FileNotFoundError:
+            print('Warning! SSH key file not found!')
+
     rc.prepare()
     r = Runner(config=rc)
     r.run()
