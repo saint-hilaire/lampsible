@@ -12,13 +12,19 @@ what you want to install on it, and Lampsible does everything for you.
 
 ## Installing
 
-Simply build it from source. Get the code, change into its root directory,
-and run: `python3 -m pip install .`
+Install with Pip: `python3 -m pip install lampsible`
 
-(Or your platform specific equivalent of that command. You may also wish to
-install in a virtual environment. You can also run the code directly from source,
-but that's only recommended if you want to hack i.e. help me develop this tool:
-`python3 ./src/lampsible/lampsible.py`)
+Alternatively, install from source:
+```
+git clone https://github.com/saint-hilaire/lampsible
+cd lampsible
+python3 -m pip install .
+```
+
+You can also run the Python code directly, but this option is geared more towards
+developers (also, it's not really necessary, because you can install from source
+and pass the `--editable` flag): `python3 src/lampsible/lampsible.py --help`
+
 
 ## Usage
 
