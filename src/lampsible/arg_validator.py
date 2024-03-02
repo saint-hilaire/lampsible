@@ -292,8 +292,14 @@ class ArgValidator():
             warn('Will not install common PHP extensions. WordPress, Laravel, and other common CMS or frameworks will probably not work.')
 
 
+    def print_warnings(self):
+        if self.args.skip_fail2ban:
+            print('Warning! Will not install fail2ban! Your site will potentially be vulnerable to various brute force attacks. You should only pass the \'--skip-fail2ban\' flag if you have a good reason to do so. On production servers, always install fail2ban!')
+
+
     def validate_args(self):
         self.validate_apache_args()
         self.validate_database_args()
         self.validate_ssl_args()
         self.validate_php_args()
+        self.print_warnings()

@@ -1,0 +1,56 @@
+[sshd]
+enabled=true
+
+[apache-auth]
+enabled=true
+
+[apache-badbots]
+enabled=true
+
+[apache-noscript]
+enabled=true
+
+[apache-overflows]
+enabled=true
+
+[apache-nohome]
+enabled=true
+
+[apache-botsearch]
+enabled=true
+
+[apache-fakegooglebot]
+enabled=true
+
+[apache-modsecurity]
+enabled=true
+
+[apache-shellshock]
+enabled=true
+
+[php-url-fopen]
+enabled=true
+
+{#
+[mysqld-auth]
+# TODO: We had to add an existing logpath, because the default value
+# supplied by fail2ban was not being found, causing fail2ban to fail
+# starting up. However, it's still not completely working. fail2ban
+# starts successfully, but if I spam login attempts with wrong credentials,
+# I don't get banned. However, currently, it's not that big of a deal, because
+# the MySQL service is not available publicly.
+enabled=true
+logpath=/var/log/mysql/error.log
+#}
+
+{#
+TODO: Add this when we add phpmyadmin
+[phpmyadmin-syslog]
+enabled=true
+#}
+
+{#
+TODO: Add this if we ever add an FTP server.
+[proftpd]
+enabled=true
+#}

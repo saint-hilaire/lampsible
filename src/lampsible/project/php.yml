@@ -2,6 +2,15 @@
 - hosts: all
   become: true
   gather_facts: true
-  roles:
-    - apt-update
-    - php
+  tasks:
+    - name: "Include standard Ansible role"
+      include_role:
+        name: "{{ item }}"
+      loop:
+        - apt-update
+        - php
+
+    - name: Conditionally include fail2ban role
+      include_role:
+        name: fail2ban
+      when: not skip_fail2ban

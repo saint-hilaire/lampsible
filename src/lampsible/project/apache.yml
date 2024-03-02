@@ -30,3 +30,8 @@
       include_role:
         name: apache-conf
       when: ssl_selfsigned
+
+    - name: Conditionally include fail2ban role
+      include_role:
+        name: fail2ban
+      when: not skip_fail2ban
