@@ -216,7 +216,7 @@ def main():
     ###########
     # TODO: Figure this out, and a better way to validate this.
     # parser.add_argument('--wordpress-version', choices=['?'], default='latest?')
-    parser.add_argument('--wordpress-version', default='6.0')
+    parser.add_argument('--wordpress-version', default='6.4')
     parser.add_argument('--wordpress-auth-key')
     parser.add_argument('--wordpress-secure-auth-key')
     parser.add_argument('--wordpress-logged-in-key')
