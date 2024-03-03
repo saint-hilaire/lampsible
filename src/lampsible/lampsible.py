@@ -118,6 +118,8 @@ def cleanup_private_data_dir(path):
     os.system('rm -r ' + path)
 
 
+# TODO: See GH Issue #4. Currently the user is always prompted  for this.
+# The user should only be prompted for this, when the requirements are not met.
 def ensure_ansible_galaxy_dependencies(galaxy_requirements_file):
     ok_to_install = input("I have to download and install the Ansible Galaxy dependencies 'community.mysql' and 'community.crypto' into {}. Is this OK (yes/no)? ".format(
         os.path.join(USER_HOME_DIR, '.ansible/')
@@ -225,6 +227,7 @@ def main():
     parser.add_argument('--wordpress-secure-auth-salt')
     parser.add_argument('--wordpress-logged-in-salt')
     parser.add_argument('--wordpress-nonce-salt')
+    parser.add_argument('--wordpress-insecure-allow-xmlrpc', action='store_true')
 
     # ANSIBLE RUNNER
     ################
@@ -273,6 +276,7 @@ def main():
     galaxy_result = ensure_ansible_galaxy_dependencies(os.path.join(
         project_dir, 'ansible-galaxy-requirements.yml'))
 
+    # TODO: SyntaxWarning: "is" with a literal. Did you mean "=="?
     if galaxy_result is 1:
         return 0
 
@@ -308,6 +312,7 @@ def main():
 
     apache_vhosts = validator.get_apache_vhosts()
     apache_custom_conf_name = validator.get_apache_custom_conf_name()
+    apache_allow_override = validator.get_apache_allow_override()
 
     wordpress_auth_vars = validator.get_wordpress_auth_vars()
 
@@ -326,6 +331,7 @@ def main():
         extravars={
             'apache_vhosts': apache_vhosts,
             'apache_custom_conf_name': apache_custom_conf_name,
+            'apache_allow_override': apache_allow_override,
             'database_username': args.database_username,
             'database_password': args.database_password,
             'database_host': args.database_host,
@@ -335,6 +341,7 @@ def main():
             'skip_php_extensions': args.skip_php_extensions,
             'wordpress_version': args.wordpress_version,
             'wordpress_auth_vars': wordpress_auth_vars,
+            'wordpress_insecure_allow_xmlrpc': args.wordpress_insecure_allow_xmlrpc,
             'ssl_certbot': args.ssl_certbot,
             'ssl_selfsigned': args.ssl_selfsigned,
             'email_for_ssl': args.email_for_ssl,

@@ -8,9 +8,6 @@
 # Ansible parameters... This would solve a lot of problems!
 #################################################################
 
-# TODO: This is not idempotent! It overwrites an existing
-# installation, so we can't update configurations of an
-# existing installation.
 - name: Download Wordpress
   unarchive:
     src: "https://wordpress.org/wordpress-{{ wordpress_version }}.tar.gz"
@@ -53,6 +50,8 @@
     search_string: "table_prefix"
     line: "$table_prefix = '{{ database_table_prefix }}';"
 
+# TODO: Some optional flag to skip this, so that we can rerun a WordPress play
+# on some production environment without logging everybody out.
 - name: Provide authentication values
   lineinfile:
     path: /var/www/html/wordpress/wp-config.php
@@ -73,6 +72,16 @@
     recurse: yes
     owner: www-data
     group: www-data
+
+- name: Block the insecure endpoint xmlrpc.php
+  template:
+    src: .htaccess
+    dest: /var/www/html/wordpress/.htaccess
+    # TODO: Maybe this is not secure...
+    owner: www-data
+    group: www-data
+    mode: '0644'
+  when: not wordpress_insecure_allow_xmlrpc
 
 - name: Restart Apache
   service:

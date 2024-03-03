@@ -30,4 +30,11 @@
 	# following line enables the CGI configuration for this host only
 	# after it has been globally disabled with "a2disconf".
 	#Include conf-available/serve-cgi-bin.conf
+	{% if apache_allow_override %}
+	<Directory {{ item.document_root }}>
+		Options FollowSymLinks
+		AllowOverride All
+		Require all granted
+	</Directory>
+	{% endif %}
 </VirtualHost>

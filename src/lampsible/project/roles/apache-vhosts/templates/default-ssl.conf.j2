@@ -103,6 +103,13 @@
 	<Directory /usr/lib/cgi-bin>
 		SSLOptions +StdEnvVars
 	</Directory>
+	{% if apache_allow_override %}
+	<Directory {{ item.document_root }}>
+		Options FollowSymLinks
+		AllowOverride All
+		Require all granted
+	</Directory>
+	{% endif %}
 
 	#   SSL Protocol Adjustments:
 	#   The safe and default but still SSL/TLS standard compliant shutdown
