@@ -246,7 +246,7 @@ def main():
     # MISC
     ######
     parser.add_argument('--insecure-cli-password', action='store_true')
-    parser.add_argument('--skip-fail2ban', action='store_true')
+    parser.add_argument('--insecure-skip-fail2ban', action='store_true')
 
     args = parser.parse_args()
 
@@ -348,7 +348,7 @@ def main():
             'domains_for_ssl': args.domains_for_ssl,
             # TODO: Improve this when we fix Certbot.
             'domain_for_wordpress': validator.get_domain_for_wordpress(),
-            'skip_fail2ban': args.skip_fail2ban,
+            'insecure_skip_fail2ban': args.insecure_skip_fail2ban,
         },
         playbook=playbook,
     )

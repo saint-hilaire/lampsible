@@ -303,8 +303,8 @@ class ArgValidator():
 
 
     def print_warnings(self):
-        if self.args.skip_fail2ban:
-            print('Warning! Will not install fail2ban! Your site will potentially be vulnerable to various brute force attacks. You should only pass the \'--skip-fail2ban\' flag if you have a good reason to do so. On production servers, always install fail2ban!')
+        if self.args.insecure_skip_fail2ban:
+            print('Warning! Will not install fail2ban! Your site will potentially be vulnerable to various brute force attacks. You should only pass the \'--insecure-skip-fail2ban\' flag if you have a good reason to do so. On production servers, always install fail2ban!')
         if self.args.wordpress_insecure_allow_xmlrpc:
             print('Warning! Your WordPress site\'s xmlrpc.php endpoint will be enabled - this is insecure! The endpoint xmlrpc.php is a feature from older WordPress versions which allowed programmatic access to the WordPress backend. Although it has numerous known security vulnerabilities, namely a brute force and a DoS vulnerability, it is still, for some reason, enabled by default in current WordPress versions. Lampsible will, by default, block this endpoint with an .htaccess configuration, unless you specify otherwise, which you just did. You should not be doing this, unless you have some good reason to do so!')
 
