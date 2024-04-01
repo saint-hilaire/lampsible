@@ -17,6 +17,7 @@ requires-python = ">=3.8"
 dependencies = [
     "ansible-core",
     "ansible-runner",
+    "fqdn",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

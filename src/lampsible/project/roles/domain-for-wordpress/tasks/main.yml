@@ -10,7 +10,7 @@
   ignore_errors: true
 
 - debug:
-    msg: Tried to supply WordPress domain configuration via raw MySQL command. If this failed, it was because no tables exist, because WordPress has not been fully set up yet. Please finish setting up WordPress via web browser, then run this playbook again. Make sure to do so via an encrypted connection (you should run this script with --ssl-selfsigned), then, once WordPress is fully set up, rerun this script with --ssl-certbot. My apologies for the inconvenience, this will be improved in a future version.
+    msg: Tried to supply WordPress domain configuration via raw MySQL command. If this failed, it was because no tables exist, because WordPress has not been fully set up yet. Please complete the Famous 5 Minute WordPress Installation in your web browser, then run this playbook again. Make sure to do so over an encrypted connection, that is via HTTPS!
 
 - pause:
     seconds: 5

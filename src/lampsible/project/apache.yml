@@ -16,15 +16,16 @@
         name: ssl-selfsigned
       when: ssl_selfsigned
 
-    # TODO
+    # It's important that this runs after the selfsigned certificates,
+    # if those are being used, but before Certbot, if that's being used.
+    - name: Include Apache virtual host role
+      include_role:
+        name: apache-vhosts
+
     - name: Conditionally include SSL role
       include_role:
         name: ssl-certbot
       when: ssl_certbot
-
-    - name: Include Apache virtual host role
-      include_role:
-        name: apache-vhosts
 
     - name: Conditionally include custom Apache configuration
       include_role:

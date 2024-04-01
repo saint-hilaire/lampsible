@@ -4,3 +4,10 @@
 
 - name: Start Apache
   service: name=apache2 state=started enabled=yes
+
+- name: Enable Apache module SSL
+  raw: a2enmod ssl
+  when: ssl_certbot or ssl_selfsigned
+- name: Enable Apache module headers
+  raw: a2enmod headers
+  when: ssl_certbot or ssl_selfsigned

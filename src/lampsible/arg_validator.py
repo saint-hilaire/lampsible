@@ -1,7 +1,9 @@
+from re import match
 from copy import copy
 from secrets import token_hex
 from warnings import warn
 from getpass import getpass
+from fqdn import FQDN
 from lampsible.constants import *
 
 
@@ -26,7 +28,7 @@ class ArgValidator():
         except AttributeError:
             return ''
 
-    
+
     # TODO: Improve/remove this when we fix Certbot.
     def get_domain_for_wordpress(self):
         try:
@@ -82,6 +84,17 @@ class ArgValidator():
                 and not self.args.wordpress_insecure_allow_xmlrpc
             )
         )
+
+
+    def get_certbot_domains_string(self):
+        try:
+            return '-d {}'.format(' -d '.join(self.args.domains_for_ssl))
+        except TypeError:
+            return ''
+
+
+    def get_certbot_test_cert_string(self):
+        return '--test-cert' if self.args.test_cert else ''
 
 
     def handle_defaults(
@@ -172,14 +185,19 @@ class ArgValidator():
 
     def validate_apache_args(self):
 
+        server_name = self.args.host
+        try:
+            assert FQDN(server_name).is_valid
+        except AssertionError:
+            server_name = DEFAULT_APACHE_SERVER_NAME
+
         base_vhost_dict = {
             'base_vhost_file': '{}.conf'.format(DEFAULT_APACHE_VHOST_NAME),
             'document_root':  self.args.apache_document_root,
             'vhost_name':     self.args.apache_vhost_name,
-            # TODO: Temporarily disabled because it does not play
-            # nicely with Certbot.
-            # 'server_name':    self.args.apache_server_name,
+            'server_name':    server_name,
             'server_admin':   self.args.apache_server_admin,
+            'allow_override': self.get_apache_allow_override(),
         }
 
         if self.args.action == 'wordpress':
@@ -192,7 +210,7 @@ class ArgValidator():
 
         self.apache_vhosts = [base_vhost_dict]
 
-        if self.args.ssl_selfsigned or self.args.ssl_certbot:
+        if self.args.ssl_selfsigned:
 
             ssl_vhost_dict = copy(base_vhost_dict)
 
@@ -200,16 +218,11 @@ class ArgValidator():
             ssl_vhost_dict['vhost_name']      += '-ssl'
 
             self.apache_vhosts.append(ssl_vhost_dict)
-            self.apache_custom_conf_name = 'ssl-params'
 
-        # if ssl_action:
-        #     # TODO: Does not work for Certbot, unless the client is
-        #     # run with the flag --register-unsafely-without-email.
-        #     # TODO: This method has been refactored, so this is now broken.
-        #     self.handle_defaults([{
-        #         'arg_name': 'email_for_ssl',
-        #         'cli_default_value': self.args.apache_server_admin,
-        #     }], False, True)
+            if self.args.ssl_selfsigned:
+                self.apache_custom_conf_name = 'ssl-params'
+
+        return 0
 
 
     def validate_database_args(self):
@@ -225,7 +238,8 @@ class ArgValidator():
         if self.args.database_password \
             and not self.args.insecure_cli_password:
 
-            exit('It\'s insecure to pass passwords via CLI args! If you are sure that you want to do this, rerun this command with the --insecure-cli-password flag.')
+            print('It\'s insecure to pass passwords via CLI args! If you are sure that you want to do this, rerun this command with the --insecure-cli-password flag.')
+            return 1
 
         # TODO: Add some option like --wordpress-defaults, to improve user
         # experience. Otherwise, the user would always be asked about defaulting
@@ -256,38 +270,49 @@ class ArgValidator():
                 7
             )
 
+        return 0
+
 
     def validate_ssl_args(self):
 
         if self.args.ssl_certbot:
-            if self.args.ssl_selfsigned:
-                warn('Warning: Got --ssl-certbot, but also got --ssl-selfsigned. Ignoring --ssl-selfsigned and using --ssl-certbot.')
             ssl_action = 'certbot'
         elif self.args.ssl_selfsigned:
-            warn('Warning! Creating a self signed certificate to handle the site\'s encryption. This is less secure and will appear untrustworthy to any visitors. Only use this for testing environments.')
             ssl_action = 'selfsigned'
         else:
-            warn('WARNING! Your site will not have any encryption enabled! This is very insecure, as passwords and other sensitive data will be transmitted in clear text. DO NOT use this on any remote host or over any partially untrusted network. ONLY use this for local, secure, private and trusted networks, ideally only for local development servers.')
             ssl_action = None
 
-        # TODO: Improve this when we fix Certbot.
         if ssl_action == 'certbot':
             self.handle_defaults([
                 {
                     'arg_name': 'domains_for_ssl',
                     'cli_default_value': None,
-                    'override_default_value': self.args.hosts.split(','),
+                    'override_default_value': [self.args.host],
                 },
                 {
                     'arg_name': 'email_for_ssl',
-                    'cli_default_value': self.args.apache_server_admin,
+                    'cli_default_value': None,
+                    'override_default_value': self.args.apache_server_admin,
                 },
             ])
+
+            if not match(r"[^@]+@[^@]+\.[^@]+", self.args.email_for_ssl):
+                print("FATAL! --email-for-ssl needs to be valid. Got '{}'. Aborting.".format(
+                    self.args.email_for_ssl))
+                return 1
+
             if self.args.action == 'wordpress':
-                self.args.domains_for_ssl.append(
-                    'www.{}'.format(self.args.domains_for_ssl[0])
-                )
-                self.domain_for_wordpress = self.args.domains_for_ssl[-1]
+                if self.args.host[:4] == 'www.':
+                    www_domain = self.args.host
+                else:
+                    www_domain = 'www.{}'.format(self.args.host)
+
+                if www_domain not in self.args.domains_for_ssl:
+                    self.args.domains_for_ssl.append(www_domain)
+
+                self.domain_for_wordpress = www_domain
+
+        return 0
 
 
     def validate_php_args(self):
@@ -299,19 +324,38 @@ class ArgValidator():
         # To work around the above points, you would have to manually configure the
         # APT repository.
         if self.args.skip_php_extensions:
-            warn('Will not install common PHP extensions. WordPress, Laravel, and other common CMS or frameworks will probably not work.')
+            print('Will not install common PHP extensions. WordPress, Laravel, and other common CMS or frameworks will probably not work.')
+
+        return 0
 
 
     def print_warnings(self):
         if self.args.insecure_skip_fail2ban:
             print('Warning! Will not install fail2ban! Your site will potentially be vulnerable to various brute force attacks. You should only pass the \'--insecure-skip-fail2ban\' flag if you have a good reason to do so. On production servers, always install fail2ban!')
+
         if self.args.wordpress_insecure_allow_xmlrpc:
             print('Warning! Your WordPress site\'s xmlrpc.php endpoint will be enabled - this is insecure! The endpoint xmlrpc.php is a feature from older WordPress versions which allowed programmatic access to the WordPress backend. Although it has numerous known security vulnerabilities, namely a brute force and a DoS vulnerability, it is still, for some reason, enabled by default in current WordPress versions. Lampsible will, by default, block this endpoint with an .htaccess configuration, unless you specify otherwise, which you just did. You should not be doing this, unless you have some good reason to do so!')
 
+        if self.args.ssl_certbot and self.args.ssl_selfsigned:
+            print('Warning: Got --ssl-certbot, but also got --ssl-selfsigned. Ignoring --ssl-selfsigned and using --ssl-certbot.')
+        elif self.args.ssl_selfsigned:
+            print('Warning! Creating a self signed certificate to handle the site\'s encryption. This is less secure and will appear untrustworthy to any visitors. Only use this for testing environments.')
+        elif not (self.args.ssl_selfsigned or self.args.ssl_certbot):
+            print('WARNING! Your site will not have any encryption enabled! This is very insecure, as passwords and other sensitive data will be transmitted in clear text. DO NOT use this on any remote host or over any partially untrusted network. ONLY use this for local, secure, private and trusted networks, ideally only for local development servers.')
+
 
     def validate_args(self):
-        self.validate_apache_args()
-        self.validate_database_args()
-        self.validate_ssl_args()
-        self.validate_php_args()
+        validate_methods = [
+            'validate_apache_args',
+            'validate_database_args',
+            'validate_ssl_args',
+            'validate_php_args',
+        ]
+        for method_name in validate_methods:
+            method = getattr(self, method_name)
+            result = method()
+            if result != 0:
+                return result
+
         self.print_warnings()
+        return 0

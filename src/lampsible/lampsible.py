@@ -78,38 +78,79 @@ def init_inventory_file(private_data_dir, user, host):
     #     fh.write(yaml.dump(inventory))
 
 
-def prepare_inventory(users, hosts):
-    # TODO: Funny thing... doing hosts and users this way works for the
-    # ansible_runner module when we use it in this script, but does not work
-    # for the ansible-runner as a CLI tool... even though in the venv 
-    # they should be the same versions.
-    hosts_ls = hosts.split(',')
-    users_ls = users.split(',')
-    l = len(hosts_ls)
-    if len(users_ls) != l:
-        raise NotImplementedError('For now, you have to pass users and hosts as lists that match one to one exactly. This will be improved in a future version.')
+def prepare_inventory(user, host):
+    ########
+    # TODO #
+    ########
 
-    if l > 1: 
-        hosts = ['{}@{}'.format(users_ls[i], hosts_ls[i]) for i in range(l)]
-        return ','.join(hosts)
-    elif l == 1:
-        return '{}@{},'.format(users_ls[0], hosts_ls[0])
-    else:
-        raise ValueError('Got bad value for --users or --hosts.')
-    
-    # TODO: Passing an inventory directly as a dictionary to Ansible is currenlty
-    # not possible... unfortunately! It should be...
+    # Dealing with inventories can be tricky.
+    # This is a big part of what will have to be refactored in the future.
+    # Ideally, it should be possible to pass the inventories to Ansible,
+    # along with all sorts of variables, as a dictionary. However,
+    # that appears not to be possible at the moment. If it truly is not
+    # possible, this might be a worthwhile improvment to Ansible itself.
+    # See the code below.
+
     # hosts = {hosts_ls[i]: users_ls[i] for i in range(l)}
-
     # inventory = {
     #     'ungrouped': {
     #         'hosts': {
     #             host: {'ansible_user': user} for host, user in hosts.items()
     #         },
+    #         # various variables here...
     #     },
     # }
 
-    # return inventory
+    # Without dictionaries, it would mean that we would have to create
+    # some temporary files on the local filesystem to handle all the
+    # inventory configuration. This is OK, but IMO not ideal. In any case,
+    # I don't want to implement that into this project, but rather, into some
+    # "Python-Ansible-Runner" library.
+
+    # So for the time being, there are no "inventories-per-dictionary" (might
+    # require changes to Ansible itself), nor "inventory-per-tmp-file" (won't
+    # implement in this codebase, but rather in other library).
+
+    # It's possible to pass "work around" the need for the "local inventory
+    # file" by passing a comma separated list to Ansible. The commented out
+    # code below does exactly that. However, dealing with multiple users and
+    # hosts this way introduces unnecessary and unwieldy complexities, which
+    # most of the time wouldn't be needed by a tool as simple as Lampsible
+    # anyway. Funny thing... doing hosts and users this way works for the
+    # ansible_runner module when we use it in this script, but does not work
+    # for the ansible-runner as a CLI tool... even though in the venv 
+    # they should be the same versions.
+
+    # hosts_ls = hosts.split(',')
+    # users_ls = users.split(',')
+    # l = len(hosts_ls)
+    # if len(users_ls) != l:
+    #     raise NotImplementedError('For now, you have to pass users and hosts as lists that match one to one exactly. This will be improved in a future version.')
+
+    # if l > 1: 
+    #     hosts = ['{}@{}'.format(users_ls[i], hosts_ls[i]) for i in range(l)]
+    #     return ','.join(hosts)
+    # elif l == 1:
+    #     return '{}@{},'.format(users_ls[0], hosts_ls[0])
+    # else:
+    #     raise ValueError('Got bad value for --users or --hosts.')
+
+    # For these reasons, we confine ourselves for now to the simple
+    # "one user, one host" inventory. Note the comma at the end of the
+    # inventory string - that is needed, in order for Ansible to process it
+    # this way.
+
+    # To do the inventories "The Right Way", I want to find out, if it maybe
+    # isn't possible to configure the entire invetory in one single
+    # dictionary, and pass that directly to Ansible-Runner - and possibly
+    # contribute those changes to the maintainers of Ansible itself. Failing
+    # that, I want to implement some small library to handle tasks like
+    # 'writing Anisble inventory file temporarily to local filesystem', which
+    # would then be required by this application. 
+
+    # Another thing that will be important in the future is for the web-
+    # and database-servers to run on different hosts.
+    return '{}@{},'.format(user, host)
 
 
 def cleanup_private_data_dir(path):
@@ -121,7 +162,7 @@ def cleanup_private_data_dir(path):
 # TODO: See GH Issue #4. Currently the user is always prompted  for this.
 # The user should only be prompted for this, when the requirements are not met.
 def ensure_ansible_galaxy_dependencies(galaxy_requirements_file):
-    ok_to_install = input("I have to download and install the Ansible Galaxy dependencies 'community.mysql' and 'community.crypto' into {}. Is this OK (yes/no)? ".format(
+    ok_to_install = input("I have to download and install the Ansible Galaxy dependencies 'community.general', 'community.mysql' and 'community.crypto' into {}. Is this OK (yes/no)? ".format(
         os.path.join(USER_HOME_DIR, '.ansible/')
     )).lower()
     while ok_to_install != 'yes' and ok_to_install != 'no':
@@ -131,6 +172,10 @@ def ensure_ansible_galaxy_dependencies(galaxy_requirements_file):
             executable_cmd='ansible-galaxy',
             cmdline_args=['collection', 'install', '-r', galaxy_requirements_file],
         )
+        # run_command(
+        #     executable_cmd='ansible-galaxy',
+        #     cmdline_args=['role', 'install', '-r', galaxy_requirements_file],
+        # )
         return 0
     else:
         print('Cannot run Ansible plays without Galaxy requirements. Aborting.')
@@ -145,8 +190,8 @@ def main():
         epilog='Currently in development...',
     )
     # TODO
-    parser.add_argument('users')
-    parser.add_argument('hosts')
+    parser.add_argument('user')
+    parser.add_argument('host')
 
     # TODO: Validation
     parser.add_argument('action', choices=[
@@ -183,10 +228,6 @@ def main():
     # TODO: Apache configs, versions, etc? Nginx or others?
     parser.add_argument('--apache-vhost-name',
         default=DEFAULT_APACHE_VHOST_NAME)
-    # TODO: Temporarily disabled because it does not play
-    # nicely with Certbot.
-    # parser.add_argument('--apache-server-name',
-    #     default=DEFAULT_APACHE_SERVER_NAME)
     parser.add_argument('--apache-server-admin',
         default=DEFAULT_APACHE_SERVER_ADMIN)
     parser.add_argument('--apache-document-root',
@@ -240,8 +281,10 @@ def main():
     #####
     parser.add_argument('--ssl-certbot', action='store_true')
     parser.add_argument('--ssl-selfsigned', action='store_true')
-    parser.add_argument('--email-for-ssl', default=DEFAULT_APACHE_SERVER_ADMIN)
+    parser.add_argument('--email-for-ssl')
     parser.add_argument('--domains-for-ssl')
+    parser.add_argument('--test-cert', action='store_true')
+    parser.add_argument('--wordpress-5-minute-install-seconds', default=60)
 
     # MISC
     ######
@@ -251,7 +294,10 @@ def main():
     args = parser.parse_args()
 
     validator = ArgValidator(args)
-    validator.validate_args()
+    result = validator.validate_args()
+    if result != 0:
+        print('FATAL! validator.validate_args returned non zero return code. Aborting.')
+        return 1
     args = validator.get_args()
 
     # TODO: Let arg_validator handle private_data_dir, project_dir,
@@ -269,7 +315,7 @@ def main():
     # build.
     project_dir = init_project_dir(args.project_dir)
 
-    inventory = prepare_inventory(args.users, args.hosts)
+    inventory = prepare_inventory(args.user, args.host)
     # Now inventory is something like 'user1@host1,user2@host2' 
     # or 'user1@host1,'
 
@@ -312,15 +358,8 @@ def main():
 
     apache_vhosts = validator.get_apache_vhosts()
     apache_custom_conf_name = validator.get_apache_custom_conf_name()
-    apache_allow_override = validator.get_apache_allow_override()
 
     wordpress_auth_vars = validator.get_wordpress_auth_vars()
-
-    # TODO
-    # if roles and len(roles) > 1:
-    #     roles = ','.join(roles) 
-    # elif roles:
-    #     roles = roles.pop()
 
     rc = RunnerConfig(
         private_data_dir=private_data_dir,
@@ -331,7 +370,6 @@ def main():
         extravars={
             'apache_vhosts': apache_vhosts,
             'apache_custom_conf_name': apache_custom_conf_name,
-            'apache_allow_override': apache_allow_override,
             'database_username': args.database_username,
             'database_password': args.database_password,
             'database_host': args.database_host,
@@ -345,9 +383,11 @@ def main():
             'ssl_certbot': args.ssl_certbot,
             'ssl_selfsigned': args.ssl_selfsigned,
             'email_for_ssl': args.email_for_ssl,
-            'domains_for_ssl': args.domains_for_ssl,
+            'certbot_domains_string': validator.get_certbot_domains_string(),
+            'certbot_test_cert_string': validator.get_certbot_test_cert_string(),
             # TODO: Improve this when we fix Certbot.
             'domain_for_wordpress': validator.get_domain_for_wordpress(),
+            'wordpress_5_minute_install_seconds': args.wordpress_5_minute_install_seconds,
             'insecure_skip_fail2ban': args.insecure_skip_fail2ban,
         },
         playbook=playbook,

@@ -8,7 +8,7 @@
 # Ansible parameters... This would solve a lot of problems!
 #################################################################
 
-- name: Download Wordpress
+- name: Download WordPress
   unarchive:
     src: "https://wordpress.org/wordpress-{{ wordpress_version }}.tar.gz"
     dest: "/var/www/html/"

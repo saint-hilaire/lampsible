@@ -30,11 +30,6 @@
 - name: Create Diffie-Hellman group for forward secrecy
   raw: openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
 
-- name: Enable Apache module SSL
-  raw: a2enmod ssl
-- name: Enable Apache module headers
-  raw: a2enmod headers
-
 - name: Restart Apache
   service:
     name: apache2

@@ -19,27 +19,26 @@
         name: ssl-selfsigned
       when: ssl_selfsigned
 
-    # TODO
+    # It's important that this runs after the selfsigned certificates,
+    # if those are being used, but before Certbot, if that's being used.
+    - name: Include Apache virtual host role
+      include_role:
+        name: apache-vhosts
+
     - name: Conditionally include SSL role
       include_role:
         name: ssl-certbot
       when: ssl_certbot
 
-    # TODO: This only works if WordPress has been finished setting up
-    # via the manual "5 minute install", because otherwise, the database
-    # table that this role tries to update wouldn't exist.
-    # So to fully install WordPress, you have to install it first without
-    # --ssl-certbot - but absolutely with --ssl-selfsigned, because you're sending
-    # credentials over the network! - then, when that's taken care of, run the
-    # script once again with --ssl-certbot.
+    - pause:
+        seconds: "{{ wordpress_5_minute_install_seconds }}"
+        prompt: "Please navigate to your site right now to complete the 'Famous 5 Minute WordPress Installation'. This is required for the next step of the script to suceed (setting some configurations in the database), and it's also important for security reasons that you do this right away. You have exactly {{ wordpress_5_minute_install_seconds }} seconds to complete this step."
+      when: ssl_certbot
+
     - name: Conditionally include WordPress domain configuration - needed for SSL
       include_role:
         name: domain-for-wordpress
       when: ssl_certbot
-
-    - name: Include Apache virtual host role
-      include_role:
-        name: apache-vhosts
 
     - name: Conditionally include custom Apache configuration
       include_role:
