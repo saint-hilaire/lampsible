@@ -284,7 +284,19 @@ def main():
     parser.add_argument('--email-for-ssl')
     parser.add_argument('--domains-for-ssl')
     parser.add_argument('--test-cert', action='store_true')
-    parser.add_argument('--wordpress-5-minute-install-seconds', default=60)
+
+    # TODO: This is intended as a temporary workaround.
+    # Ideally, we implement https://github.com/saint-hilaire/lampsible/issues/14
+    # and then there should be no need to configure the length of time for
+    # which Ansible pauses to allow the user to perform this step (unless
+    # the user wants to do it in the browser, via some
+    # --wordpress-interactive-install?)
+    # Failing that, it would be quite good if a future version of
+    # Ansible Runner can improve the handling of user input in the context
+    # of paused Playbooks (see issues
+    # https://github.com/ansible/ansible-runner/issues/1075
+    # and https://github.com/ansible/ansible-runner/issues/756):
+    parser.add_argument('--wordpress-5-minute-install-seconds', default=120)
 
     # MISC
     ######

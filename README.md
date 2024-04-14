@@ -50,7 +50,7 @@ Some flags which you'll likely also want to use:
 * `--php-version` (You'll need this on older Ubuntu versions, because they don't support PHP 8 out of the box)
 * `--wordpress-version`
 * `--ssl-certbot`
-* `--ssl-selfsigned` (See the note below about Certbot)
+* `--ssl-selfsigned`
 
 Run `lampsible --help` for a full list of options.
 
@@ -71,11 +71,11 @@ password, as it's generally insecure to do so over the CLI. Lampsible will promp
 
 ```
 lampsible sampleuser your.server.com wordpress \
-    --ssl-selfsigned
+    --ssl-certbot \
+    --email-for-ssl you@yourdomain.com
 ```
 (Along with the underlying LAMP stack, this installs WordPress on your server,
-and also sets up a self signed SSL certificate, so you have a secure connection
-to finish setting up your WordPress site. You don't have to provide any database
+and also sets up SSL via Certbot. You don't have to provide any database
 or Apache configurations - they will either be generated automatically,
 or you will be prompted to enter them.)
 
@@ -84,43 +84,6 @@ or you will be prompted to enter them.)
 in your browser and finishing the "famous 5 minute WordPress installation",
 in which you enter the credentials for the admin user!
 Otherwise, someone else will do that for you, and use your server to host malicious content!
-
-### Note about Certbot
-
-Certbot is not completely working at the moment. It works, but you have to do
-part of the process directly on the remote server. There is also a little bit
-of difficutly with WordPress at the moment, because immediately after Lampsible
-finishes installing WordPress, (but before you finish the _"famous 5-minute install"_
-in the browser), the tables of the WP database won't exist yet, but in order for Certbot to
-work, they need to exist.
-
-For this reason, to install a fully functional, secure, production ready WordPress site,
-the workflow will need to look something like this:
-
-* First, install WordPress with the along with an self signed SSL certificate, so you have an
-  encrypted connection over which you can securely provide your admin credentials.
-```
-lampsible remoteuser your.server.com wordpress --ssl-selfsigned --apache-server-admin you@yourdomain.com
-```
-
-* Next, finish setting up WordPress by browsing to your new site and completing
-  the _"famous 5 minute install"_ - it takes a lot less than 5 minutes, but it
-  is **very important** that you do this immediately, because otherwise someone could
-  hijack your site by doing this step for you.
-
-* Now, rerun the lampsible command from before, but with the
-  `--ssl-certbot` flag instead of `--ssl-selfsigned`.
-```
-lampsible remoteuser your.server.com wordpress --ssl-certbot --apache-server-admin you@yourdomain.com
-```
-
-* Finally, SSH into your remote server, then, as root, run `certbot`.
-  Note that for WordPress sites, you'll have to enable SSL
-  not just for your.server.com but also www.your.server.com.
-  When Certbot prompts you to select a virtual host for which to to enable SSL,
-  select `wordpress-ssl.conf`. (That is assuming that you did not provide
-  an `--apache-vhost-name` of your own - in any case, pick the one with the `-ssl` in its name).
-
 
 ## Contributing 
 
