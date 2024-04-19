@@ -184,6 +184,7 @@ def ensure_ansible_galaxy_dependencies(galaxy_requirements_file):
 
 
 def main():
+    print(LAMPSIBLE_BANNER)
     parser = argparse.ArgumentParser(
         prog='lampsible',
         description='Deploy and set up LAMP Stacks with Ansible',
@@ -272,6 +273,8 @@ def main():
 
     # ANSIBLE RUNNER
     ################
+    parser.add_argument('--remote-sudo-password')
+    parser.add_argument('--ask-remote-sudo', action='store_true')
     parser.add_argument('--ssh-key-file')
     parser.add_argument('--private-data-dir', default=DEFAULT_PRIVATE_DATA_DIR)
     parser.add_argument('--project-dir',      default=DEFAULT_PROJECT_DIR)
@@ -305,6 +308,7 @@ def main():
 
     args = parser.parse_args()
 
+
     validator = ArgValidator(args)
     result = validator.validate_args()
     if result != 0:
@@ -335,7 +339,7 @@ def main():
         project_dir, 'ansible-galaxy-requirements.yml'))
 
     # TODO: SyntaxWarning: "is" with a literal. Did you mean "=="?
-    if galaxy_result is 1:
+    if galaxy_result == 1:
         return 0
 
 
@@ -373,35 +377,41 @@ def main():
 
     wordpress_auth_vars = validator.get_wordpress_auth_vars()
 
+    # TODO: Construct this with arg_validator as well.
+    extravars = {
+        'apache_vhosts': apache_vhosts,
+        'apache_custom_conf_name': apache_custom_conf_name,
+        'database_username': args.database_username,
+        'database_password': args.database_password,
+        'database_host': args.database_host,
+        'database_name': args.database_name,
+        'database_table_prefix': args.database_table_prefix,
+        'php_version': args.php_version,
+        'skip_php_extensions': args.skip_php_extensions,
+        'wordpress_version': args.wordpress_version,
+        'wordpress_auth_vars': wordpress_auth_vars,
+        'wordpress_insecure_allow_xmlrpc': args.wordpress_insecure_allow_xmlrpc,
+        'ssl_certbot': args.ssl_certbot,
+        'ssl_selfsigned': args.ssl_selfsigned,
+        'email_for_ssl': args.email_for_ssl,
+        'certbot_domains_string': validator.get_certbot_domains_string(),
+        'certbot_test_cert_string': validator.get_certbot_test_cert_string(),
+        # TODO: Improve this when we fix Certbot.
+        'domain_for_wordpress': validator.get_domain_for_wordpress(),
+        'wordpress_5_minute_install_seconds': args.wordpress_5_minute_install_seconds,
+        'insecure_skip_fail2ban': args.insecure_skip_fail2ban,
+    }
+    if args.remote_sudo_password:
+        # TODO: It would be better to not include this as an extravar, but to
+        # make use of Ansible Runner's password feature in the
+        # Input Directory Hierarchy.
+        extravars['ansible_sudo_pass'] = args.remote_sudo_password
+
     rc = RunnerConfig(
         private_data_dir=private_data_dir,
         project_dir=project_dir,
-
         inventory=inventory,
-
-        extravars={
-            'apache_vhosts': apache_vhosts,
-            'apache_custom_conf_name': apache_custom_conf_name,
-            'database_username': args.database_username,
-            'database_password': args.database_password,
-            'database_host': args.database_host,
-            'database_name': args.database_name,
-            'database_table_prefix': args.database_table_prefix,
-            'php_version': args.php_version,
-            'skip_php_extensions': args.skip_php_extensions,
-            'wordpress_version': args.wordpress_version,
-            'wordpress_auth_vars': wordpress_auth_vars,
-            'wordpress_insecure_allow_xmlrpc': args.wordpress_insecure_allow_xmlrpc,
-            'ssl_certbot': args.ssl_certbot,
-            'ssl_selfsigned': args.ssl_selfsigned,
-            'email_for_ssl': args.email_for_ssl,
-            'certbot_domains_string': validator.get_certbot_domains_string(),
-            'certbot_test_cert_string': validator.get_certbot_test_cert_string(),
-            # TODO: Improve this when we fix Certbot.
-            'domain_for_wordpress': validator.get_domain_for_wordpress(),
-            'wordpress_5_minute_install_seconds': args.wordpress_5_minute_install_seconds,
-            'insecure_skip_fail2ban': args.insecure_skip_fail2ban,
-        },
+        extravars=extravars,
         playbook=playbook,
     )
 

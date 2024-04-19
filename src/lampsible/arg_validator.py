@@ -171,16 +171,30 @@ class ArgValidator():
         return '--{}'.format(var_name.replace('_', '-'))
 
 
-    def get_pass_and_check(self, prompt, min_length):
+    def get_pass_and_check(self, prompt, min_length=0, confirm=False):
         password = getpass(prompt)
-        while len(password) < min_length:
+        while min_length > 0 and len(password) < min_length:
             password = getpass('That password is too short. Please enter another password: ')
-        double_check = getpass('Please retype password: ')
-        if password == double_check:
-            return password
+        if confirm:
+            double_check = getpass('Please retype password: ')
+            if password == double_check:
+                return password
+            else:
+                print('Passwords don\'t match. Please try again.')
+                return self.get_pass_and_check(prompt, min_length, True)
         else:
-            print('Passwords don\'t match. Please try again.')
-            return self.get_pass_and_check(prompt, min_length)
+            return password
+
+
+    def validate_ansible_runner_args(self):
+        if self.args.remote_sudo_password \
+            and not self.args.insecure_cli_password:
+            print(INSECURE_CLI_PASS_WARNING)
+            return 1
+        if self.args.ask_remote_sudo:
+            self.args.remote_sudo_password = self.get_pass_and_check(
+                'Please enter sudo password for remote host: ')
+        return 0
 
 
     def validate_apache_args(self):
@@ -238,7 +252,7 @@ class ArgValidator():
         if self.args.database_password \
             and not self.args.insecure_cli_password:
 
-            print('It\'s insecure to pass passwords via CLI args! If you are sure that you want to do this, rerun this command with the --insecure-cli-password flag.')
+            print(INSECURE_CLI_PASS_WARNING)
             return 1
 
         # TODO: Add some option like --wordpress-defaults, to improve user
@@ -267,7 +281,8 @@ class ArgValidator():
         if self.args.database_username and not self.args.database_password:
             self.args.database_password = self.get_pass_and_check(
                 'Please enter a database password: ',
-                7
+                0,
+                True
             )
 
         return 0
@@ -346,6 +361,7 @@ class ArgValidator():
 
     def validate_args(self):
         validate_methods = [
+            'validate_ansible_runner_args',
             'validate_apache_args',
             'validate_database_args',
             'validate_ssl_args',

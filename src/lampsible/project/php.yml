@@ -8,6 +8,16 @@
         name: "{{ item }}"
       loop:
         - apt-update
+        # NOTE: Ran into this issue while trying to install
+        # PHP 7.4 onto a local Ubuntu 20 VM:
+        # * Over network (192.168.0.123), server returns HTTP status 304
+        # * On the localhost, server outputs PHP code in the response, i.e.
+        #   Apache PHP module not working.
+        # $ a2enmod php7.4
+        # ERROR about module mpm_event needing to be disabled
+        # $ a2dismod mpm_event
+        # $ a2enmod php7.4
+        # Restart Apache, then it works.
         - php
 
     - name: Conditionally include fail2ban role
