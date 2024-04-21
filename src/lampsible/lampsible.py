@@ -4,6 +4,7 @@ import argparse
 import warnings
 import yaml
 from ansible_runner import Runner, RunnerConfig, run_command
+from . import __version__
 from lampsible.constants import *
 from lampsible.arg_validator import ArgValidator
 
@@ -60,7 +61,7 @@ def find_package_project_dir():
     raise RuntimeError("Got no user supplied --project-dir, and could not find one in expected package location. Your Lampsible installation is likely broken. However, if you are running this code directly from source, this is expected behavior. You probably forgot to pass the '--project-dir' flag. The directoy you're looking for is 'src/lampsible/project/'.")
 
 
-def init_inventory_file(private_data_dir, user, host):
+def init_inventory_file(private_data_dir, user, remote_host):
     pass
     # try:
     #     os.mkdir(os.path.join(private_data_dir, 'inventory'))
@@ -70,7 +71,7 @@ def init_inventory_file(private_data_dir, user, host):
     # inventory = {
     #     'ungrouped': {
     #         'hosts': {
-    #             host: {'ansible_user': user}
+    #             remote_host: {'ansible_user': user}
     #         },
     #     },
     # }
@@ -78,7 +79,7 @@ def init_inventory_file(private_data_dir, user, host):
     #     fh.write(yaml.dump(inventory))
 
 
-def prepare_inventory(user, host):
+def prepare_inventory(user, remote_host):
     ########
     # TODO #
     ########
@@ -95,7 +96,7 @@ def prepare_inventory(user, host):
     # inventory = {
     #     'ungrouped': {
     #         'hosts': {
-    #             host: {'ansible_user': user} for host, user in hosts.items()
+    #             remote_host: {'ansible_user': user} for host, user in hosts.items()
     #         },
     #         # various variables here...
     #     },
@@ -150,7 +151,7 @@ def prepare_inventory(user, host):
 
     # Another thing that will be important in the future is for the web-
     # and database-servers to run on different hosts.
-    return '{}@{},'.format(user, host)
+    return '{}@{},'.format(user, remote_host)
 
 
 def cleanup_private_data_dir(path):
@@ -184,18 +185,17 @@ def ensure_ansible_galaxy_dependencies(galaxy_requirements_file):
 
 
 def main():
-    print(LAMPSIBLE_BANNER)
     parser = argparse.ArgumentParser(
         prog='lampsible',
         description='Deploy and set up LAMP Stacks with Ansible',
         epilog='Currently in development...',
     )
     # TODO
-    parser.add_argument('user')
-    parser.add_argument('host')
+    parser.add_argument('--user', '-u')
+    parser.add_argument('--remote-host', '-r')
 
     # TODO: Validation
-    parser.add_argument('action', choices=[
+    parser.add_argument('--action', '-a', choices=[
         # LAMP-Stack basics
         'lamp-stack',
         'apache',
@@ -221,7 +221,7 @@ def main():
         'woocommerce', # TODO
         'composer',    # TODO
         'xdebug',      # TODO
-        ]
+        ], default=None
     )
 
     # APACHE
@@ -306,9 +306,16 @@ def main():
     parser.add_argument('--insecure-cli-password', action='store_true')
     parser.add_argument('--insecure-skip-fail2ban', action='store_true')
 
+    # METADATA
+    parser.add_argument('--version', action='store_true')
+
     args = parser.parse_args()
 
+    if args.version:
+        print(__version__)
+        return 0
 
+    print(LAMPSIBLE_BANNER)
     validator = ArgValidator(args)
     result = validator.validate_args()
     if result != 0:
@@ -331,7 +338,7 @@ def main():
     # build.
     project_dir = init_project_dir(args.project_dir)
 
-    inventory = prepare_inventory(args.user, args.host)
+    inventory = prepare_inventory(args.user, args.remote_host)
     # Now inventory is something like 'user1@host1,user2@host2' 
     # or 'user1@host1,'
 
@@ -372,46 +379,11 @@ def main():
         # TODO: In the future we will have to change how this is validated.
         raise NotImplementedError()
 
-    apache_vhosts = validator.get_apache_vhosts()
-    apache_custom_conf_name = validator.get_apache_custom_conf_name()
-
-    wordpress_auth_vars = validator.get_wordpress_auth_vars()
-
-    # TODO: Construct this with arg_validator as well.
-    extravars = {
-        'apache_vhosts': apache_vhosts,
-        'apache_custom_conf_name': apache_custom_conf_name,
-        'database_username': args.database_username,
-        'database_password': args.database_password,
-        'database_host': args.database_host,
-        'database_name': args.database_name,
-        'database_table_prefix': args.database_table_prefix,
-        'php_version': args.php_version,
-        'skip_php_extensions': args.skip_php_extensions,
-        'wordpress_version': args.wordpress_version,
-        'wordpress_auth_vars': wordpress_auth_vars,
-        'wordpress_insecure_allow_xmlrpc': args.wordpress_insecure_allow_xmlrpc,
-        'ssl_certbot': args.ssl_certbot,
-        'ssl_selfsigned': args.ssl_selfsigned,
-        'email_for_ssl': args.email_for_ssl,
-        'certbot_domains_string': validator.get_certbot_domains_string(),
-        'certbot_test_cert_string': validator.get_certbot_test_cert_string(),
-        # TODO: Improve this when we fix Certbot.
-        'domain_for_wordpress': validator.get_domain_for_wordpress(),
-        'wordpress_5_minute_install_seconds': args.wordpress_5_minute_install_seconds,
-        'insecure_skip_fail2ban': args.insecure_skip_fail2ban,
-    }
-    if args.remote_sudo_password:
-        # TODO: It would be better to not include this as an extravar, but to
-        # make use of Ansible Runner's password feature in the
-        # Input Directory Hierarchy.
-        extravars['ansible_sudo_pass'] = args.remote_sudo_password
-
     rc = RunnerConfig(
         private_data_dir=private_data_dir,
         project_dir=project_dir,
         inventory=inventory,
-        extravars=extravars,
+        extravars=validator.get_extravars_dict(),
         playbook=playbook,
     )
 

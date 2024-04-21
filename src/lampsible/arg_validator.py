@@ -97,6 +97,39 @@ class ArgValidator():
         return '--test-cert' if self.args.test_cert else ''
 
 
+    def get_extravars_dict(self):
+        extravars = {
+            'apache_vhosts': self.get_apache_vhosts(),
+            'apache_custom_conf_name': self.get_apache_custom_conf_name(),
+            'database_username': self.args.database_username,
+            'database_password': self.args.database_password,
+            'database_host': self.args.database_host,
+            'database_name': self.args.database_name,
+            'database_table_prefix': self.args.database_table_prefix,
+            'php_version': self.args.php_version,
+            'skip_php_extensions': self.args.skip_php_extensions,
+            'wordpress_version': self.args.wordpress_version,
+            'wordpress_auth_vars': self.get_wordpress_auth_vars(),
+            'wordpress_insecure_allow_xmlrpc': self.args.wordpress_insecure_allow_xmlrpc,
+            'ssl_certbot': self.args.ssl_certbot,
+            'ssl_selfsigned': self.args.ssl_selfsigned,
+            'email_for_ssl': self.args.email_for_ssl,
+            'certbot_domains_string': self.get_certbot_domains_string(),
+            'certbot_test_cert_string': self.get_certbot_test_cert_string(),
+            # TODO: Improve this when we fix Certbot.
+            'domain_for_wordpress': self.get_domain_for_wordpress(),
+            'wordpress_5_minute_install_seconds': self.args.wordpress_5_minute_install_seconds,
+            'insecure_skip_fail2ban': self.args.insecure_skip_fail2ban,
+        }
+        if self.args.remote_sudo_password:
+            # TODO: It would be better to not include this as an extravar, but to
+            # make use of Ansible Runner's password feature in the
+            # Input Directory Hierarchy.
+            extravars['ansible_sudo_pass'] = self.args.remote_sudo_password
+
+        return extravars
+
+
     def handle_defaults(
         self,
         default_args,
@@ -199,7 +232,7 @@ class ArgValidator():
 
     def validate_apache_args(self):
 
-        server_name = self.args.host
+        server_name = self.args.remote_host
         try:
             assert FQDN(server_name).is_valid
         except AssertionError:
@@ -302,7 +335,7 @@ class ArgValidator():
                 {
                     'arg_name': 'domains_for_ssl',
                     'cli_default_value': None,
-                    'override_default_value': [self.args.host],
+                    'override_default_value': [self.args.remote_host],
                 },
                 {
                     'arg_name': 'email_for_ssl',
@@ -317,10 +350,10 @@ class ArgValidator():
                 return 1
 
             if self.args.action == 'wordpress':
-                if self.args.host[:4] == 'www.':
-                    www_domain = self.args.host
+                if self.args.remote_host[:4] == 'www.':
+                    www_domain = self.args.remote_host
                 else:
-                    www_domain = 'www.{}'.format(self.args.host)
+                    www_domain = 'www.{}'.format(self.args.remote_host)
 
                 if www_domain not in self.args.domains_for_ssl:
                     self.args.domains_for_ssl.append(www_domain)

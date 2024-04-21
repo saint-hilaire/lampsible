@@ -1,4 +1,5 @@
 import os
+from . import __version__
 
 LAMPSIBLE_BANNER = """\
       _                           _ _     _
@@ -10,9 +11,9 @@ LAMPSIBLE_BANNER = """\
                        | |
                        |_|
      --------------------------------------------
-              LAMP stacks with Ansible
+        LAMP stacks with Ansible  -  v{}
      --------------------------------------------
-"""
+""".format(__version__)
 
 # SCRIPT PATHS
 USER_HOME_DIR            = os.path.expanduser('~')
