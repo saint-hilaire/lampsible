@@ -1,16 +1,11 @@
 ---
 
+# TODO: Maybe no longer necessary because of WP-CLI.
 - name: Provide Wordpress with the URL
   community.mysql.mysql_query:
     login_db: "{{ database_name }}"
     query: "UPDATE {{ database_table_prefix }}options SET option_value = %s WHERE option_name IN ('siteurl', 'home')"
     positional_args:
-      - "http://{{ domain_for_wordpress }}"
+      - "http://{{ wordpress_url }}"
     login_unix_socket: /run/mysqld/mysqld.sock
   ignore_errors: true
-
-- debug:
-    msg: Tried to supply WordPress domain configuration via raw MySQL command. If this failed, it was because no tables exist, because WordPress has not been fully set up yet. Please complete the Famous 5 Minute WordPress Installation in your web browser, then run this playbook again. Make sure to do so over an encrypted connection, that is via HTTPS!
-
-- pause:
-    seconds: 5

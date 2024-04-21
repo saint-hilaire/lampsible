@@ -3,6 +3,7 @@ from copy import copy
 from secrets import token_hex
 from warnings import warn
 from getpass import getpass
+from requests import head as requests_head
 from fqdn import FQDN
 from lampsible.constants import *
 
@@ -30,9 +31,9 @@ class ArgValidator():
 
 
     # TODO: Improve/remove this when we fix Certbot.
-    def get_domain_for_wordpress(self):
+    def get_wordpress_url(self):
         try:
-            return self.domain_for_wordpress
+            return self.wordpress_url
         except AttributeError:
             return ''
 
@@ -108,17 +109,11 @@ class ArgValidator():
             'database_table_prefix': self.args.database_table_prefix,
             'php_version': self.args.php_version,
             'skip_php_extensions': self.args.skip_php_extensions,
-            'wordpress_version': self.args.wordpress_version,
-            'wordpress_auth_vars': self.get_wordpress_auth_vars(),
-            'wordpress_insecure_allow_xmlrpc': self.args.wordpress_insecure_allow_xmlrpc,
             'ssl_certbot': self.args.ssl_certbot,
             'ssl_selfsigned': self.args.ssl_selfsigned,
             'email_for_ssl': self.args.email_for_ssl,
             'certbot_domains_string': self.get_certbot_domains_string(),
             'certbot_test_cert_string': self.get_certbot_test_cert_string(),
-            # TODO: Improve this when we fix Certbot.
-            'domain_for_wordpress': self.get_domain_for_wordpress(),
-            'wordpress_5_minute_install_seconds': self.args.wordpress_5_minute_install_seconds,
             'insecure_skip_fail2ban': self.args.insecure_skip_fail2ban,
         }
         if self.args.remote_sudo_password:
@@ -126,6 +121,28 @@ class ArgValidator():
             # make use of Ansible Runner's password feature in the
             # Input Directory Hierarchy.
             extravars['ansible_sudo_pass'] = self.args.remote_sudo_password
+
+        if self.args.action == 'wordpress':
+            extravars['wordpress_version'] = self.args.wordpress_version
+            extravars['wordpress_locale'] = self.args.wordpress_locale
+            extravars['wordpress_site_title'] = self.args.wordpress_site_title
+            extravars['wordpress_admin_username'] = \
+                self.args.wordpress_admin_username
+            extravars['wordpress_admin_password'] = \
+                self.args.wordpress_admin_password
+            extravars['wordpress_admin_email'] = \
+                self.args.wordpress_admin_email
+
+            # TODO: This should be deprecated in favor of
+            # letting WP-CLI handlethese.
+            extravars['wordpress_auth_vars'] = self.get_wordpress_auth_vars()
+
+            extravars['wordpress_insecure_allow_xmlrpc'] = \
+                self.args.wordpress_insecure_allow_xmlrpc
+            extravars['wordpress_url'] = self.get_wordpress_url()
+            extravars['wp_apache_document_root'] = self.wp_apache_document_root
+            extravars['wordpress_manual_install'] = \
+                self.args.wordpress_manual_install
 
         return extravars
 
@@ -247,14 +264,6 @@ class ArgValidator():
             'allow_override': self.get_apache_allow_override(),
         }
 
-        if self.args.action == 'wordpress':
-
-            if self.args.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
-                base_vhost_dict['document_root'] = '{}/wordpress'.format(
-                    DEFAULT_APACHE_DOCUMENT_ROOT)
-            if self.args.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
-                base_vhost_dict['vhost_name'] = 'wordpress'
-
         self.apache_vhosts = [base_vhost_dict]
 
         if self.args.ssl_selfsigned:
@@ -287,29 +296,6 @@ class ArgValidator():
 
             print(INSECURE_CLI_PASS_WARNING)
             return 1
-
-        # TODO: Add some option like --wordpress-defaults, to improve user
-        # experience. Otherwise, the user would always be asked about defaulting
-        # to 'wordpress' and 'wp_' for database name and table prefix, which
-        # might be a little annoying.
-        if self.args.action == 'wordpress':
-            self.handle_defaults([
-                {
-                    'arg_name': 'database_name',
-                    'cli_default_value': None,
-                    'override_default_value': 'wordpress',
-                },
-                {
-                    'arg_name': 'database_username',
-                    'cli_default_value': None,
-                    'override_default_value': DEFAULT_DATABASE_USERNAME,
-                },
-                {
-                    'arg_name': 'database_table_prefix',
-                    'cli_default_value': DEFAULT_DATABASE_TABLE_PREFIX,
-                    'override_default_value': 'wp_',
-                },
-            ], True, True)
 
         if self.args.database_username and not self.args.database_password:
             self.args.database_password = self.get_pass_and_check(
@@ -349,17 +335,6 @@ class ArgValidator():
                     self.args.email_for_ssl))
                 return 1
 
-            if self.args.action == 'wordpress':
-                if self.args.remote_host[:4] == 'www.':
-                    www_domain = self.args.remote_host
-                else:
-                    www_domain = 'www.{}'.format(self.args.remote_host)
-
-                if www_domain not in self.args.domains_for_ssl:
-                    self.args.domains_for_ssl.append(www_domain)
-
-                self.domain_for_wordpress = www_domain
-
         return 0
 
 
@@ -375,6 +350,125 @@ class ArgValidator():
             print('Will not install common PHP extensions. WordPress, Laravel, and other common CMS or frameworks will probably not work.')
 
         return 0
+
+
+    def validate_wordpress_args(self):
+        if self.args.action != 'wordpress':
+            return 0
+
+        if not self.is_valid_wordpress_version(self.args.wordpress_version):
+            print('Invalid WordPress version! Leave --wordpress-version blank to default to \'{}\''.format(DEFAULT_WORDPRESS_VERSION))
+            return 1
+
+        if self.args.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
+            wp_apache_document_root = '{}/wordpress'.format(
+                DEFAULT_APACHE_DOCUMENT_ROOT
+            )
+        else:
+            wp_apache_document_root = self.args.apache_document_root
+
+        if self.args.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
+            wp_apache_vhost_name = 'wordpress'
+        else:
+            wp_apache_vhost_name = self.args.apache_vhost_name
+
+        for i in range(len(self.apache_vhosts)):
+            self.apache_vhosts[i]['document_root'] = wp_apache_document_root
+            self.apache_vhosts[i]['vhost_name'] = wp_apache_vhost_name
+
+        # NOTE: We might need to access this in other scenarios, not just
+        # for WordPress, but for now, only WordPress.
+        # The Apache DocumentRoot is defined individually for each vhost,
+        # and there can be several of those.
+        self.wp_apache_document_root = wp_apache_document_root
+
+        self.handle_defaults([
+            {
+                'arg_name': 'database_name',
+                'cli_default_value': None,
+                'override_default_value': 'wordpress',
+            },
+            {
+                'arg_name': 'database_username',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_DATABASE_USERNAME,
+            },
+            {
+                'arg_name': 'database_table_prefix',
+                'cli_default_value': DEFAULT_DATABASE_TABLE_PREFIX,
+                'override_default_value': 'wp_',
+            },
+            {
+                'arg_name': 'wordpress_site_title',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_WORDPRESS_SITE_TITLE,
+            },
+            {
+                'arg_name': 'wordpress_admin_username',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_WORDPRESS_ADMIN_USERNAME,
+            },
+            {
+                'arg_name': 'wordpress_admin_email',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_WORDPRESS_ADMIN_EMAIL,
+            },
+        ], True, True)
+
+        self.validate_database_args()
+
+        if self.args.wordpress_admin_password \
+            and not self.args.insecure_cli_password:
+            print(INSECURE_CLI_PASS_WARNING)
+            return 1
+
+        if not self.args.wordpress_admin_password:
+            self.args.wordpress_admin_password = self.get_pass_and_check(
+                'Please choose a password for the WordPress admin: ',
+                0,
+                True
+            )
+
+        if self.args.ssl_certbot:
+            if self.args.remote_host[:4] == 'www.':
+                www_domain = self.args.remote_host
+            else:
+                www_domain = 'www.{}'.format(self.args.remote_host)
+
+            if www_domain not in self.args.domains_for_ssl:
+                self.args.domains_for_ssl.append(www_domain)
+
+            self.wordpress_url = www_domain
+
+        else:
+            self.wordpress_url = self.args.remote_host
+
+        return 0
+
+
+    def is_valid_wordpress_version(self, wp_version):
+        recent_versions = [
+            'latest',
+            'nightly',
+            '6.5.2',
+            '6.5',
+            '6.4.4',
+            '6.4.3',
+            '6.4.2',
+            '6.4.1',
+            '6.4',
+        ]
+        if wp_version in recent_versions:
+            return True
+
+        try:
+            r = requests_head(
+                'https://wordpress.org/wordpress-{}.tar.gz'.format(wp_version)
+            )
+            assert r.status_code == 200
+            return True
+        except AssertionError:
+            return False
 
 
     def print_warnings(self):
@@ -399,6 +493,7 @@ class ArgValidator():
             'validate_database_args',
             'validate_ssl_args',
             'validate_php_args',
+            'validate_wordpress_args',
         ]
         for method_name in validate_methods:
             method = getattr(self, method_name)

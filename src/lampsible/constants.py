@@ -34,5 +34,12 @@ DEFAULT_DATABASE_USERNAME     = 'db-username'
 DEFAULT_DATABASE_HOST         = 'localhost'
 DEFAULT_DATABASE_TABLE_PREFIX = ''
 
+# WORDPRESS
+DEFAULT_WORDPRESS_VERSION        = 'latest'
+DEFAULT_WORDPRESS_LOCALE         = 'en_US'
+DEFAULT_WORDPRESS_SITE_TITLE     = 'Sample Site'
+DEFAULT_WORDPRESS_ADMIN_USERNAME = 'admin'
+DEFAULT_WORDPRESS_ADMIN_EMAIL    = 'admin@example.com'
+
 # MISC
 INSECURE_CLI_PASS_WARNING = 'It\'s insecure to pass passwords via CLI args! If you are sure that you want to do this, rerun this command with the --insecure-cli-password flag.'

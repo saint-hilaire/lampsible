@@ -1,0 +1,95 @@
+---
+
+# https://make.wordpress.org/cli/handbook/guides/quick-start/
+- name: Download WP-CLI
+  get_url:
+    url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+    dest: /usr/local/bin/wp
+    mode: '0755'
+
+# https://developer.wordpress.org/cli/commands/core/download/
+- name: Download WordPress
+  # TODO: Maybe parameterize the --force flag, to be on the safe side.
+  command:
+  args:
+    argv:
+      - wp
+      - core
+      - download
+      - --allow-root
+      - --force
+      - "--path={{ wp_apache_document_root }}"
+      - "--locale={{ wordpress_locale }}"
+      - "--version={{ wordpress_version }}"
+
+# https://developer.wordpress.org/cli/commands/config/create/
+- name: Create wp-config.php
+  # TODO: We can add --dbcharset and --dbcollate.
+  # TODO: Maybe parameterize the --force flag, to be on the safe side.
+  command:
+  args:
+    argv:
+      - wp
+      - config
+      - create
+      - --allow-root
+      - --force
+      - "--path={{ wp_apache_document_root }}"
+      - "--dbname={{ database_name }}"
+      - "--dbuser={{ database_username }}"
+      - "--dbpass={{ database_password }}"
+      - "--dbhost={{ database_host }}"
+      - "--dbprefix={{ database_table_prefix }}"
+      - "--locale={{ wordpress_locale }}"
+      - --extra-php
+    stdin: "define( 'FS_METHOD', 'direct' );"
+
+# https://developer.wordpress.org/cli/commands/db/create/
+# TODO: Might not even need this...
+- name: Create the WordPress database
+  command:
+  args:
+    argv:
+      - wp
+      - db
+      - create
+      - --allow-root
+      - "--path={{ wp_apache_document_root }}"
+      - "--dbname={{ database_name }}"
+      - "--dbuser={{ database_username }}"
+      - "--dbpass={{ database_password }}"
+      - "--dbhost={{ database_host }}"
+  ignore_errors: true
+
+# https://developer.wordpress.org/cli/commands/core/install/
+- name: Install WordPress
+  command:
+  args:
+    argv:
+      - wp
+      - core
+      - install
+      - --allow-root
+      - "--path={{ wp_apache_document_root }}"
+      - "--url={{ wordpress_url }}"
+      - "--title={{ wordpress_site_title }}"
+      - "--admin_user={{ wordpress_admin_username }}"
+      - "--admin_password={{ wordpress_admin_password }}"
+      - "--admin_email={{ wordpress_admin_email }}"
+      - "--locale={{ wordpress_locale }}"
+
+- name: Set file ownership for WordPress directory
+  file:
+    path: "{{ wp_apache_document_root }}"
+    state: directory
+    recurse: yes
+    owner: nobody
+    group: nogroup
+
+- name: Set file ownership for wp-content/
+  file:
+    path: "{{ wp_apache_document_root }}/wp-content"
+    state: directory
+    recurse: yes
+    owner: www-data
+    group: www-data

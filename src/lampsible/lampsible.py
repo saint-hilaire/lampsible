@@ -258,9 +258,16 @@ def main():
 
     # WORDPRESS
     ###########
-    # TODO: Figure this out, and a better way to validate this.
-    # parser.add_argument('--wordpress-version', choices=['?'], default='latest?')
-    parser.add_argument('--wordpress-version', default='6.4')
+    parser.add_argument('--wordpress-version',
+        default=DEFAULT_WORDPRESS_VERSION)
+    parser.add_argument('--wordpress-locale', default=DEFAULT_WORDPRESS_LOCALE)
+    parser.add_argument('--wordpress-site-title')
+    parser.add_argument('--wordpress-admin-username')
+    parser.add_argument('--wordpress-admin-email')
+    parser.add_argument('--wordpress-admin-password')
+    # Maybe TODO?
+    # parser.add_argument('--wordpress-skip-content', action='store_true')
+    parser.add_argument('--wordpress-manual-install', action='store_true')
     parser.add_argument('--wordpress-auth-key')
     parser.add_argument('--wordpress-secure-auth-key')
     parser.add_argument('--wordpress-logged-in-key')
@@ -287,19 +294,6 @@ def main():
     parser.add_argument('--email-for-ssl')
     parser.add_argument('--domains-for-ssl')
     parser.add_argument('--test-cert', action='store_true')
-
-    # TODO: This is intended as a temporary workaround.
-    # Ideally, we implement https://github.com/saint-hilaire/lampsible/issues/14
-    # and then there should be no need to configure the length of time for
-    # which Ansible pauses to allow the user to perform this step (unless
-    # the user wants to do it in the browser, via some
-    # --wordpress-interactive-install?)
-    # Failing that, it would be quite good if a future version of
-    # Ansible Runner can improve the handling of user input in the context
-    # of paused Playbooks (see issues
-    # https://github.com/ansible/ansible-runner/issues/1075
-    # and https://github.com/ansible/ansible-runner/issues/756):
-    parser.add_argument('--wordpress-5-minute-install-seconds', default=120)
 
     # MISC
     ######

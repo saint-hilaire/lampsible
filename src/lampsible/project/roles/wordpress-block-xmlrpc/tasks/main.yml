@@ -1,0 +1,15 @@
+---
+
+- name: Block the insecure endpoint xmlrpc.php
+  template:
+    src: .htaccess
+    dest: "{{ wp_apache_document_root }}/.htaccess"
+    # TODO: Maybe this is not secure!!
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+- name: Restart Apache
+  service:
+    name: apache2
+    state: reloaded

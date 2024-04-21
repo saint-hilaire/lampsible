@@ -1,12 +1,5 @@
 ---
-#################################################################
-# TODO: There are some open source Ansible playbooks/methods/etc. for
-# dealing with WordPress. It is particularly challenging that WordPress needs
-# to be 'installed' by the user by submitting the usual '5 Minute Install'
-# form, that is, HTML form via HTTP... But maybe the options that WordPress
-# expects from that form submission can also somehow be supplied via
-# Ansible parameters... This would solve a lot of problems!
-#################################################################
+# Installing WordPress manually
 
 - name: Download WordPress
   unarchive:
@@ -72,18 +65,3 @@
     recurse: yes
     owner: www-data
     group: www-data
-
-- name: Block the insecure endpoint xmlrpc.php
-  template:
-    src: .htaccess
-    dest: /var/www/html/wordpress/.htaccess
-    # TODO: Maybe this is not secure...
-    owner: www-data
-    group: www-data
-    mode: '0644'
-  when: not wordpress_insecure_allow_xmlrpc
-
-- name: Restart Apache
-  service:
-    name: apache2
-    state: reloaded
