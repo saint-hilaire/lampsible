@@ -70,7 +70,7 @@ class ArgValidator():
                 )
 
             if warn_user:
-                print('The value you passed for {} is too short! I will automatically generate a value for you, and use that. If in doubt, you should leave this argument blank, to use automatically generated values. See the file wp-config.php on your server.'.format(
+                print('\nThe value you passed for {} is too short! I will automatically generate a value for you, and use that. If in doubt, you should leave this argument blank, to use automatically generated values. See the file wp-config.php on your server.'.format(
                     self.var_name_to_cli_arg('wordpress_{}'.format(var))
                 ))
 
@@ -211,7 +211,7 @@ class ArgValidator():
                 )
 
                 if verbose:
-                    print('Using {} value \'{}\'.'.format(
+                    print('\nUsing {} value \'{}\'.'.format(
                         self.var_name_to_cli_arg(arg_dict['arg_name']),
                         default_value
                     ))
@@ -230,13 +230,21 @@ class ArgValidator():
             if password == double_check:
                 return password
             else:
-                print('Passwords don\'t match. Please try again.')
+                print('\nPasswords don\'t match. Please try again.')
                 return self.get_pass_and_check(prompt, min_length, True)
         else:
             return password
 
 
     def validate_ansible_runner_args(self):
+        user_at_host = self.args.user_at_host.split('@')
+        try:
+            self.web_host_user = user_at_host[0]
+            self.web_host      = user_at_host[1]
+        except IndexError:
+            print('FATAL! First positional argument must be in the format of \'user@host\'')
+            return 1
+
         if self.args.remote_sudo_password \
             and not self.args.insecure_cli_password:
             print(INSECURE_CLI_PASS_WARNING)
@@ -249,7 +257,7 @@ class ArgValidator():
 
     def validate_apache_args(self):
 
-        server_name = self.args.remote_host
+        server_name = self.web_host
         try:
             assert FQDN(server_name).is_valid
         except AssertionError:
@@ -321,7 +329,7 @@ class ArgValidator():
                 {
                     'arg_name': 'domains_for_ssl',
                     'cli_default_value': None,
-                    'override_default_value': [self.args.remote_host],
+                    'override_default_value': [self.web_host],
                 },
                 {
                     'arg_name': 'email_for_ssl',
@@ -331,7 +339,7 @@ class ArgValidator():
             ])
 
             if not match(r"[^@]+@[^@]+\.[^@]+", self.args.email_for_ssl):
-                print("FATAL! --email-for-ssl needs to be valid. Got '{}'. Aborting.".format(
+                print("\nFATAL! --email-for-ssl needs to be valid. Got '{}'. Aborting.".format(
                     self.args.email_for_ssl))
                 return 1
 
@@ -347,7 +355,7 @@ class ArgValidator():
         # To work around the above points, you would have to manually configure the
         # APT repository.
         if self.args.skip_php_extensions:
-            print('Will not install common PHP extensions. WordPress, Laravel, and other common CMS or frameworks will probably not work.')
+            print('\nWill not install common PHP extensions. WordPress, Laravel, and other common CMS or frameworks will probably not work.')
 
         return 0
 
@@ -357,7 +365,7 @@ class ArgValidator():
             return 0
 
         if not self.is_valid_wordpress_version(self.args.wordpress_version):
-            print('Invalid WordPress version! Leave --wordpress-version blank to default to \'{}\''.format(DEFAULT_WORDPRESS_VERSION))
+            print('\nInvalid WordPress version! Leave --wordpress-version blank to default to \'{}\''.format(DEFAULT_WORDPRESS_VERSION))
             return 1
 
         if self.args.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
@@ -430,10 +438,10 @@ class ArgValidator():
             )
 
         if self.args.ssl_certbot:
-            if self.args.remote_host[:4] == 'www.':
-                www_domain = self.args.remote_host
+            if self.web_host[:4] == 'www.':
+                www_domain = self.web_host
             else:
-                www_domain = 'www.{}'.format(self.args.remote_host)
+                www_domain = 'www.{}'.format(self.web_host)
 
             if www_domain not in self.args.domains_for_ssl:
                 self.args.domains_for_ssl.append(www_domain)
@@ -441,7 +449,7 @@ class ArgValidator():
             self.wordpress_url = www_domain
 
         else:
-            self.wordpress_url = self.args.remote_host
+            self.wordpress_url = self.web_host
 
         return 0
 
@@ -473,17 +481,17 @@ class ArgValidator():
 
     def print_warnings(self):
         if self.args.insecure_skip_fail2ban:
-            print('Warning! Will not install fail2ban! Your site will potentially be vulnerable to various brute force attacks. You should only pass the \'--insecure-skip-fail2ban\' flag if you have a good reason to do so. On production servers, always install fail2ban!')
+            print('\nWarning! Will not install fail2ban! Your site will potentially be vulnerable to various brute force attacks. You should only pass the \'--insecure-skip-fail2ban\' flag if you have a good reason to do so. On production servers, always install fail2ban!')
 
         if self.args.wordpress_insecure_allow_xmlrpc:
-            print('Warning! Your WordPress site\'s xmlrpc.php endpoint will be enabled - this is insecure! The endpoint xmlrpc.php is a feature from older WordPress versions which allowed programmatic access to the WordPress backend. Although it has numerous known security vulnerabilities, namely a brute force and a DoS vulnerability, it is still, for some reason, enabled by default in current WordPress versions. Lampsible will, by default, block this endpoint with an .htaccess configuration, unless you specify otherwise, which you just did. You should not be doing this, unless you have some good reason to do so!')
+            print('\nWarning! Your WordPress site\'s xmlrpc.php endpoint will be enabled - this is insecure! The endpoint xmlrpc.php is a feature from older WordPress versions which allowed programmatic access to the WordPress backend. Although it has numerous known security vulnerabilities, namely a brute force and a DoS vulnerability, it is still, for some reason, enabled by default in current WordPress versions. Lampsible will, by default, block this endpoint with an .htaccess configuration, unless you specify otherwise, which you just did. You should not be doing this, unless you have some good reason to do so!')
 
         if self.args.ssl_certbot and self.args.ssl_selfsigned:
-            print('Warning: Got --ssl-certbot, but also got --ssl-selfsigned. Ignoring --ssl-selfsigned and using --ssl-certbot.')
+            print('\nWarning: Got --ssl-certbot, but also got --ssl-selfsigned. Ignoring --ssl-selfsigned and using --ssl-certbot.')
         elif self.args.ssl_selfsigned:
-            print('Warning! Creating a self signed certificate to handle the site\'s encryption. This is less secure and will appear untrustworthy to any visitors. Only use this for testing environments.')
+            print('\nWarning! Creating a self signed certificate to handle the site\'s encryption. This is less secure and will appear untrustworthy to any visitors. Only use this for testing environments.')
         elif not (self.args.ssl_selfsigned or self.args.ssl_certbot):
-            print('WARNING! Your site will not have any encryption enabled! This is very insecure, as passwords and other sensitive data will be transmitted in clear text. DO NOT use this on any remote host or over any partially untrusted network. ONLY use this for local, secure, private and trusted networks, ideally only for local development servers.')
+            print('\nWARNING! Your site will not have any encryption enabled! This is very insecure, as passwords and other sensitive data will be transmitted in clear text. DO NOT use this on any remote host or over any partially untrusted network. ONLY use this for local, secure, private and trusted networks, ideally only for local development servers.')
 
 
     def validate_args(self):

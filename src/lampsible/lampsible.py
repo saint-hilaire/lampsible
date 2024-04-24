@@ -2,7 +2,7 @@ import os
 from sys import path as sys_path
 import argparse
 import warnings
-import yaml
+from yaml import safe_load
 from ansible_runner import Runner, RunnerConfig, run_command
 from . import __version__
 from lampsible.constants import *
@@ -160,23 +160,56 @@ def cleanup_private_data_dir(path):
     os.system('rm -r ' + path)
 
 
-# TODO: See GH Issue #4. Currently the user is always prompted  for this.
-# The user should only be prompted for this, when the requirements are not met.
 def ensure_ansible_galaxy_dependencies(galaxy_requirements_file):
-    ok_to_install = input("I have to download and install the Ansible Galaxy dependencies 'community.general', 'community.mysql' and 'community.crypto' into {}. Is this OK (yes/no)? ".format(
-        os.path.join(USER_HOME_DIR, '.ansible/')
+    with open(galaxy_requirements_file, 'r') as stream:
+        required_collections = []
+        tmp_collections = safe_load(stream)['collections']
+        for tmp_dict in tmp_collections:
+            required_collections.append(tmp_dict['name'])
+
+    # TODO There might be a more elegant way to do this - Right now,
+    # we're expecting required_collections to always be a tuple,
+    # and searching for requirements in a big string, but yaml/dict
+    # would be better.
+    installed_collections = run_command(
+        executable_cmd='ansible-galaxy',
+        cmdline_args=[
+            'collection',
+            'list',
+            '--collections-path',
+            os.path.join(USER_HOME_DIR, '.ansible'),
+        ],
+        quiet=True
+    )[0]
+    missing_collections = []
+    for required in required_collections:
+        if required not in installed_collections:
+            missing_collections.append(required)
+    if len(missing_collections) == 0:
+        return 0
+    else:
+        return install_galaxy_collections(missing_collections)
+
+
+
+def install_galaxy_collections(collections):
+    ok_to_install = input("\nI have to download and install the following Ansible Galaxy dependencies into {}:\n- {}\nIs this OK (yes/no)? ".format(
+        os.path.join(USER_HOME_DIR, '.ansible/'),
+        '\n- '.join(collections)
     )).lower()
     while ok_to_install != 'yes' and ok_to_install != 'no':
         ok_to_install = input("Please type 'yes' or 'no': ")
     if ok_to_install == 'yes':
+        print('\nInstalling Ansible Galaxy collections...')
         run_command(
             executable_cmd='ansible-galaxy',
-            cmdline_args=['collection', 'install', '-r', galaxy_requirements_file],
+            cmdline_args=['collection', 'install'] + collections,
         )
         # run_command(
         #     executable_cmd='ansible-galaxy',
         #     cmdline_args=['role', 'install', '-r', galaxy_requirements_file],
         # )
+        print('\n... collections installed.')
         return 0
     else:
         print('Cannot run Ansible plays without Galaxy requirements. Aborting.')
@@ -187,15 +220,13 @@ def ensure_ansible_galaxy_dependencies(galaxy_requirements_file):
 def main():
     parser = argparse.ArgumentParser(
         prog='lampsible',
-        description='Deploy and set up LAMP Stacks with Ansible',
+        description='LAMP Stacks with Ansible',
         epilog='Currently in development...',
     )
-    # TODO
-    parser.add_argument('--user', '-u')
-    parser.add_argument('--remote-host', '-r')
 
-    # TODO: Validation
-    parser.add_argument('--action', '-a', choices=[
+    parser.add_argument('user_at_host', nargs='?')
+
+    parser.add_argument('action', choices=[
         # LAMP-Stack basics
         'lamp-stack',
         'apache',
@@ -221,7 +252,8 @@ def main():
         'woocommerce', # TODO
         'composer',    # TODO
         'xdebug',      # TODO
-        ], default=None
+        ],
+        nargs='?'
     )
 
     # APACHE
@@ -313,35 +345,22 @@ def main():
     validator = ArgValidator(args)
     result = validator.validate_args()
     if result != 0:
-        print('FATAL! validator.validate_args returned non zero return code. Aborting.')
+        print('FATAL! Got invalid user input, and cannot continue. Please fix the issues listed above and try again.')
         return 1
     args = validator.get_args()
 
     # TODO: Let arg_validator handle private_data_dir, project_dir,
     # inventory and playbook as well, but for now, this will do.
     private_data_dir = init_private_data_dir(args.private_data_dir)
-    # TODO: Where to put this?
-    # Putting it directly into the package build seems the more simple and
-    # intuitive approach.
-    # However, placing it into another path on the system, for example
-    # ~/.lampsible/ offers the benefit of making the path of project_dir
-    # configurable by the user. In this case, ~/.lampsible could be the
-    # default value, but if users override this, they could provide their own
-    # playbooks.
-    # For now, let's simply bring the directory directly into the package
-    # build.
     project_dir = init_project_dir(args.project_dir)
 
-    inventory = prepare_inventory(args.user, args.remote_host)
-    # Now inventory is something like 'user1@host1,user2@host2' 
-    # or 'user1@host1,'
+    inventory = prepare_inventory(validator.web_host_user, validator.web_host)
 
     galaxy_result = ensure_ansible_galaxy_dependencies(os.path.join(
         project_dir, 'ansible-galaxy-requirements.yml'))
 
-    # TODO: SyntaxWarning: "is" with a literal. Did you mean "=="?
     if galaxy_result == 1:
-        return 0
+        return 1
 
 
     if args.action == 'dump-ansible-facts':
@@ -356,18 +375,6 @@ def main():
         )
         return 0
 
-    # TODO
-    # action = parse_action(args.action)
-    # if 'playbook' in action:
-    #     playbook = action['playbook']
-    #     roles = None
-    # elif 'roles' in action:
-    #     # TODO
-    #     # playbook = 'do-nothing.yml'
-    #     # roles = action['roles']
-    #     raise NotImplementedError()
-    # else:
-    #     raise NotImplementedError()
     playbook = '{}.yml'.format(args.action)
     if not os.path.exists(os.path.join(project_dir, playbook)):
         # TODO: In the future we will have to change how this is validated.
@@ -400,15 +407,9 @@ def main():
         cleanup_private_data_dir(private_data_dir)
     else:
         print('WARNING! Got --keep-private-data-dir, probably because you are debugging something locally, so I will not delete the directory {}. Please be aware that it likely contains sensitive data, like SSH keys and so on, so you should probably delete it yourself.'.format(private_data_dir))
-        # TODO: warnings gets tripped up by strings like this :-(
-        # warnings.warn('WARNING! Got --keep-private-data-dir, probably because you are debugging something locally, so I will not delete the directory {}. Please be aware that it likely contains sensitive data, like SSH keys and so on, so you should probably delete it yourself.'.format(private_data_dir))
 
     return 0
 
-    # TODO: Some other ideas...
-    # -------------------------
-    # It would be cool if we could also use this to run Ansible
-    # directly. See ansible_runner.run_command.
 
 if __name__ == '__main__':
     main()
