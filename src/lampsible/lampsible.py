@@ -225,36 +225,7 @@ def main():
     )
 
     parser.add_argument('user_at_host', nargs='?')
-
-    parser.add_argument('action', choices=[
-        # LAMP-Stack basics
-        'lamp-stack',
-        'apache',
-        'mysql',
-        'php',
-        # PHP CMS
-        'wordpress',
-        'typo3',       # TODO
-        'joomla',      # TODO
-        'drupal',      # TODO
-        # PHP frameworks
-        'laravel',     # TODO
-        'symfony',     # TODO
-        'zend',        # TODO
-        # Local debugging
-        'dump-ansible-facts',
-        # Non-PHP frameworks. Should we even support these?
-        'django',      # TODO
-        'rails',       # TODO
-        'springboot',  # TODO
-        # Misc. PHP
-        'magento',     # TODO
-        'woocommerce', # TODO
-        'composer',    # TODO
-        'xdebug',      # TODO
-        ],
-        nargs='?'
-    )
+    parser.add_argument('action', choices=SUPPORTED_ACTIONS, nargs='?')
 
     # APACHE
     ########
@@ -283,9 +254,9 @@ def main():
     # PHP
     #####
     parser.add_argument('--php-version', default='8.2')
-    parser.add_argument('--skip-php-extensions', action='store_true')
     # TODO
     parser.add_argument('--php-my-admin', action='store_true')
+    parser.add_argument('--php-extensions')
 
 
     # WORDPRESS
@@ -310,13 +281,20 @@ def main():
     parser.add_argument('--wordpress-nonce-salt')
     parser.add_argument('--wordpress-insecure-allow-xmlrpc', action='store_true')
 
+    # WEB APPLICATIONS
+    parser.add_argument('--app-name', default='laravel-app')
+    parser.add_argument('--app-build-path')
+    parser.add_argument('--app-local-env', action='store_true')
+    parser.add_argument('--laravel-artisan-commands',
+        default=','.join(DEFAULT_LARAVEL_ARTISAN_COMMANDS))
+
     # ANSIBLE RUNNER
     ################
     parser.add_argument('--remote-sudo-password')
     parser.add_argument('--ask-remote-sudo', action='store_true')
     parser.add_argument('--ssh-key-file')
-    parser.add_argument('--private-data-dir', default=DEFAULT_PRIVATE_DATA_DIR)
-    parser.add_argument('--project-dir',      default=DEFAULT_PROJECT_DIR)
+    parser.add_argument('--private-data-dir',  default=DEFAULT_PRIVATE_DATA_DIR)
+    parser.add_argument('--project-dir', '-Z', default=DEFAULT_PROJECT_DIR)
     parser.add_argument('--keep-private-data-dir', action='store_true')
 
     # SSL

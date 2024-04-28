@@ -1,0 +1,38 @@
+---
+
+- name: Upload app build to remote server
+  unarchive:
+    src: "{{ app_build_path }}"
+    dest: "/var/www/html"
+    owner: www-data
+    group: www-data
+
+- name: Set permissions on Laravel storage/ directory
+  file:
+    path: "{{ app_source_root }}/storage"
+    state: directory
+    recurse: yes
+    mode: '0775'
+
+- name: Load env-file onto remote server
+  template:
+    src: .env.j2
+    dest: "{{ app_source_root }}/.env"
+
+- name: Enable Apache mod_rewrite
+  command: a2enmod rewrite
+
+- name: Reload Apache
+  service: name=apache2 state=reloaded
+
+- name: Run Artisan commands
+  command:
+  args:
+    argv:
+      - php
+      - "{{ app_source_root }}/artisan"
+      - "{{ artisan_command }}"
+      - --force
+  loop: "{{ laravel_artisan_commands }}"
+  loop_control:
+    loop_var: artisan_command

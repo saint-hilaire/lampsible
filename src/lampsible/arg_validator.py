@@ -22,6 +22,10 @@ class ArgValidator():
         return self.apache_vhosts
 
 
+    def get_apache_document_root(self):
+        return self.apache_document_root
+
+
     # TODO: I don't find this very elegant.
     def get_apache_custom_conf_name(self):
         try:
@@ -108,7 +112,7 @@ class ArgValidator():
             'database_name': self.args.database_name,
             'database_table_prefix': self.args.database_table_prefix,
             'php_version': self.args.php_version,
-            'skip_php_extensions': self.args.skip_php_extensions,
+            'php_extensions': self.php_extensions,
             'ssl_certbot': self.args.ssl_certbot,
             'ssl_selfsigned': self.args.ssl_selfsigned,
             'email_for_ssl': self.args.email_for_ssl,
@@ -140,9 +144,17 @@ class ArgValidator():
             extravars['wordpress_insecure_allow_xmlrpc'] = \
                 self.args.wordpress_insecure_allow_xmlrpc
             extravars['wordpress_url'] = self.get_wordpress_url()
-            extravars['wp_apache_document_root'] = self.wp_apache_document_root
+            extravars['wp_apache_document_root'] = \
+                self.get_apache_document_root()
             extravars['wordpress_manual_install'] = \
                 self.args.wordpress_manual_install
+
+        elif self.args.action in ['laravel']:
+            extravars['app_build_path'] = self.args.app_build_path
+            extravars['app_source_root'] = self.app_source_root
+            extravars['app_local_env'] = self.args.app_local_env
+            extravars['laravel_artisan_commands'] = \
+                self.args.laravel_artisan_commands
 
         return extravars
 
@@ -243,6 +255,12 @@ class ArgValidator():
             self.web_host      = user_at_host[1]
         except IndexError:
             print('FATAL! First positional argument must be in the format of \'user@host\'')
+            return 1
+
+        if self.args.action not in SUPPORTED_ACTIONS:
+            print('FATAL! Second positional argument must be one of {}'.format(
+                ', '.join(SUPPORTED_ACTIONS)
+            ))
             return 1
 
         if self.args.remote_sudo_password \
@@ -354,8 +372,27 @@ class ArgValidator():
         # * Ubuntu 22 does not support PHP 8.0. PHP 8.1 is supported.
         # To work around the above points, you would have to manually configure the
         # APT repository.
-        if self.args.skip_php_extensions:
-            print('\nWill not install common PHP extensions. WordPress, Laravel, and other common CMS or frameworks will probably not work.')
+        if self.args.php_extensions:
+            extensions = [
+                extension.strip()
+                for extension in self.args.php_extensions.split(',')
+            ]
+        elif self.args.action == 'laravel':
+            extensions = [
+                'mysql',
+                'xml',
+                'mbstring'
+            ]
+        elif self.args.action == 'wordpress':
+            extensions = ['mysql']
+        else:
+            extensions = []
+        self.php_extensions = [
+            'php{}-{}'.format(
+                self.args.php_version,
+                extension
+            ) for extension in extensions
+        ]
 
         return 0
 
@@ -384,11 +421,7 @@ class ArgValidator():
             self.apache_vhosts[i]['document_root'] = wp_apache_document_root
             self.apache_vhosts[i]['vhost_name'] = wp_apache_vhost_name
 
-        # NOTE: We might need to access this in other scenarios, not just
-        # for WordPress, but for now, only WordPress.
-        # The Apache DocumentRoot is defined individually for each vhost,
-        # and there can be several of those.
-        self.wp_apache_document_root = wp_apache_document_root
+        self.apache_document_root = wp_apache_document_root
 
         self.handle_defaults([
             {
@@ -479,6 +512,59 @@ class ArgValidator():
             return False
 
 
+    def validate_app_args(self):
+        if self.args.action not in [
+            'laravel',
+        ]:
+            return 0
+
+        try:
+            self.args.app_build_path = os.path.abspath(self.args.app_build_path)
+            assert os.path.isfile(self.args.app_build_path)
+        except TypeError:
+            print('FATAL! --app-build-path required! Please specify the path of a build archive of your application.')
+            return 1
+        except AssertionError:
+            print('FATAL! {} not found on local file system.'.format(
+                self.args.app_build_path
+            ))
+            return 1
+
+        if self.args.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
+            app_apache_vhost_name = self.args.app_name
+        else:
+            app_apache_vhost_name = self.args.apache_vhost_name
+
+        self.app_source_root = '/var/www/html/{}'.format(self.args.app_name)
+        app_apache_document_root = '{}/public'.format(self.app_source_root)
+
+        self.apache_document_root = app_apache_document_root
+
+        for i in range(len(self.apache_vhosts)):
+            self.apache_vhosts[i]['vhost_name'] = app_apache_vhost_name
+            self.apache_vhosts[i]['document_root'] = app_apache_document_root
+
+        self.handle_defaults([
+            {
+                'arg_name': 'database_name',
+                'cli_default_value': None,
+                'override_default_value': self.args.app_name,
+            },
+            {
+                'arg_name': 'database_username',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_DATABASE_USERNAME,
+            },
+            ], True, True
+        )
+        self.validate_database_args()
+
+        self.args.laravel_artisan_commands = \
+            self.args.laravel_artisan_commands.split(',')
+
+        return 0
+
+
     def print_warnings(self):
         if self.args.insecure_skip_fail2ban:
             print('\nWarning! Will not install fail2ban! Your site will potentially be vulnerable to various brute force attacks. You should only pass the \'--insecure-skip-fail2ban\' flag if you have a good reason to do so. On production servers, always install fail2ban!')
@@ -502,6 +588,7 @@ class ArgValidator():
             'validate_ssl_args',
             'validate_php_args',
             'validate_wordpress_args',
+            'validate_app_args',
         ]
         for method_name in validate_methods:
             method = getattr(self, method_name)

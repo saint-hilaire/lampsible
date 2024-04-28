@@ -1,0 +1,41 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: "Include standard Ansible role"
+      include_role:
+        name: "{{ item }}"
+      loop:
+        - apt-update
+        - apache2
+        - php
+        - pip
+        - mysql
+        - laravel
+
+    - name: Conditionally include SSL role
+      include_role:
+        name: ssl-selfsigned
+      when: ssl_selfsigned
+
+    # It's important that this runs after the selfsigned certificates,
+    # if those are being used, but before Certbot, if that's being used.
+    - name: Include Apache virtual host role
+      include_role:
+        name: apache-vhosts
+
+    - name: Conditionally include SSL role
+      include_role:
+        name: ssl-certbot
+      when: ssl_certbot
+
+    - name: Conditionally include custom Apache configuration
+      include_role:
+        name: apache-conf
+      when: ssl_selfsigned
+
+    - name: Conditionally include fail2ban role
+      include_role:
+        name: fail2ban
+      when: not insecure_skip_fail2ban

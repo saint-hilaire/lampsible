@@ -1,6 +1,7 @@
 import os
 from . import __version__
 
+# LAMPSIBLE
 LAMPSIBLE_BANNER = """\
       _                           _ _     _
      | |                         (_) |   | |
@@ -14,6 +15,33 @@ LAMPSIBLE_BANNER = """\
         LAMP stacks with Ansible  -  v{}
      --------------------------------------------
 """.format(__version__)
+SUPPORTED_ACTIONS = [
+    # LAMP-Stack basics
+    'lamp-stack',
+    'apache',
+    'mysql',
+    'php',
+    # PHP CMS
+    'wordpress',
+    'typo3',       # TODO
+    'joomla',      # TODO
+    'drupal',      # TODO
+    # PHP frameworks
+    'laravel',     # TODO
+    'symfony',     # TODO
+    'zend',        # TODO
+    # Local debugging
+    'dump-ansible-facts',
+    # Non-PHP frameworks. Should we even support these?
+    'django',      # TODO
+    'rails',       # TODO
+    'springboot',  # TODO
+    # Misc. PHP
+    'magento',     # TODO
+    'woocommerce', # TODO
+    'composer',    # TODO
+    'xdebug',      # TODO
+]
 
 # SCRIPT PATHS
 USER_HOME_DIR            = os.path.expanduser('~')
@@ -40,6 +68,13 @@ DEFAULT_WORDPRESS_LOCALE         = 'en_US'
 DEFAULT_WORDPRESS_SITE_TITLE     = 'Sample Site'
 DEFAULT_WORDPRESS_ADMIN_USERNAME = 'admin'
 DEFAULT_WORDPRESS_ADMIN_EMAIL    = 'admin@example.com'
+
+# WEB APPLICATIONS
+DEFAULT_LARAVEL_ARTISAN_COMMANDS = [
+    'key:generate',
+    'migrate',
+    'db:seed',
+]
 
 # MISC
 INSECURE_CLI_PASS_WARNING = 'It\'s insecure to pass passwords via CLI args! If you are sure that you want to do this, rerun this command with the --insecure-cli-password flag.'
