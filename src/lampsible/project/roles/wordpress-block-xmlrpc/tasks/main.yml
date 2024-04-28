@@ -4,9 +4,8 @@
   template:
     src: .htaccess
     dest: "{{ wp_apache_document_root }}/.htaccess"
-    # TODO: Maybe this is not secure!!
-    owner: www-data
-    group: www-data
+    owner: nobody
+    group: nogroup
     mode: '0644'
 
 - name: Restart Apache
