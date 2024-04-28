@@ -1,4 +1,11 @@
 ---
+
+- name: Remove APT unattended upgrades
+  apt:
+    name: unattended-upgrades
+    state: absent
+
 - name: Update APT
-  # TODO: Do this better.
-  raw: apt update
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
