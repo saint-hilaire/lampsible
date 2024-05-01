@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lampsible"
-version = "0.12.0dev"
+version = "1.0.0"
 authors = [
     {name="Brian St. Hilaire", email="brian.st-hilaire@sanctus-tech.com"}
 ]
@@ -32,14 +32,12 @@ classifiers = [
 ]
 
 [project.scripts]
-# TODO: Improve this.
 lampsible = "lampsible:lampsible.main"
 
 [project.urls]
 Homepage = "https://github.com/saint-hilaire/lampsible"
 Issues = "https://github.com/saint-hilaire/lampsible/issues"
 
-# TODO: It may be possible without the following 2 tables.
 [tool.setuptools.packages.find]
 where = ["src"]
 

@@ -3,7 +3,6 @@
   file:
     path: "{{ item }}"
     state: directory
-    # TODO: Are these the right permissions
     owner: root
     group: root
     mode: '0755'

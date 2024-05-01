@@ -3,8 +3,7 @@
   become: true
   gather_facts: true
   tasks:
-    - name: "Include standard Ansible role"
-      include_role:
+    - include_role:
         name: "{{ item }}"
       loop:
         - apt-update
@@ -12,7 +11,6 @@
         - mysql
           # TODO: phpmyadmin option
 
-    - name: Conditionally include fail2ban role
-      include_role:
+    - include_role:
         name: fail2ban
       when: not insecure_skip_fail2ban

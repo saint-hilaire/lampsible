@@ -16,6 +16,4 @@ SSLSessionTickets Off
 SSLUseStapling on
 SSLStaplingCache "shmcb:logs/stapling-cache(150000)"
 
-# TODO: This has caused bugs in the past in other projects...
-# This whole thing needs to be refactored altogether.
 SSLOpenSSLConfCmd DHParameters "/etc/ssl/certs/dhparam.pem"

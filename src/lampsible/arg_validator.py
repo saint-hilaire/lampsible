@@ -26,7 +26,6 @@ class ArgValidator():
         return self.apache_document_root
 
 
-    # TODO: I don't find this very elegant.
     def get_apache_custom_conf_name(self):
         try:
             return self.apache_custom_conf_name
@@ -34,7 +33,6 @@ class ArgValidator():
             return ''
 
 
-    # TODO: Improve/remove this when we fix Certbot.
     def get_wordpress_url(self):
         try:
             return self.wordpress_url
@@ -108,7 +106,7 @@ class ArgValidator():
             'apache_custom_conf_name': self.get_apache_custom_conf_name(),
             'database_username': self.args.database_username,
             'database_password': self.args.database_password,
-            'database_host': self.args.database_host,
+            'database_host': DEFAULT_DATABASE_HOST,
             'database_name': self.args.database_name,
             'database_table_prefix': self.args.database_table_prefix,
             'php_version': self.args.php_version,
@@ -249,11 +247,11 @@ class ArgValidator():
 
 
     def validate_ansible_runner_args(self):
-        user_at_host = self.args.user_at_host.split('@')
         try:
+            user_at_host = self.args.user_at_host.split('@')
             self.web_host_user = user_at_host[0]
             self.web_host      = user_at_host[1]
-        except IndexError:
+        except (IndexError, AttributeError):
             print('FATAL! First positional argument must be in the format of \'user@host\'')
             return 1
 
@@ -308,14 +306,6 @@ class ArgValidator():
 
 
     def validate_database_args(self):
-
-        # TODO: Sanity check database username and database name.
-
-        if self.args.database_engine != DEFAULT_DATABASE_ENGINE \
-            or self.args.database_host != DEFAULT_DATABASE_HOST \
-            or self.args.php_my_admin:
-
-            raise NotImplementedError()
 
         if self.args.database_password \
             and not self.args.insecure_cli_password:

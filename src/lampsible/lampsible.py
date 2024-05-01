@@ -3,30 +3,11 @@ from sys import path as sys_path
 import argparse
 import warnings
 from yaml import safe_load
+from shutil import rmtree
 from ansible_runner import Runner, RunnerConfig, run_command
 from . import __version__
 from lampsible.constants import *
 from lampsible.arg_validator import ArgValidator
-
-
-# TODO
-def init_directories(hosts, private_data_dir, project_dir,):
-    pass
-    # directories = {
-    #     'private_data_dir': init_private_data_dir(
-    #         os.path.abspath(private_data_dir),
-    #         hosts
-    #     ),
-    #     'project_dir': init_project_dir(
-    #         os.path.abspath(project_dir)
-    #     ),
-    # }
-    # for k,v in directories.items():
-    #     try:
-    #         assert os.path.isdir(v)
-    #     except AssertionError:
-    #         raise ValueError('{} is not a valid {}'.format(k, v))
-    # return directories
 
 
 def init_private_data_dir(private_data_dir):
@@ -61,103 +42,8 @@ def find_package_project_dir():
     raise RuntimeError("Got no user supplied --project-dir, and could not find one in expected package location. Your Lampsible installation is likely broken. However, if you are running this code directly from source, this is expected behavior. You probably forgot to pass the '--project-dir' flag. The directoy you're looking for is 'src/lampsible/project/'.")
 
 
-def init_inventory_file(private_data_dir, user, remote_host):
-    pass
-    # try:
-    #     os.mkdir(os.path.join(private_data_dir, 'inventory'))
-    # except FileExistsError:
-    #     pass
-    #     
-    # inventory = {
-    #     'ungrouped': {
-    #         'hosts': {
-    #             remote_host: {'ansible_user': user}
-    #         },
-    #     },
-    # }
-    # with open(os.path.join(private_data_dir, 'inventory', 'hosts'), 'w') as fh:
-    #     fh.write(yaml.dump(inventory))
-
-
 def prepare_inventory(user, remote_host):
-    ########
-    # TODO #
-    ########
-
-    # Dealing with inventories can be tricky.
-    # This is a big part of what will have to be refactored in the future.
-    # Ideally, it should be possible to pass the inventories to Ansible,
-    # along with all sorts of variables, as a dictionary. However,
-    # that appears not to be possible at the moment. If it truly is not
-    # possible, this might be a worthwhile improvment to Ansible itself.
-    # See the code below.
-
-    # hosts = {hosts_ls[i]: users_ls[i] for i in range(l)}
-    # inventory = {
-    #     'ungrouped': {
-    #         'hosts': {
-    #             remote_host: {'ansible_user': user} for host, user in hosts.items()
-    #         },
-    #         # various variables here...
-    #     },
-    # }
-
-    # Without dictionaries, it would mean that we would have to create
-    # some temporary files on the local filesystem to handle all the
-    # inventory configuration. This is OK, but IMO not ideal. In any case,
-    # I don't want to implement that into this project, but rather, into some
-    # "Python-Ansible-Runner" library.
-
-    # So for the time being, there are no "inventories-per-dictionary" (might
-    # require changes to Ansible itself), nor "inventory-per-tmp-file" (won't
-    # implement in this codebase, but rather in other library).
-
-    # It's possible to pass "work around" the need for the "local inventory
-    # file" by passing a comma separated list to Ansible. The commented out
-    # code below does exactly that. However, dealing with multiple users and
-    # hosts this way introduces unnecessary and unwieldy complexities, which
-    # most of the time wouldn't be needed by a tool as simple as Lampsible
-    # anyway. Funny thing... doing hosts and users this way works for the
-    # ansible_runner module when we use it in this script, but does not work
-    # for the ansible-runner as a CLI tool... even though in the venv 
-    # they should be the same versions.
-
-    # hosts_ls = hosts.split(',')
-    # users_ls = users.split(',')
-    # l = len(hosts_ls)
-    # if len(users_ls) != l:
-    #     raise NotImplementedError('For now, you have to pass users and hosts as lists that match one to one exactly. This will be improved in a future version.')
-
-    # if l > 1: 
-    #     hosts = ['{}@{}'.format(users_ls[i], hosts_ls[i]) for i in range(l)]
-    #     return ','.join(hosts)
-    # elif l == 1:
-    #     return '{}@{},'.format(users_ls[0], hosts_ls[0])
-    # else:
-    #     raise ValueError('Got bad value for --users or --hosts.')
-
-    # For these reasons, we confine ourselves for now to the simple
-    # "one user, one host" inventory. Note the comma at the end of the
-    # inventory string - that is needed, in order for Ansible to process it
-    # this way.
-
-    # To do the inventories "The Right Way", I want to find out, if it maybe
-    # isn't possible to configure the entire invetory in one single
-    # dictionary, and pass that directly to Ansible-Runner - and possibly
-    # contribute those changes to the maintainers of Ansible itself. Failing
-    # that, I want to implement some small library to handle tasks like
-    # 'writing Anisble inventory file temporarily to local filesystem', which
-    # would then be required by this application. 
-
-    # Another thing that will be important in the future is for the web-
-    # and database-servers to run on different hosts.
     return '{}@{},'.format(user, remote_host)
-
-
-def cleanup_private_data_dir(path):
-    # TODO: Do this the right way.
-    # TODO: Implement some safety measures to avoid data destruction.
-    os.system('rm -r ' + path)
 
 
 def ensure_ansible_galaxy_dependencies(galaxy_requirements_file):
@@ -205,10 +91,6 @@ def install_galaxy_collections(collections):
             executable_cmd='ansible-galaxy',
             cmdline_args=['collection', 'install'] + collections,
         )
-        # run_command(
-        #     executable_cmd='ansible-galaxy',
-        #     cmdline_args=['role', 'install', '-r', galaxy_requirements_file],
-        # )
         print('\n... collections installed.')
         return 0
     else:
@@ -216,108 +98,203 @@ def install_galaxy_collections(collections):
         return 1
 
 
-
 def main():
     parser = argparse.ArgumentParser(
         prog='lampsible',
         description='LAMP Stacks with Ansible',
-        epilog='Currently in development...',
     )
 
-    parser.add_argument('user_at_host', nargs='?')
+    # ----------------------
+    #                      -
+    #  Required arguments  -
+    #                      -
+    # ----------------------
+
+    parser.add_argument('user_at_host', nargs='?',
+        help="example: someuser@somehost.com"
+    )
     parser.add_argument('action', choices=SUPPORTED_ACTIONS, nargs='?')
 
-    # APACHE
-    ########
-    # TODO: Apache configs, versions, etc? Nginx or others?
-    parser.add_argument('--apache-vhost-name',
-        default=DEFAULT_APACHE_VHOST_NAME)
-    parser.add_argument('--apache-server-admin',
-        default=DEFAULT_APACHE_SERVER_ADMIN)
-    parser.add_argument('--apache-document-root',
-        default=DEFAULT_APACHE_DOCUMENT_ROOT)
+    # ----------------------
+    #                      -
+    #  Basic Options       -
+    #                      -
+    # ----------------------
 
-    # DATABASE
-    #######
-    # TODO: MySQL configs, versions, etc? PostgreSQL or others?
-    parser.add_argument('--database-engine', default=DEFAULT_DATABASE_ENGINE)
-    parser.add_argument('--database-username')
-    parser.add_argument('--database-password')
-    parser.add_argument('--database-name')
-    # TODO; Right now, this is not possible. To enable this, you have to dive
-    # a little deeper into Ansible's inventory feature... for now, the
-    # database and webserver need to run on the same host.
-    parser.add_argument('--database-host', default=DEFAULT_DATABASE_HOST)
-    parser.add_argument('--database-table-prefix',
-        default=DEFAULT_DATABASE_TABLE_PREFIX)
+    # Ansible Runner
+    # --------------
+    parser.add_argument('--ask-remote-sudo', action='store_true',
+        help="Pass this flag if you want to be prompted for the sudo password of the remote server.")
+
+    # Apache
+    # ------
+    parser.add_argument('-a', '--apache-server-admin',
+        default=DEFAULT_APACHE_SERVER_ADMIN,
+        help="the email address of the server administrator, which is passed to Apache's 'ServerAdmin' configuration. Defaults to '{}' but if you are using '--ssl-cerbot', you should pass in a real email address".format(DEFAULT_APACHE_SERVER_ADMIN)
+    )
+
+    # Database
+    # --------
+    parser.add_argument('-d', '--database-username', help="database user - If your website requires a database, and you leave this blank, you will be prompted to enter a value, or default to '{}'. If no database is required, and you leave this blank, no database user will be created.".format(DEFAULT_DATABASE_USERNAME))
+    parser.add_argument('-n', '--database-name', help="name of your database - If your website requires a database, and you leave this blank, you will be prompted to enter a value, or default to a sensible default, depending on your app. If no database is required, and you leave this blank, no database will be created.")
+    # TODO
+    # parser.add_argument('--database-host', default=DEFAULT_DATABASE_HOST)
+    # parser.add_argument('--database-engine', default=DEFAULT_DATABASE_ENGINE)
 
     # PHP
-    #####
-    parser.add_argument('--php-version', default='8.2')
+    # ---
+    parser.add_argument('-p', '--php-version', default=DEFAULT_PHP_VERSION,
+        help="the version of PHP to be installed, defaults to '{}'".format(
+            DEFAULT_PHP_VERSION
+        )
+    )
     # TODO
-    parser.add_argument('--php-my-admin', action='store_true')
-    parser.add_argument('--php-extensions')
+    # parser.add_argument('--php-my-admin', action='store_true')
 
 
-    # WORDPRESS
-    ###########
-    parser.add_argument('--wordpress-version',
-        default=DEFAULT_WORDPRESS_VERSION)
-    parser.add_argument('--wordpress-locale', default=DEFAULT_WORDPRESS_LOCALE)
-    parser.add_argument('--wordpress-site-title')
-    parser.add_argument('--wordpress-admin-username')
-    parser.add_argument('--wordpress-admin-email')
-    parser.add_argument('--wordpress-admin-password')
-    # Maybe TODO?
-    # parser.add_argument('--wordpress-skip-content', action='store_true')
-    parser.add_argument('--wordpress-manual-install', action='store_true')
-    parser.add_argument('--wordpress-auth-key')
-    parser.add_argument('--wordpress-secure-auth-key')
-    parser.add_argument('--wordpress-logged-in-key')
-    parser.add_argument('--wordpress-nonce-key')
-    parser.add_argument('--wordpress-auth-salt')
-    parser.add_argument('--wordpress-secure-auth-salt')
-    parser.add_argument('--wordpress-logged-in-salt')
-    parser.add_argument('--wordpress-nonce-salt')
-    parser.add_argument('--wordpress-insecure-allow-xmlrpc', action='store_true')
+    # WordPress
+    # ---------
+    parser.add_argument('-w', '--wordpress-version',
+        default=DEFAULT_WORDPRESS_VERSION,
+        help="the version of WordPress to be installed, defaults to '{}'".format(
+            DEFAULT_WORDPRESS_VERSION
+        )
+    )
+    parser.add_argument('--wordpress-locale',
+        default=DEFAULT_WORDPRESS_LOCALE,
+        help="the locale of your WordPress site, defaults to '{}'".format(
+            DEFAULT_WORDPRESS_LOCALE
+        )
+    )
+    parser.add_argument('--wordpress-site-title',
+        help="The \"Site Title\" configuration of your WordPress site. If you leave this blank, you will be prompted to enter a value, or default to '{}'".format(
+            DEFAULT_WORDPRESS_SITE_TITLE
+        )
+    )
+    parser.add_argument('--wordpress-admin-username',
+        help="The admin username of your WordPress site. If you leave this blank, you will be prompted to enter a value, or default to '{}'".format(
+            DEFAULT_WORDPRESS_ADMIN_USERNAME
+        )
+    )
+    parser.add_argument('--wordpress-admin-email',
+        help="The email address of your WordPress site's admin username. If you leave this blank, you will be prompted to enter a value, or default to '{}'".format(
+            DEFAULT_WORDPRESS_ADMIN_EMAIL
+        )
+    )
 
-    # WEB APPLICATIONS
-    parser.add_argument('--app-name', default='laravel-app')
-    parser.add_argument('--app-build-path')
-    parser.add_argument('--app-local-env', action='store_true')
-    parser.add_argument('--laravel-artisan-commands',
-        default=','.join(DEFAULT_LARAVEL_ARTISAN_COMMANDS))
-
-    # ANSIBLE RUNNER
-    ################
-    parser.add_argument('--remote-sudo-password')
-    parser.add_argument('--ask-remote-sudo', action='store_true')
-    parser.add_argument('--ssh-key-file')
-    parser.add_argument('--private-data-dir',  default=DEFAULT_PRIVATE_DATA_DIR)
-    parser.add_argument('--project-dir', '-Z', default=DEFAULT_PROJECT_DIR)
-    parser.add_argument('--keep-private-data-dir', action='store_true')
+    # Web applications
+    # ----------------
+    parser.add_argument('--app-name', default='laravel-app', help="the name of your Laravel app, if you're installing one. Leave blank to default to 'laravel-app'")
+    parser.add_argument('--app-build-path', help="If you are installing a Laravel app, use this option to specify the local path of a production ready build-archive of your app, for example /path/to/some-app-2.0.tar.gz")
 
     # SSL
-    #####
-    parser.add_argument('--ssl-certbot', action='store_true')
-    parser.add_argument('--ssl-selfsigned', action='store_true')
-    parser.add_argument('--email-for-ssl')
-    parser.add_argument('--domains-for-ssl')
-    parser.add_argument('--test-cert', action='store_true')
+    # ---
+    parser.add_argument('-s', '--ssl-certbot', action='store_true',
+        help="Pass this flag to use Certbot to fully enable SSL for your site. You should also pass a valid email address to '--apache-server-admin', or alternatively to '--email-for-ssl'. If you are simply testing, pass '--test-cert' as well, to avoid being rate limited by Let's Encrypt."
+    )
+    parser.add_argument('--ssl-selfsigned', action='store_true',
+        help="Pass this flag to generate a self signed SSL certificate for your site. You should only do this on test servers, because it makes your site look untrustworthy to visitors."
+    )
 
-    # MISC
-    ######
-    parser.add_argument('--insecure-cli-password', action='store_true')
-    parser.add_argument('--insecure-skip-fail2ban', action='store_true')
+    # ----------------------
+    #                      -
+    #  Advanced Options    -
+    #                      -
+    # ----------------------
 
-    # METADATA
-    parser.add_argument('--version', action='store_true')
+    # Ansible Runner
+    # --------------
+    parser.add_argument('--remote-sudo-password', help="sudo password of the remote server, this only works if you also pass '--insecure-cli-password'. This is not recommended, you should use '--ask-remote-sudo' instead.")
+    parser.add_argument('--ssh-key-file', help='path to your private SSH key')
+    parser.add_argument('--private-data-dir',
+        default=DEFAULT_PRIVATE_DATA_DIR,
+        help="the \"private data directory\" that Ansible Runner will use. Default is '{}'. You can use this flag to pass an alternative value. However, it's best to just leave this blank. Be advised that Ansible Runner will write sensitive data here, like your private SSH key and passwords, but Lampsible will delete this directory when it finishes."
+    )
+    # parser.add_argument('--project-dir', '-Z', default=DEFAULT_PROJECT_DIR)
+
+    # Apache
+    # ------
+    parser.add_argument('--apache-vhost-name',
+        default=DEFAULT_APACHE_VHOST_NAME, help="the name of your site's Apache virtual host - leave this blank to let Lampsible pick a good default.")
+    parser.add_argument('--apache-document-root',
+        default=DEFAULT_APACHE_DOCUMENT_ROOT,
+        help="your Apache virtual hosts' 'DocumentRoot' configuration - leave this blank to let Lampsible pick a good default."
+    )
+
+    # Database
+    # --------
+    parser.add_argument('--database-password',
+        help="Use this flag to pass in the database password directly. This is not advised, and will only work if you also pass '--insecure-cli-password'. You should leave this blank instead, and Lampsible will prompt you for a password."
+    )
+    parser.add_argument('--database-table-prefix',
+        default=DEFAULT_DATABASE_TABLE_PREFIX,
+        help="prefix for your database tables, this is currently only used by WordPress, where it defaults to '{}'".format(
+            DEFAULT_DATABASE_TABLE_PREFIX
+        )
+    )
+
+    # PHP
+    # ---
+    parser.add_argument('--php-extensions', help="A comma separated list of PHP extensions to install. For example, if you pass '--php-version 8.2 --php-extensions mysql,mbstring', Lampsible will install the packages php8.2-mysql and php8.2-mbstring. However, it's best to leave this blank, and let Lampsible pick sensible defaults depending on what you are installing.")
+
+    # WordPress
+    # ---------
+    parser.add_argument('--wordpress-admin-password',
+        help="Use this flag to pass in the WordPress admin password directly. This is not advised, and will only work if you also pass '--insecure-cli-password'. You should leave this blank instead, and Lampsible will prompt you for a password."
+    )
+    # NOTE: Manually installing WordPress and passing the authentication salts
+    # will be deprecated.
+    parser.add_argument('--wordpress-manual-install', action='store_true',
+        help="Pass this flag if you prefer to complete the \"Famous 5 Minute WordPress Install\" manually. This is not advised, and will be deprecated."
+    )
+    parser.add_argument('--wordpress-auth-key', help="deprecated")
+    parser.add_argument('--wordpress-secure-auth-key', help="deprecated")
+    parser.add_argument('--wordpress-logged-in-key', help="deprecated")
+    parser.add_argument('--wordpress-nonce-key', help="deprecated")
+    parser.add_argument('--wordpress-auth-salt', help="deprecated")
+    parser.add_argument('--wordpress-secure-auth-salt', help="deprecated")
+    parser.add_argument('--wordpress-logged-in-salt', help="deprecated")
+    parser.add_argument('--wordpress-nonce-salt', help="deprecated")
+    parser.add_argument('--wordpress-insecure-allow-xmlrpc',
+        action='store_true',
+        help="Pass this flag if you want your WordPress site's insecure(!) endpoint xmlrpc.php to be reachable. This will make your site vulnerable to various exploits, and you really shouldn't do this if you don't have a good reason for this."
+    )
+    # TODO
+    # parser.add_argument('--wordpress-skip-content', action='store_true')
+
+    # Web applications
+    # ----------------
+    parser.add_argument('--app-local-env', action='store_true',
+        help="Pass this flag if you want your Laravel app to have the configurations 'APP_ENV=local' and 'APP_DEBUG=true'. Otherwise, they'll default to 'APP_ENV=production' and 'APP_DEBUG=false'."
+    )
+    parser.add_argument('--laravel-artisan-commands',
+        default=','.join(DEFAULT_LARAVEL_ARTISAN_COMMANDS),
+        help="a comma separated list of Artisan commands to run on your server after setting up your Laravel app there. Defaults to {}, which results in these commands being run: {}".format(
+            ','.join(DEFAULT_LARAVEL_ARTISAN_COMMANDS),
+            '; '.join([
+                'php /path/to/your/app/artisan {} --force'.format(artisan_command)
+                for artisan_command in DEFAULT_LARAVEL_ARTISAN_COMMANDS
+            ])
+        )
+    )
+
+    # SSL
+    # ---
+    parser.add_argument('--email-for-ssl', help="the email address that will be passed to Certbot. If left blank, the value of '--apache-server-admin' will be used instead.")
+    parser.add_argument('--domains-for-ssl', help="a comma separated list of domains that will be passed to Certbot. If left blank, Lampsible will figure out what to use based on your host and action.")
+    parser.add_argument('--test-cert', action='store_true', help="Pass this flag along with '--ssl-certbot' if you are testing and want to avoid being rate limited by Let's Encrypt.")
+
+    # Misc
+    # ----
+    parser.add_argument('--insecure-cli-password', action='store_true', help="If you want to pass passwords directly over the CLI, you have to pass this flag as well, otherwise Lampsible will refuse to run. This is not advised.")
+    parser.add_argument('--insecure-skip-fail2ban', action='store_true', help="Pass this flag if you don't want to install fail2ban on your server. This is insecure not advised.")
+
+    # Metadata
+    # --------
+    parser.add_argument('-V', '--version', action='version', version=__version__)
+
 
     args = parser.parse_args()
-
-    if args.version:
-        print(__version__)
-        return 0
 
     print(LAMPSIBLE_BANNER)
     validator = ArgValidator(args)
@@ -327,10 +304,8 @@ def main():
         return 1
     args = validator.get_args()
 
-    # TODO: Let arg_validator handle private_data_dir, project_dir,
-    # inventory and playbook as well, but for now, this will do.
-    private_data_dir = init_private_data_dir(args.private_data_dir)
-    project_dir = init_project_dir(args.project_dir)
+    private_data_dir = init_private_data_dir(DEFAULT_PRIVATE_DATA_DIR)
+    project_dir = init_project_dir(DEFAULT_PROJECT_DIR)
 
     inventory = prepare_inventory(validator.web_host_user, validator.web_host)
 
@@ -381,10 +356,7 @@ def main():
     # TODO: Deal with these better.
     print(r.stats)
 
-    if not args.keep_private_data_dir:
-        cleanup_private_data_dir(private_data_dir)
-    else:
-        print('WARNING! Got --keep-private-data-dir, probably because you are debugging something locally, so I will not delete the directory {}. Please be aware that it likely contains sensitive data, like SSH keys and so on, so you should probably delete it yourself.'.format(private_data_dir))
+    rmtree(private_data_dir)
 
     return 0
 
