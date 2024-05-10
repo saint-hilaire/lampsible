@@ -288,6 +288,7 @@ def main():
     # ----
     parser.add_argument('--insecure-cli-password', action='store_true', help="If you want to pass passwords directly over the CLI, you have to pass this flag as well, otherwise Lampsible will refuse to run. This is not advised.")
     parser.add_argument('--insecure-skip-fail2ban', action='store_true', help="Pass this flag if you don't want to install fail2ban on your server. This is insecure not advised.")
+    parser.add_argument('--extra-packages', help="comma separated list of any extra packages to be installed on the remote server")
 
     # Metadata
     # --------

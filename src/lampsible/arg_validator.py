@@ -117,6 +117,7 @@ class ArgValidator():
             'certbot_domains_string': self.get_certbot_domains_string(),
             'certbot_test_cert_string': self.get_certbot_test_cert_string(),
             'insecure_skip_fail2ban': self.args.insecure_skip_fail2ban,
+            'extra_packages': self.args.extra_packages,
         }
         if self.args.remote_sudo_password:
             # TODO: It would be better to not include this as an extravar, but to
@@ -555,6 +556,11 @@ class ArgValidator():
         return 0
 
 
+    def validate_misc_args(self):
+        self.args.extra_packages = self.args.extra_packages.split(',')
+        return 0
+
+
     def print_warnings(self):
         if self.args.insecure_skip_fail2ban:
             print('\nWarning! Will not install fail2ban! Your site will potentially be vulnerable to various brute force attacks. You should only pass the \'--insecure-skip-fail2ban\' flag if you have a good reason to do so. On production servers, always install fail2ban!')
@@ -579,6 +585,7 @@ class ArgValidator():
             'validate_php_args',
             'validate_wordpress_args',
             'validate_app_args',
+            'validate_misc_args',
         ]
         for method_name in validate_methods:
             method = getattr(self, method_name)

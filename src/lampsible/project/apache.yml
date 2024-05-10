@@ -7,7 +7,7 @@
     - include_role:
         name: "{{ item }}"
       loop:
-        - apt-update
+        - apt
         - apache2
 
     - include_role:
