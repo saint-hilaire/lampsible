@@ -102,6 +102,7 @@ class ArgValidator():
 
     def get_extravars_dict(self):
         extravars = {
+            'web_host': self.web_host,
             'apache_vhosts': self.get_apache_vhosts(),
             'apache_custom_conf_name': self.get_apache_custom_conf_name(),
             'database_username': self.args.database_username,
