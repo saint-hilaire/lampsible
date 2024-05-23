@@ -205,7 +205,7 @@ def main():
     # Ansible Runner
     # --------------
     parser.add_argument('--remote-sudo-password', help="sudo password of the remote server, this only works if you also pass '--insecure-cli-password'. This is not recommended, you should use '--ask-remote-sudo' instead.")
-    parser.add_argument('--ssh-key-file', help='path to your private SSH key')
+    parser.add_argument('--ssh-key-file', '-i',  help='path to your private SSH key')
     parser.add_argument('--private-data-dir',
         default=DEFAULT_PRIVATE_DATA_DIR,
         help="the \"private data directory\" that Ansible Runner will use. Default is '{}'. You can use this flag to pass an alternative value. However, it's best to just leave this blank. Be advised that Ansible Runner will write sensitive data here, like your private SSH key and passwords, but Lampsible will delete this directory when it finishes."

@@ -557,7 +557,10 @@ class ArgValidator():
 
 
     def validate_misc_args(self):
-        self.args.extra_packages = self.args.extra_packages.split(',')
+        try:
+            self.args.extra_packages = self.args.extra_packages.split(',')
+        except AttributeError:
+            self.args.extra_packages = []
         return 0
 
 
