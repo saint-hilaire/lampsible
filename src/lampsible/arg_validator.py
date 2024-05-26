@@ -448,7 +448,9 @@ class ArgValidator():
             },
         ], True, True)
 
-        self.validate_database_args()
+        if not self.args.database_password:
+            if self.validate_database_args() != 0:
+                return 1
 
         if self.args.wordpress_admin_password \
             and not self.args.insecure_cli_password:
@@ -549,7 +551,9 @@ class ArgValidator():
             },
             ], True, True
         )
-        self.validate_database_args()
+        if not self.args.database_password:
+            if self.validate_database_args() != 0:
+                return 1
 
         self.args.laravel_artisan_commands = \
             self.args.laravel_artisan_commands.split(',')
