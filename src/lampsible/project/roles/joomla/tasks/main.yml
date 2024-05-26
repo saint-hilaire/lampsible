@@ -1,0 +1,75 @@
+---
+
+- name: Delete placeholder index.html
+  file:
+    path: "/var/www/html/index.html"
+    state: absent
+
+- name: Create joomla/ directory
+  file:
+    path: "{{ apache_document_root }}"
+    state: directory
+
+- name: Download Joomla
+  get_url:
+    url: "https://downloads.joomla.org/cms/joomla{{ joomla_version[0] }}/{{ joomla_version | regex_replace('\\.', '-') }}/Joomla_{{ joomla_version | regex_replace('\\.', '-') }}-Stable-Full_Package.tar.gz"
+    dest: "/var/www/html/"
+
+- name: Extract Joomla (gzip)
+  command:
+  args:
+    argv:
+      - gzip
+      - --decompress
+      - --force
+      - "/var/www/html/Joomla_{{ joomla_version }}-Stable-Full_Package.tar.gz"
+
+- name: Extract Joomla (tar)
+  unarchive:
+    src: "/var/www/html/Joomla_{{ joomla_version }}-Stable-Full_Package.tar"
+    dest: "{{ apache_document_root }}"
+    remote_src: true
+
+- name: Set file ownership and permissions
+  file:
+    path: "{{ apache_document_root }}/administrator/cache"
+    state: directory
+    group: www-data
+    mode: '0775'
+
+- name: Install Joomla
+  command:
+  args:
+    argv:
+      - php
+      - "{{ apache_document_root }}/installation/joomla.php"
+      - install
+      - --no-interaction
+
+      - "--site-name={{ site_title }}"
+      - "--admin-user={{ joomla_admin_full_name }}"
+      - "--admin-username={{ admin_username }}"
+      - "--admin-password={{ admin_password }}"
+      - "--admin-email={{ admin_email }}"
+
+      # TODO
+      - "--db-type=mysqli"
+      # TODO
+      - "--db-host=localhost"
+      - "--db-user={{ database_username }}"
+      - "--db-pass={{ database_password }}"
+      - "--db-name={{ database_name }}"
+      # TODO: This breaks the command if it's empty.
+      # - "--db-prefix={{ database_table_prefix }}"
+      # # TODO? Options: 0, 1, 2
+      # - "--db-encryption=0"
+      # # TODO? Requires --db-encryption=2
+      # - "--db-sslkey=deadbeef"
+      # # TODO? Requires --db-encryption=2
+      # - "--db-sslcert=deadbeef"
+      # # TODO? Requires --db-encryption=1 or 2
+      # - "--db-sslverifyservercert="
+      # # TODO?
+      # - "--db-sslca="
+      # # TODO?
+      # - "--db-sslcipher="
