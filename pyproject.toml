@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lampsible"
-version = "1.0.0"
+version = "1.1.0"
 authors = [
     {name="Brian St. Hilaire", email="brian.st-hilaire@sanctus-tech.com"}
 ]
@@ -21,7 +21,7 @@ dependencies = [
     "fqdn",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Framework :: Ansible",
     "Programming Language :: Python :: 3",
