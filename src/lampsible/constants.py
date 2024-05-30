@@ -24,6 +24,7 @@ SUPPORTED_ACTIONS = [
     'php',
     # PHP CMS
     'wordpress',
+    'joomla',
     # PHP frameworks
     'laravel',
     # Local debugging
@@ -56,13 +57,21 @@ DEFAULT_DATABASE_TABLE_PREFIX = ''
 # ---
 DEFAULT_PHP_VERSION = '8.2'
 
+# All CMS
+# -------
+DEFAULT_SITE_TITLE     = 'Sample Site'
+DEFAULT_ADMIN_USERNAME = 'admin'
+DEFAULT_ADMIN_EMAIL    = 'admin@example.com'
+
 # WordPress
 # ---------
-DEFAULT_WORDPRESS_VERSION        = 'latest'
-DEFAULT_WORDPRESS_LOCALE         = 'en_US'
-DEFAULT_WORDPRESS_SITE_TITLE     = 'Sample Site'
-DEFAULT_WORDPRESS_ADMIN_USERNAME = 'admin'
-DEFAULT_WORDPRESS_ADMIN_EMAIL    = 'admin@example.com'
+DEFAULT_WORDPRESS_VERSION = 'latest'
+DEFAULT_WORDPRESS_LOCALE  = 'en_US'
+
+# Joomla
+# ------
+DEFAULT_JOOMLA_VERSION         = '5.1.0'
+DEFAULT_JOOMLA_ADMIN_FULL_NAME = 'Sample User'
 
 # Web applications
 # ----------------
