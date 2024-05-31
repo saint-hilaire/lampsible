@@ -39,6 +39,14 @@ lampsible someuser@somehost.com wordpress \
     --email-for-ssl you@yourdomain.com
 ```
 
+Install a production ready Joomla site:
+
+```
+lampsible someuser@somehost.com joomla \
+    --ssl-certbot \
+    --email-for-ssl you@yourdomain.com
+```
+
 Install a Laravel app on a test server:
 
 ```
@@ -51,7 +59,7 @@ lampsible someuser@somehost.com laravel \
     --laravel-artisan-commands key:generate,migrate
 ```
 
-Set up a LAMP with various custom configuration and a self signed SSL certificate on some local VM:
+Set up a LAMP stack with various custom configuration and a self signed SSL certificate on some local VM:
 
 ```
 lampsible someuser@192.168.123.123 lamp-stack \
@@ -70,4 +78,4 @@ Run `lampsible --help` for a full list of options.
 
 ## Contributing 
 
-PLease do! I'd be more than happy to see Issues, Pull Requests and any other kind of feedback ;-)
+Please do! I'd be more than happy to see Issues, Pull Requests and any other kind of feedback ;-)
