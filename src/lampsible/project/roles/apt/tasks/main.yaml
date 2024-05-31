@@ -1,0 +1,20 @@
+---
+
+- name: Remove APT unattended upgrades
+  apt:
+    name: unattended-upgrades
+    state: absent
+
+- name: Update APT
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install any extra packages
+  apt:
+    name: "{{ package_name }}"
+    state: present
+  loop: "{{ extra_packages }}"
+  loop_control:
+    loop_var: package_name
+  ignore_errors: true

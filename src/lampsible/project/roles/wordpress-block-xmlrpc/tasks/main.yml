@@ -3,7 +3,7 @@
 - name: Block the insecure endpoint xmlrpc.php
   template:
     src: .htaccess
-    dest: "{{ wp_apache_document_root }}/.htaccess"
+    dest: "{{ apache_document_root }}/.htaccess"
     owner: nobody
     group: nogroup
     mode: '0644'

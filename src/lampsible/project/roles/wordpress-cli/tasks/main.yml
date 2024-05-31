@@ -18,7 +18,7 @@
       - download
       - --allow-root
       - --force
-      - "--path={{ wp_apache_document_root }}"
+      - "--path={{ apache_document_root }}"
       - "--locale={{ wordpress_locale }}"
       - "--version={{ wordpress_version }}"
 
@@ -34,7 +34,7 @@
       - create
       - --allow-root
       - --force
-      - "--path={{ wp_apache_document_root }}"
+      - "--path={{ apache_document_root }}"
       - "--dbname={{ database_name }}"
       - "--dbuser={{ database_username }}"
       - "--dbpass={{ database_password }}"
@@ -54,7 +54,7 @@
       - db
       - create
       - --allow-root
-      - "--path={{ wp_apache_document_root }}"
+      - "--path={{ apache_document_root }}"
       - "--dbname={{ database_name }}"
       - "--dbuser={{ database_username }}"
       - "--dbpass={{ database_password }}"
@@ -70,17 +70,17 @@
       - core
       - install
       - --allow-root
-      - "--path={{ wp_apache_document_root }}"
+      - "--path={{ apache_document_root }}"
       - "--url={{ wordpress_url }}"
-      - "--title={{ wordpress_site_title }}"
-      - "--admin_user={{ wordpress_admin_username }}"
-      - "--admin_password={{ wordpress_admin_password }}"
-      - "--admin_email={{ wordpress_admin_email }}"
+      - "--title={{ site_title }}"
+      - "--admin_user={{ admin_username }}"
+      - "--admin_password={{ admin_password }}"
+      - "--admin_email={{ admin_email }}"
       - "--locale={{ wordpress_locale }}"
 
 - name: Set file ownership for WordPress directory
   file:
-    path: "{{ wp_apache_document_root }}"
+    path: "{{ apache_document_root }}"
     state: directory
     recurse: yes
     owner: nobody
@@ -88,7 +88,7 @@
 
 - name: Set file ownership for wp-content/
   file:
-    path: "{{ wp_apache_document_root }}/wp-content"
+    path: "{{ apache_document_root }}/wp-content"
     state: directory
     recurse: yes
     owner: www-data

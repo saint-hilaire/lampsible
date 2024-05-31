@@ -22,10 +22,6 @@ class ArgValidator():
         return self.apache_vhosts
 
 
-    def get_apache_document_root(self):
-        return self.apache_document_root
-
-
     def get_apache_custom_conf_name(self):
         try:
             return self.apache_custom_conf_name
@@ -102,7 +98,10 @@ class ArgValidator():
 
     def get_extravars_dict(self):
         extravars = {
+            'web_host': self.web_host,
             'apache_vhosts': self.get_apache_vhosts(),
+            'apache_document_root': self.apache_document_root,
+            'apache_vhost_name': self.apache_vhost_name,
             'apache_custom_conf_name': self.get_apache_custom_conf_name(),
             'database_username': self.args.database_username,
             'database_password': self.args.database_password,
@@ -117,6 +116,7 @@ class ArgValidator():
             'certbot_domains_string': self.get_certbot_domains_string(),
             'certbot_test_cert_string': self.get_certbot_test_cert_string(),
             'insecure_skip_fail2ban': self.args.insecure_skip_fail2ban,
+            'extra_packages': self.args.extra_packages,
         }
         if self.args.remote_sudo_password:
             # TODO: It would be better to not include this as an extravar, but to
@@ -124,16 +124,18 @@ class ArgValidator():
             # Input Directory Hierarchy.
             extravars['ansible_sudo_pass'] = self.args.remote_sudo_password
 
+        if self.args.action in [
+            'wordpress',
+            'joomla',
+        ]:
+            extravars['site_title'] = self.args.site_title
+            extravars['admin_username'] = self.args.admin_username
+            extravars['admin_email'] = self.args.admin_email
+            extravars['admin_password'] = self.args.admin_password
+
         if self.args.action == 'wordpress':
             extravars['wordpress_version'] = self.args.wordpress_version
             extravars['wordpress_locale'] = self.args.wordpress_locale
-            extravars['wordpress_site_title'] = self.args.wordpress_site_title
-            extravars['wordpress_admin_username'] = \
-                self.args.wordpress_admin_username
-            extravars['wordpress_admin_password'] = \
-                self.args.wordpress_admin_password
-            extravars['wordpress_admin_email'] = \
-                self.args.wordpress_admin_email
 
             # TODO: This should be deprecated in favor of
             # letting WP-CLI handlethese.
@@ -142,10 +144,14 @@ class ArgValidator():
             extravars['wordpress_insecure_allow_xmlrpc'] = \
                 self.args.wordpress_insecure_allow_xmlrpc
             extravars['wordpress_url'] = self.get_wordpress_url()
-            extravars['wp_apache_document_root'] = \
-                self.get_apache_document_root()
             extravars['wordpress_manual_install'] = \
                 self.args.wordpress_manual_install
+
+        elif self.args.action == 'joomla':
+            # TODO: We could do something like 'cms_version' instead.
+            extravars['joomla_version'] = self.args.joomla_version
+            extravars['joomla_admin_full_name'] = \
+                self.args.joomla_admin_full_name
 
         elif self.args.action in ['laravel']:
             extravars['app_build_path'] = self.args.app_build_path
@@ -279,10 +285,45 @@ class ArgValidator():
         except AssertionError:
             server_name = DEFAULT_APACHE_SERVER_NAME
 
+        if self.args.action in [
+            'wordpress',
+            'joomla',
+        ]:
+            if self.args.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
+                self.apache_document_root = '{}/{}'.format(
+                    DEFAULT_APACHE_DOCUMENT_ROOT,
+                    self.args.action
+                )
+            else:
+                self.apache_document_root = self.args.apache_document_root
+
+            if self.args.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
+                self.apache_vhost_name = self.args.action
+            else:
+                self.apache_vhost_name = self.args.apache_vhost_name
+
+        elif self.args.action == 'laravel':
+            if self.args.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
+                self.apache_document_root = '{}/{}/public'.format(
+                    DEFAULT_APACHE_DOCUMENT_ROOT,
+                    self.args.app_name
+                )
+            else:
+                self.apache_document_root = self.args.apache_document_root
+
+            if self.args.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
+                self.apache_vhost_name = self.args.app_name
+            else:
+                self.apache_vhost_name = self.args.apache_vhost_name
+
+        else:
+            self.apache_document_root = self.args.apache_document_root
+            self.apache_vhost_name = self.args.apache_vhost_name
+
         base_vhost_dict = {
             'base_vhost_file': '{}.conf'.format(DEFAULT_APACHE_VHOST_NAME),
-            'document_root':  self.args.apache_document_root,
-            'vhost_name':     self.args.apache_vhost_name,
+            'document_root':  self.apache_document_root,
+            'vhost_name':     self.apache_vhost_name,
             'server_name':    server_name,
             'server_admin':   self.args.apache_server_admin,
             'allow_override': self.get_apache_allow_override(),
@@ -307,11 +348,48 @@ class ArgValidator():
 
     def validate_database_args(self):
 
+        default_database_names = {
+            'wordpress': 'wordpress',
+            'joomla':    'joomla',
+            'laravel':   self.args.app_name,
+        }
+
+        default_database_table_prefixes = {
+            'wordpress': 'wp_',
+            # TODO?
+            'joomla':    '',
+            'laravel':   '',
+        }
         if self.args.database_password \
             and not self.args.insecure_cli_password:
 
             print(INSECURE_CLI_PASS_WARNING)
             return 1
+
+        if self.args.action in [
+            'wordpress',
+            'joomla',
+            'laravel',
+        ]:
+            self.handle_defaults([
+                {
+                    'arg_name': 'database_name',
+                    'cli_default_value': None,
+                    'override_default_value': default_database_names[
+                        self.args.action],
+                },
+                {
+                    'arg_name': 'database_username',
+                    'cli_default_value': None,
+                    'override_default_value': DEFAULT_DATABASE_USERNAME,
+                },
+                {
+                    'arg_name': 'database_table_prefix',
+                    'cli_default_value': DEFAULT_DATABASE_TABLE_PREFIX,
+                    'override_default_value': default_database_table_prefixes[
+                        self.args.action],
+                },
+            ], True, True)
 
         if self.args.database_username and not self.args.database_password:
             self.args.database_password = self.get_pass_and_check(
@@ -362,21 +440,38 @@ class ArgValidator():
         # * Ubuntu 22 does not support PHP 8.0. PHP 8.1 is supported.
         # To work around the above points, you would have to manually configure the
         # APT repository.
+        # TODO: Joomla 5 requires minimum PHP 8.1.
         if self.args.php_extensions:
             extensions = [
                 extension.strip()
                 for extension in self.args.php_extensions.split(',')
             ]
+        elif self.args.action == 'lamp-stack':
+            extensions = ['mysql']
+
+        elif self.args.action == 'wordpress':
+            extensions = ['mysql']
+
+        elif self.args.action == 'joomla':
+            # TODO
+            extensions = [
+                'simplexml',
+                'dom',
+                'zip',
+                'gd',
+                'mysql',
+            ]
+
         elif self.args.action == 'laravel':
             extensions = [
                 'mysql',
                 'xml',
                 'mbstring'
             ]
-        elif self.args.action == 'wordpress':
-            extensions = ['mysql']
+
         else:
             extensions = []
+
         self.php_extensions = [
             'php{}-{}'.format(
                 self.args.php_version,
@@ -395,67 +490,45 @@ class ArgValidator():
             print('\nInvalid WordPress version! Leave --wordpress-version blank to default to \'{}\''.format(DEFAULT_WORDPRESS_VERSION))
             return 1
 
-        if self.args.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
-            wp_apache_document_root = '{}/wordpress'.format(
-                DEFAULT_APACHE_DOCUMENT_ROOT
-            )
-        else:
-            wp_apache_document_root = self.args.apache_document_root
-
-        if self.args.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
-            wp_apache_vhost_name = 'wordpress'
-        else:
-            wp_apache_vhost_name = self.args.apache_vhost_name
-
-        for i in range(len(self.apache_vhosts)):
-            self.apache_vhosts[i]['document_root'] = wp_apache_document_root
-            self.apache_vhosts[i]['vhost_name'] = wp_apache_vhost_name
-
-        self.apache_document_root = wp_apache_document_root
+        # TODO: These are for backwards compatibility, in case a user still uses
+        # the deprecated flag instead of the one valid for all CMS.
+        # Support for deprecated flags will be dropped in a future version.
+        if self.args.wordpress_site_title and not self.args.site_title:
+            self.args.site_title = self.args.wordpress_site_title
+        if self.args.wordpress_admin_username and not self.args.admin_username:
+            self.args.admin_username = self.args.wordpress_admin_username
+        if self.args.wordpress_admin_email and not self.args.admin_email:
+            self.args.admin_email = self.args.wordpress_admin_email
+        if self.args.wordpress_admin_password and not self.args.admin_password:
+            self.args.admin_password = self.args.wordpress_admin_password
+        ####
 
         self.handle_defaults([
             {
-                'arg_name': 'database_name',
+                'arg_name': 'site_title',
                 'cli_default_value': None,
-                'override_default_value': 'wordpress',
+                'override_default_value': DEFAULT_SITE_TITLE,
             },
             {
-                'arg_name': 'database_username',
+                'arg_name': 'admin_username',
                 'cli_default_value': None,
-                'override_default_value': DEFAULT_DATABASE_USERNAME,
+                'override_default_value': DEFAULT_ADMIN_USERNAME,
             },
             {
-                'arg_name': 'database_table_prefix',
-                'cli_default_value': DEFAULT_DATABASE_TABLE_PREFIX,
-                'override_default_value': 'wp_',
-            },
-            {
-                'arg_name': 'wordpress_site_title',
+                'arg_name': 'admin_email',
                 'cli_default_value': None,
-                'override_default_value': DEFAULT_WORDPRESS_SITE_TITLE,
-            },
-            {
-                'arg_name': 'wordpress_admin_username',
-                'cli_default_value': None,
-                'override_default_value': DEFAULT_WORDPRESS_ADMIN_USERNAME,
-            },
-            {
-                'arg_name': 'wordpress_admin_email',
-                'cli_default_value': None,
-                'override_default_value': DEFAULT_WORDPRESS_ADMIN_EMAIL,
+                'override_default_value': DEFAULT_ADMIN_EMAIL,
             },
         ], True, True)
 
-        self.validate_database_args()
-
-        if self.args.wordpress_admin_password \
+        if self.args.admin_password \
             and not self.args.insecure_cli_password:
             print(INSECURE_CLI_PASS_WARNING)
             return 1
 
-        if not self.args.wordpress_admin_password:
-            self.args.wordpress_admin_password = self.get_pass_and_check(
-                'Please choose a password for the WordPress admin: ',
+        if not self.args.admin_password:
+            self.args.admin_password = self.get_pass_and_check(
+                "Please choose a password for the website's admin user: ",
                 0,
                 True
             )
@@ -502,6 +575,50 @@ class ArgValidator():
             return False
 
 
+    def validate_joomla_args(self):
+        if self.args.action != 'joomla':
+            return 0
+
+        self.handle_defaults([
+            {
+                'arg_name': 'site_title',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_SITE_TITLE,
+            },
+            {
+                'arg_name': 'admin_username',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_ADMIN_USERNAME,
+            },
+            {
+                'arg_name': 'admin_email',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_ADMIN_EMAIL,
+            },
+            {
+                'arg_name': 'joomla_admin_full_name',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_JOOMLA_ADMIN_FULL_NAME,
+            },
+        ], True, True)
+
+        # TODO: If instead of returning 1 we throw an exception, we could make
+        # a small helper function out of this, see validate_wordpress_args.
+        if self.args.admin_password \
+            and not self.args.insecure_cli_password:
+            print(INSECURE_CLI_PASS_WARNING)
+            return 1
+
+        if not self.args.admin_password:
+            self.args.admin_password = self.get_pass_and_check(
+                "Please choose a password for the website's admin user: ",
+                12,
+                True
+            )
+
+        return 0
+
+
     def validate_app_args(self):
         if self.args.action not in [
             'laravel',
@@ -520,38 +637,19 @@ class ArgValidator():
             ))
             return 1
 
-        if self.args.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
-            app_apache_vhost_name = self.args.app_name
-        else:
-            app_apache_vhost_name = self.args.apache_vhost_name
-
         self.app_source_root = '/var/www/html/{}'.format(self.args.app_name)
-        app_apache_document_root = '{}/public'.format(self.app_source_root)
-
-        self.apache_document_root = app_apache_document_root
-
-        for i in range(len(self.apache_vhosts)):
-            self.apache_vhosts[i]['vhost_name'] = app_apache_vhost_name
-            self.apache_vhosts[i]['document_root'] = app_apache_document_root
-
-        self.handle_defaults([
-            {
-                'arg_name': 'database_name',
-                'cli_default_value': None,
-                'override_default_value': self.args.app_name,
-            },
-            {
-                'arg_name': 'database_username',
-                'cli_default_value': None,
-                'override_default_value': DEFAULT_DATABASE_USERNAME,
-            },
-            ], True, True
-        )
-        self.validate_database_args()
 
         self.args.laravel_artisan_commands = \
             self.args.laravel_artisan_commands.split(',')
 
+        return 0
+
+
+    def validate_misc_args(self):
+        try:
+            self.args.extra_packages = self.args.extra_packages.split(',')
+        except AttributeError:
+            self.args.extra_packages = []
         return 0
 
 
@@ -578,7 +676,9 @@ class ArgValidator():
             'validate_ssl_args',
             'validate_php_args',
             'validate_wordpress_args',
+            'validate_joomla_args',
             'validate_app_args',
+            'validate_misc_args',
         ]
         for method_name in validate_methods:
             method = getattr(self, method_name)

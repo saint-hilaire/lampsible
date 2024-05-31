@@ -151,6 +151,23 @@ def main():
     # TODO
     # parser.add_argument('--php-my-admin', action='store_true')
 
+    # All CMS
+    # -------
+    parser.add_argument('--site-title', '-t',
+        help="The \"Site Title\" configuration of your website. If you leave this blank, you will be prompted to enter a value, or default to '{}'".format(
+            DEFAULT_SITE_TITLE
+        )
+    )
+    parser.add_argument('--admin-username',
+        help="The admin username of your website. If you leave this blank, you will be prompted to enter a value, or default to '{}'".format(
+            DEFAULT_ADMIN_USERNAME
+        )
+    )
+    parser.add_argument('--admin-email',
+        help="The email address of your website's admin username. If you leave this blank, you will be prompted to enter a value, or default to '{}'".format(
+            DEFAULT_ADMIN_EMAIL
+        )
+    )
 
     # WordPress
     # ---------
@@ -166,21 +183,13 @@ def main():
             DEFAULT_WORDPRESS_LOCALE
         )
     )
-    parser.add_argument('--wordpress-site-title',
-        help="The \"Site Title\" configuration of your WordPress site. If you leave this blank, you will be prompted to enter a value, or default to '{}'".format(
-            DEFAULT_WORDPRESS_SITE_TITLE
-        )
-    )
-    parser.add_argument('--wordpress-admin-username',
-        help="The admin username of your WordPress site. If you leave this blank, you will be prompted to enter a value, or default to '{}'".format(
-            DEFAULT_WORDPRESS_ADMIN_USERNAME
-        )
-    )
-    parser.add_argument('--wordpress-admin-email',
-        help="The email address of your WordPress site's admin username. If you leave this blank, you will be prompted to enter a value, or default to '{}'".format(
-            DEFAULT_WORDPRESS_ADMIN_EMAIL
-        )
-    )
+
+    # Joomla
+    # ------
+
+    parser.add_argument('--joomla-version', '-j',
+        default=DEFAULT_JOOMLA_VERSION)
+    parser.add_argument('--joomla-admin-full-name', '-J')
 
     # Web applications
     # ----------------
@@ -205,7 +214,7 @@ def main():
     # Ansible Runner
     # --------------
     parser.add_argument('--remote-sudo-password', help="sudo password of the remote server, this only works if you also pass '--insecure-cli-password'. This is not recommended, you should use '--ask-remote-sudo' instead.")
-    parser.add_argument('--ssh-key-file', help='path to your private SSH key')
+    parser.add_argument('--ssh-key-file', '-i',  help='path to your private SSH key')
     parser.add_argument('--private-data-dir',
         default=DEFAULT_PRIVATE_DATA_DIR,
         help="the \"private data directory\" that Ansible Runner will use. Default is '{}'. You can use this flag to pass an alternative value. However, it's best to just leave this blank. Be advised that Ansible Runner will write sensitive data here, like your private SSH key and passwords, but Lampsible will delete this directory when it finishes."
@@ -237,10 +246,20 @@ def main():
     # ---
     parser.add_argument('--php-extensions', help="A comma separated list of PHP extensions to install. For example, if you pass '--php-version 8.2 --php-extensions mysql,mbstring', Lampsible will install the packages php8.2-mysql and php8.2-mbstring. However, it's best to leave this blank, and let Lampsible pick sensible defaults depending on what you are installing.")
 
+    # All CMS
+    # -------
+    parser.add_argument('--admin-password',
+        help="Use this flag to provide the admin password of your CMS directly. This is not advised, and will only work if you also pass '--insecure-cli-password'. You should leave this blank instead, and Lampsible will prompt you for a password."
+    )
+
     # WordPress
     # ---------
     parser.add_argument('--wordpress-admin-password',
-        help="Use this flag to pass in the WordPress admin password directly. This is not advised, and will only work if you also pass '--insecure-cli-password'. You should leave this blank instead, and Lampsible will prompt you for a password."
+        help="deprecated, use '--admin-password' instead"
+    )
+    parser.add_argument('--wordpress-insecure-allow-xmlrpc',
+        action='store_true',
+        help="Pass this flag if you want your WordPress site's insecure(!) endpoint xmlrpc.php to be reachable. This will make your site vulnerable to various exploits, and you really shouldn't do this if you don't have a good reason for this."
     )
     # NOTE: Manually installing WordPress and passing the authentication salts
     # will be deprecated.
@@ -255,9 +274,14 @@ def main():
     parser.add_argument('--wordpress-secure-auth-salt', help="deprecated")
     parser.add_argument('--wordpress-logged-in-salt', help="deprecated")
     parser.add_argument('--wordpress-nonce-salt', help="deprecated")
-    parser.add_argument('--wordpress-insecure-allow-xmlrpc',
-        action='store_true',
-        help="Pass this flag if you want your WordPress site's insecure(!) endpoint xmlrpc.php to be reachable. This will make your site vulnerable to various exploits, and you really shouldn't do this if you don't have a good reason for this."
+    parser.add_argument('--wordpress-site-title',
+        help="deprecated, use '--site-title' instead."
+    )
+    parser.add_argument('--wordpress-admin-username',
+        help="deprecated, use '--admin-username' instead"
+    )
+    parser.add_argument('--wordpress-admin-email',
+        help="deprecated, use '--admin-email' instead"
     )
     # TODO
     # parser.add_argument('--wordpress-skip-content', action='store_true')
@@ -288,6 +312,7 @@ def main():
     # ----
     parser.add_argument('--insecure-cli-password', action='store_true', help="If you want to pass passwords directly over the CLI, you have to pass this flag as well, otherwise Lampsible will refuse to run. This is not advised.")
     parser.add_argument('--insecure-skip-fail2ban', action='store_true', help="Pass this flag if you don't want to install fail2ban on your server. This is insecure not advised.")
+    parser.add_argument('--extra-packages', help="comma separated list of any extra packages to be installed on the remote server")
 
     # Metadata
     # --------

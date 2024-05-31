@@ -11,7 +11,7 @@
         - php
         - pip
         - mysql
-        - laravel
+        - joomla
 
     - include_role:
         name: ssl-selfsigned
