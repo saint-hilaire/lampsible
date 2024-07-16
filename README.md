@@ -100,14 +100,9 @@ the `--php-version` flag. Based on your Ubuntu version, these currently are:
 * Ubuntu 22: PHP 8.1
 * Ubuntu 20: PHP 7.4
 
-A future version of Lampsible will improve this. The default will be the
-newest version of PHP, but if Lampsible detects that you are trying to
-install an unsupported PHP version on your remote Ubuntu server, Lampsible
-will warn you, and offer to overwrite the value with a value that's supported.
-That way, you won't have to worry about PHP versions altogether.
-
-However, for now, you do have to be mindful of the Ubuntu version, and specify
-the correct PHP version.
+A future version of Lampsible will improve this, so you won't have to worry
+about Ubuntu and PHP versions. However, for now, you do have to be mindful
+of the Ubuntu version, and specify the correct PHP version.
 
 Of course, you can also add support for other PHP versions on your remote
 server by manually configuring the APT repository.
