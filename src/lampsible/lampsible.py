@@ -42,10 +42,6 @@ def find_package_project_dir():
     raise RuntimeError("Got no user supplied --project-dir, and could not find one in expected package location. Your Lampsible installation is likely broken. However, if you are running this code directly from source, this is expected behavior. You probably forgot to pass the '--project-dir' flag. The directoy you're looking for is 'src/lampsible/project/'.")
 
 
-def prepare_inventory(user, remote_host):
-    return '{}@{},'.format(user, remote_host)
-
-
 def ensure_ansible_galaxy_dependencies(galaxy_requirements_file):
     with open(galaxy_requirements_file, 'r') as stream:
         required_collections = []
@@ -322,17 +318,21 @@ def main():
     args = parser.parse_args()
 
     print(LAMPSIBLE_BANNER)
-    validator = ArgValidator(args)
+
+    private_data_dir = init_private_data_dir(DEFAULT_PRIVATE_DATA_DIR)
+    project_dir      = init_project_dir(DEFAULT_PROJECT_DIR)
+
+    # inventory = prepare_inventory(validator.web_host_user, validator.web_host)
+
+    validator = ArgValidator(args, private_data_dir, project_dir)
     result = validator.validate_args()
+
+    inventory = validator.get_inventory()
+
     if result != 0:
         print('FATAL! Got invalid user input, and cannot continue. Please fix the issues listed above and try again.')
         return 1
     args = validator.get_args()
-
-    private_data_dir = init_private_data_dir(DEFAULT_PRIVATE_DATA_DIR)
-    project_dir = init_project_dir(DEFAULT_PROJECT_DIR)
-
-    inventory = prepare_inventory(validator.web_host_user, validator.web_host)
 
     galaxy_result = ensure_ansible_galaxy_dependencies(os.path.join(
         project_dir, 'ansible-galaxy-requirements.yml'))

@@ -83,33 +83,6 @@ lampsible someuser@192.168.123.123 lamp-stack \
 
 Run `lampsible --help` for a full list of options.
 
-## Note about PHP versions
-
-Different versions of Ubuntu natively support different versions of PHP.
-You can specify the PHP version to install on the remote server by
-passing the `--php-version` flag. The default value for this parameter is
-currently: **8.3**
-
-If you try to install an unsupported PHP version on your remote server,
-Lampsible will fail, because on the remote server, APT will fail to find
-the required packages. Therefore, you need to pass the correct value to
-the `--php-version` flag. Based on your Ubuntu version, these currently are:
-
-* Ubuntu 24: PHP 8.3 (default)
-* Ubuntu 23: PHP 8.2 (not tested)
-* Ubuntu 22: PHP 8.1
-* Ubuntu 20: PHP 7.4
-
-A future version of Lampsible will improve this, so you won't have to worry
-about Ubuntu and PHP versions. However, for now, you do have to be mindful
-of the Ubuntu version, and specify the correct PHP version.
-
-Of course, you can also add support for other PHP versions on your remote
-server by manually configuring the APT repository.
-
-It's also worth noting that Joomla 5 requires PHP 8.1 or newer. Similar
-requirements may apply for other CMS/frameworks like Wordpress, Laravel, etc.
-
 ## Contributing 
 
 Please do! I'd be more than happy to see Issues, Pull Requests and any other kind of feedback ;-)

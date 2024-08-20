@@ -5,13 +5,16 @@ from warnings import warn
 from getpass import getpass
 from requests import head as requests_head
 from fqdn import FQDN
+from ansible_runner import Runner, RunnerConfig
 from lampsible.constants import *
 
 
 class ArgValidator():
 
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, args, private_data_dir, project_dir):
+        self.args             = args
+        self.private_data_dir = private_data_dir
+        self.project_dir      = project_dir
 
 
     def get_args(self):
@@ -163,6 +166,40 @@ class ArgValidator():
         return extravars
 
 
+    def get_inventory(self):
+        return '{}@{},'.format(self.web_host_user, self.web_host)
+
+
+    def fetch_ansible_facts(self):
+        rc = RunnerConfig(
+            private_data_dir=self.private_data_dir,
+            project_dir=self.project_dir,
+            inventory=self.get_inventory(),
+            playbook='get-ansible-facts.yml',
+        )
+
+        if self.args.ssh_key_file:
+            try:
+                with open(os.path.abspath(self.args.ssh_key_file), 'r') as key_file:
+                    key_data = key_file.read()
+                rc.ssh_key_data = key_data
+            except FileNotFoundError:
+                print('Warning! SSH key file not found!')
+
+        rc.prepare()
+        r = Runner(config=rc)
+        r.run()
+
+        # TODO: Dealing with hosts this way is definitely an antipattern
+        # that I want to get rid of by version 2...
+        self.ansible_facts = r.get_fact_cache(
+            '{}@{}'.format(
+                self.web_host_user,
+                self.web_host
+            )
+        )
+
+
     def handle_defaults(
         self,
         default_args,
@@ -252,15 +289,18 @@ class ArgValidator():
             return password
 
 
-    def validate_ansible_runner_args(self):
+    def prepare_inventory(self):
         try:
             user_at_host = self.args.user_at_host.split('@')
             self.web_host_user = user_at_host[0]
             self.web_host      = user_at_host[1]
+            return 0
         except (IndexError, AttributeError):
             print('FATAL! First positional argument must be in the format of \'user@host\'')
             return 1
 
+
+    def validate_ansible_runner_args(self):
         if self.args.action not in SUPPORTED_ACTIONS:
             print('FATAL! Second positional argument must be one of {}'.format(
                 ', '.join(SUPPORTED_ACTIONS)
@@ -433,14 +473,36 @@ class ArgValidator():
 
 
     def validate_php_args(self):
-        # TODO: If we can get the ansible_facts back into a Python variable,
-        # we can validate this stuff too.
-        # NOTE:
-        # * Ubuntu versions 20 and older do not support PHP versions 8.0 or newer
-        # * Ubuntu 22 does not support PHP 8.0. PHP 8.1 is supported.
-        # To work around the above points, you would have to manually configure the
-        # APT repository.
-        # TODO: Joomla 5 requires minimum PHP 8.1.
+
+        if int(self.ansible_facts['ubuntu_version']) <= 20:
+            ubuntu_version = 'legacy'
+        else:
+            ubuntu_version = self.ansible_facts['ubuntu_version']
+
+        ubuntu_to_php_version = {
+            'legacy': '7.4',
+            '21'    : '8.0',
+            '22'    : '8.1',
+            '23'    : '8.2',
+            '24'    : '8.3',
+            'latest': '8.3',
+        }
+
+        # User passed nothing, so we set the proper version based on
+        # the Ubuntu version
+        if self.args.php_version == DEFAULT_PHP_VERSION:
+            self.args.php_version = ubuntu_to_php_version[ubuntu_version]
+        # User passed a value, warn them if it's likely to not work.
+        # TODO: In the future, we should have a global "non-interactive" flag,
+        # based on which this can be handled better, for example, "interactive"
+        # mode could offer to correct the user's input.
+        else:
+            if self.args.php_version != ubuntu_to_php_version[ubuntu_version]:
+                print('Warning! You are trying to install PHP {} on Ubuntu {}. Unless you manually configured the APT repository, this will not work.'.format(
+                    self.args.php_version,
+                    self.ansible_facts['ubuntu_version']
+                ))
+
         if self.args.php_extensions:
             extensions = [
                 extension.strip()
@@ -453,7 +515,10 @@ class ArgValidator():
             extensions = ['mysql']
 
         elif self.args.action == 'joomla':
-            # TODO
+            if int(self.args.joomla_version[0]) >= 5 \
+                    and float(self.args.php_version) < 8.1:
+                print('FATAL! Joomla versions 5 and newer require minimum PHP version 8.1!')
+                return 1
             extensions = [
                 'simplexml',
                 'dom',
@@ -669,6 +734,12 @@ class ArgValidator():
 
 
     def validate_args(self):
+        result = self.prepare_inventory()
+        if result != 0:
+            return result
+
+        self.fetch_ansible_facts()
+        # ubuntu_version = self.fetch_ubuntu_version()
         validate_methods = [
             'validate_ansible_runner_args',
             'validate_apache_args',
