@@ -140,7 +140,7 @@ def main():
     # PHP
     # ---
     parser.add_argument('-p', '--php-version', default=DEFAULT_PHP_VERSION,
-        help="the version of PHP to be installed, defaults to '{}'".format(
+        help="the version of PHP to be installed, defaults to '{}'. Leave it blank to let Lampsible pick the right version based on your remote server.".format(
             DEFAULT_PHP_VERSION
         )
     )
