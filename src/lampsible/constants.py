@@ -82,7 +82,7 @@ RECENT_WORDPRESS_VERSIONS = [
 
 # Joomla
 # ------
-DEFAULT_JOOMLA_VERSION         = '5.1.0'
+DEFAULT_JOOMLA_VERSION         = '5.1.3'
 DEFAULT_JOOMLA_ADMIN_FULL_NAME = 'Sample User'
 
 # Web applications
