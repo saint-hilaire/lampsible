@@ -322,8 +322,6 @@ def main():
     private_data_dir = init_private_data_dir(DEFAULT_PRIVATE_DATA_DIR)
     project_dir      = init_project_dir(DEFAULT_PROJECT_DIR)
 
-    # inventory = prepare_inventory(validator.web_host_user, validator.web_host)
-
     validator = ArgValidator(args, private_data_dir, project_dir)
     result = validator.validate_args()
 

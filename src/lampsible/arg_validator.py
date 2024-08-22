@@ -111,8 +111,6 @@ class ArgValidator():
             'database_host': DEFAULT_DATABASE_HOST,
             'database_name': self.args.database_name,
             'database_table_prefix': self.args.database_table_prefix,
-            'php_version': self.args.php_version,
-            'php_extensions': self.php_extensions,
             'ssl_certbot': self.args.ssl_certbot,
             'ssl_selfsigned': self.args.ssl_selfsigned,
             'email_for_ssl': self.args.email_for_ssl,
@@ -126,6 +124,16 @@ class ArgValidator():
             # make use of Ansible Runner's password feature in the
             # Input Directory Hierarchy.
             extravars['ansible_sudo_pass'] = self.args.remote_sudo_password
+
+        if self.args.action in [
+            'lamp-stack',
+            'php',
+            'wordpress',
+            'joomla',
+            'laravel',
+        ]:
+            extravars['php_version'] = self.args.php_version
+            extravars['php_extensions'] = self.php_extensions
 
         if self.args.action in [
             'wordpress',
@@ -474,6 +482,15 @@ class ArgValidator():
 
     def validate_php_args(self):
 
+        if self.args.action in [
+            'apache',
+            # TODO: But if 'mysql' was passed with '--php-myadmin',
+            # then we do need it. But PMA is not implemented currently.
+            'mysql',
+            'dump-ansible-facts',
+        ]:
+            return 0
+
         if int(self.ansible_facts['ubuntu_version']) <= 20:
             ubuntu_version = 'legacy'
         else:
@@ -492,16 +509,21 @@ class ArgValidator():
         # the Ubuntu version
         if self.args.php_version == DEFAULT_PHP_VERSION:
             self.args.php_version = ubuntu_to_php_version[ubuntu_version]
+
+        # Sanity check
+        elif self.args.php_version not in SUPPORTED_PHP_VERSIONS:
+            print('FATAL! Invalid PHP version!')
+            return 1
+
         # User passed a value, warn them if it's likely to not work.
         # TODO: In the future, we should have a global "non-interactive" flag,
         # based on which this can be handled better, for example, "interactive"
         # mode could offer to correct the user's input.
-        else:
-            if self.args.php_version != ubuntu_to_php_version[ubuntu_version]:
-                print('Warning! You are trying to install PHP {} on Ubuntu {}. Unless you manually configured the APT repository, this will not work.'.format(
-                    self.args.php_version,
-                    self.ansible_facts['ubuntu_version']
-                ))
+        elif self.args.php_version != ubuntu_to_php_version[ubuntu_version]:
+            print('Warning! You are trying to install PHP {} on Ubuntu {}. Unless you manually configured the APT repository, this will not work.'.format(
+                self.args.php_version,
+                self.ansible_facts['ubuntu_version']
+            ))
 
         if self.args.php_extensions:
             extensions = [
@@ -616,18 +638,7 @@ class ArgValidator():
 
 
     def is_valid_wordpress_version(self, wp_version):
-        recent_versions = [
-            'latest',
-            'nightly',
-            '6.5.2',
-            '6.5',
-            '6.4.4',
-            '6.4.3',
-            '6.4.2',
-            '6.4.1',
-            '6.4',
-        ]
-        if wp_version in recent_versions:
+        if wp_version in RECENT_WORDPRESS_VERSIONS:
             return True
 
         try:
@@ -739,7 +750,6 @@ class ArgValidator():
             return result
 
         self.fetch_ansible_facts()
-        # ubuntu_version = self.fetch_ubuntu_version()
         validate_methods = [
             'validate_ansible_runner_args',
             'validate_apache_args',
