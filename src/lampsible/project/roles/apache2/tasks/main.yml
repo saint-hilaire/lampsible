@@ -11,3 +11,15 @@
 - name: Enable Apache module headers
   raw: a2enmod headers
   when: ssl_certbot or ssl_selfsigned
+
+- name: Set Apache envvars if we have them
+  lineinfile:
+    path: /etc/apache2/envvars
+    line: "export {{ key_eq_val }}"
+    state: present
+  loop: "{{ extra_env_vars }}"
+  loop_control:
+    loop_var: key_eq_val
+
+- name: Reload Apache
+  service: name=apache2 state=reloaded

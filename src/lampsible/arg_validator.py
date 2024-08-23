@@ -118,6 +118,7 @@ class ArgValidator():
             'certbot_test_cert_string': self.get_certbot_test_cert_string(),
             'insecure_skip_fail2ban': self.args.insecure_skip_fail2ban,
             'extra_packages': self.args.extra_packages,
+            'extra_env_vars': self.extra_env_vars,
         }
         if self.args.remote_sudo_password:
             # TODO: It would be better to not include this as an extravar, but to
@@ -164,12 +165,13 @@ class ArgValidator():
             extravars['joomla_admin_full_name'] = \
                 self.args.joomla_admin_full_name
 
-        elif self.args.action in ['laravel']:
+        elif self.args.action == 'laravel':
             extravars['app_build_path'] = self.args.app_build_path
             extravars['app_source_root'] = self.app_source_root
             extravars['app_local_env'] = self.args.app_local_env
             extravars['laravel_artisan_commands'] = \
                 self.args.laravel_artisan_commands
+            extravars['laravel_extra_env_vars'] = self.laravel_extra_env_vars
 
         return extravars
 
@@ -698,6 +700,8 @@ class ArgValidator():
                 12,
                 True
             )
+        if self.args.extra_env_vars:
+            print('Warning! You provided values for --extra-env-vars, but Joomla will not register these. What you are trying to do will likely not work.')
 
         return 0
 
@@ -733,6 +737,25 @@ class ArgValidator():
             self.args.extra_packages = self.args.extra_packages.split(',')
         except AttributeError:
             self.args.extra_packages = []
+
+        try:
+            self.args.extra_env_vars = self.args.extra_env_vars.split(',')
+            try:
+                for i in range(len(self.args.extra_env_vars)):
+                    assert len(self.args.extra_env_vars[i].split('=')) == 2
+                    self.args.extra_env_vars[i] = self.args.extra_env_vars[i].strip()
+            except AssertionError:
+                print('FATAL! Invalid --extra-env-vars. Aborting.')
+                return 1
+        except AttributeError:
+            self.args.extra_env_vars = []
+
+        if self.args.action == 'laravel':
+            self.laravel_extra_env_vars = self.args.extra_env_vars
+            self.extra_env_vars = []
+        else:
+            self.extra_env_vars = self.args.extra_env_vars
+
         return 0
 
 

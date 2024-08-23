@@ -309,6 +309,7 @@ def main():
     parser.add_argument('--insecure-cli-password', action='store_true', help="If you want to pass passwords directly over the CLI, you have to pass this flag as well, otherwise Lampsible will refuse to run. This is not advised.")
     parser.add_argument('--insecure-skip-fail2ban', action='store_true', help="Pass this flag if you don't want to install fail2ban on your server. This is insecure not advised.")
     parser.add_argument('--extra-packages', help="comma separated list of any extra packages to be installed on the remote server")
+    parser.add_argument('--extra-env-vars', '-e', help="comma separated list of any extra environment variables that you want to pass to your web app. If you are installing a Laravel app, these variables will be appended to your app's .env file. Otherwise, they'll be appended to Apache's envvars file, typically found in /etc/apache2/envvars. Example: SOME_VARIABLE=some-value,OTHER_VARIABLE=other-value")
 
     # Metadata
     # --------
