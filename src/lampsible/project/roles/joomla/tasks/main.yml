@@ -73,3 +73,8 @@
       # - "--db-sslca="
       # # TODO?
       # - "--db-sslcipher="
+
+- name: Delete Joomla archive
+  file:
+    path: "/var/www/html/Joomla_{{ joomla_version }}-Stable-Full_Package.tar"
+    state: absent
