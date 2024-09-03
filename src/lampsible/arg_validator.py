@@ -177,7 +177,10 @@ class ArgValidator():
 
 
     def get_inventory(self):
-        return '{}@{},'.format(self.web_host_user, self.web_host)
+        try:
+            return '{}@{},'.format(self.web_host_user, self.web_host)
+        except AttributeError:
+            return None
 
 
     def fetch_ansible_facts(self):
