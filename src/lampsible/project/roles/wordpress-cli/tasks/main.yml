@@ -111,13 +111,16 @@
     path: "{{ apache_document_root }}/wp-content"
     state: directory
     recurse: yes
-    owner: www-data
     group: www-data
+    mode: g+w
 
-# TODO: I'm not sure if these are the best permissions.
-# Also, it would be cool if WP-CLI could do this instead...
+# TODO: It would be really cool if WP-CLI could do this, for example,
+# passing a '--harden' flag to the 'config' command.
+# However, to my knowledge, it currently can't.
+# It might be worth reaching out to them, to contribute that feature.
+# If WP-CLI ever does support this, then we can remove this block.
 - name: Tighten permissions on wp-config.php
   file:
     path: "{{ apache_document_root }}/wp-config.php"
-    mode: '640'
+    mode: '440'
     group: www-data
