@@ -121,6 +121,7 @@ class ArgValidator():
             'extra_env_vars': self.extra_env_vars,
         }
         if self.args.remote_sudo_password:
+            # TODO
             # TODO: It would be better to not include this as an extravar, but to
             # make use of Ansible Runner's password feature in the
             # Input Directory Hierarchy.
@@ -176,6 +177,81 @@ class ArgValidator():
         return extravars
 
 
+    # TODO: This is the main thing that I want to improve. The 'user@host,'
+    # with the comma at the end is a hack to make Ansible accept our
+    # parameters as a proper "inventory". See the following thing that
+    # I wrote as a comment in v0.12.
+    ########
+    # TODO #
+    ########
+
+    # Dealing with inventories can be tricky.
+    # This is a big part of what will have to be refactored in the future.
+    # Ideally, it should be possible to pass the inventories to Ansible,
+    # along with all sorts of variables, as a dictionary. However,
+    # that appears not to be possible at the moment. If it truly is not
+    # possible, this might be a worthwhile improvment to Ansible itself.
+    # See the code below.
+
+    # hosts = {hosts_ls[i]: users_ls[i] for i in range(l)}
+    # inventory = {
+    #     'ungrouped': {
+    #         'hosts': {
+    #             host: {'ansible_user': user} for host, user in hosts.items()
+    #         },
+    #         # various variables here...
+    #     },
+    # }
+
+    # Without dictionaries, it would mean that we would have to create
+    # some temporary files on the local filesystem to handle all the
+    # inventory configuration. This is OK, but IMO not ideal. In any case,
+    # I don't want to implement that into this project, but rather, into some
+    # "Python-Ansible-Runner" library.
+
+    # So for the time being, there are no "inventories-per-dictionary" (might
+    # require changes to Ansible itself), nor "inventory-per-tmp-file" (won't
+    # implement in this codebase, but rather in other library).
+
+    # It's possible to pass "work around" the need for the "local inventory
+    # file" by passing a comma separated list to Ansible. The commented out
+    # code below does exactly that. However, dealing with multiple users and
+    # hosts this way introduces unnecessary and unwieldy complexities, which
+    # most of the time wouldn't be needed by a tool as simple as Lampsible
+    # anyway. Funny thing... doing hosts and users this way works for the
+    # ansible_runner module when we use it in this script, but does not work
+    # for the ansible-runner as a CLI tool... even though in the venv 
+    # they should be the same versions.
+
+    # hosts_ls = hosts.split(',')
+    # users_ls = users.split(',')
+    # l = len(hosts_ls)
+    # if len(users_ls) != l:
+    #     raise NotImplementedError('For now, you have to pass users and hosts as lists that match one to one exactly. This will be improved in a future version.')
+
+    # if l > 1: 
+    #     hosts = ['{}@{}'.format(users_ls[i], hosts_ls[i]) for i in range(l)]
+    #     return ','.join(hosts)
+    # elif l == 1:
+    #     return '{}@{},'.format(users_ls[0], hosts_ls[0])
+    # else:
+    #     raise ValueError('Got bad value for --users or --hosts.')
+
+    # For these reasons, we confine ourselves for now to the simple
+    # "one user, one host" inventory. Note the comma at the end of the
+    # inventory string - that is needed, in order for Ansible to process it
+    # this way.
+
+    # To do the inventories "The Right Way", I want to find out, if it maybe
+    # isn't possible to configure the entire invetory in one single
+    # dictionary, and pass that directly to Ansible-Runner - and possibly
+    # contribute those changes to the maintainers of Ansible itself. Failing
+    # that, I want to implement some small library to handle tasks like
+    # 'writing Anisble inventory file temporarily to local filesystem', which
+    # would then be required by this application. 
+
+    # Another thing that will be important in the future is for the web-
+    # and database-servers to run on different hosts.
     def get_inventory(self):
         try:
             return '{}@{},'.format(self.web_host_user, self.web_host)
@@ -183,6 +259,7 @@ class ArgValidator():
             return None
 
 
+    # TODO
     def fetch_ansible_facts(self):
         rc = RunnerConfig(
             private_data_dir=self.private_data_dir,
@@ -203,6 +280,7 @@ class ArgValidator():
         r = Runner(config=rc)
         r.run()
 
+        # TODO
         # TODO: Dealing with hosts this way is definitely an antipattern
         # that I want to get rid of by version 2...
         self.ansible_facts = r.get_fact_cache(
@@ -302,6 +380,7 @@ class ArgValidator():
             return password
 
 
+    # TODO
     def prepare_inventory(self):
         try:
             user_at_host = self.args.user_at_host.split('@')
