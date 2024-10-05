@@ -9,6 +9,7 @@
         - apt
         - apache2
         - php
+        - composer
         - pip
         - mysql
         - joomla

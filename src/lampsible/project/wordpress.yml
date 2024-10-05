@@ -9,6 +9,7 @@
         - apt
         - apache2
         - php
+        - composer
         - pip
         - mysql
         - "{{ 'wordpress-manual' if wordpress_manual_install else 'wordpress-cli' }}"

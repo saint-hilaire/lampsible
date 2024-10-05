@@ -135,6 +135,9 @@ class ArgValidator():
         ]:
             extravars['php_version'] = self.args.php_version
             extravars['php_extensions'] = self.php_extensions
+            extravars['composer_packages'] = self.args.composer_packages
+            extravars['composer_working_directory'] = \
+                    self.args.composer_working_directory
 
         if self.args.action in [
             'wordpress',
@@ -566,6 +569,24 @@ class ArgValidator():
                 extension
             ) for extension in extensions
         ]
+
+        try:
+            self.args.composer_packages = self.args.composer_packages.split(',')
+            for package in self.args.composer_packages:
+                assert len(package.split('/')) == 2
+        except AttributeError:
+            self.args.composer_packages = []
+        except AssertionError:
+            print('Got invalid --composer-packages')
+            return 1
+
+        self.handle_defaults(
+            [{
+                'arg_name': 'composer_working_directory',
+                'cli_default_value': None,
+                'override_default_value': self.apache_document_root,
+            }]
+        )
 
         return 0
 
