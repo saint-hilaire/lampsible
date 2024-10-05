@@ -1,0 +1,18 @@
+---
+- name: Install Composer
+  apt:
+    name: composer
+    state: present
+  when: composer_packages
+
+- name: Install Composer packages
+  community.general.composer:
+    command: require
+    arguments: "{{ package }}"
+    working_dir: "{{ composer_working_directory }}"
+  loop: "{{ composer_packages }}"
+  loop_control:
+    loop_var: package
+  environment:
+    COMPOSER_ALLOW_SUPERUSER: 1
+  when: composer_packages

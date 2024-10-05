@@ -241,6 +241,8 @@ def main():
     # PHP
     # ---
     parser.add_argument('--php-extensions', help="A comma separated list of PHP extensions to install. For example, if you pass '--php-version 8.2 --php-extensions mysql,mbstring', Lampsible will install the packages php8.2-mysql and php8.2-mbstring. However, it's best to leave this blank, and let Lampsible pick sensible defaults depending on what you are installing.")
+    parser.add_argument('--composer-packages', help="A comma separated list of PHP packages to install with Composer.")
+    parser.add_argument('--composer-working-directory', help="If you provide '--composer-packages', this will be the directory in which packages are installed.")
 
     # All CMS
     # -------
