@@ -1,0 +1,17 @@
+---
+
+- name: Install Drupal
+  command:
+  args:
+    argv:
+      - "./vendor/bin/drush"
+      - site-install
+      - "{{ drupal_profile }}"
+      - "--db-url=mysql://{{ database_username }}:{{ database_password }}@localhost/{{ database_name }}"
+      - "--site-name={{ site_title }}"
+      - "--account-name={{ admin_username }}"
+      - "--account-mail={{ admin_email }}"
+      - "--account-pass={{ admin_password }}"
+      - "--uri={{ 'https' if ssl_certbot or ssl_selfsigned else 'http' }}://{{ web_host }}"
+      - "--yes"
+    chdir: "{{ composer_working_directory }}"

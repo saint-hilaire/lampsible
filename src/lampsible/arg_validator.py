@@ -80,7 +80,7 @@ class ArgValidator():
 
     def get_apache_allow_override(self):
         return (
-            self.args.action == 'laravel'
+            self.args.action in ['laravel', 'drupal']
             or (
                 self.args.action == 'wordpress'
                 and not self.args.wordpress_insecure_allow_xmlrpc
@@ -133,16 +133,19 @@ class ArgValidator():
             'wordpress',
             'joomla',
             'laravel',
+            'drupal',
         ]:
             extravars['php_version'] = self.args.php_version
             extravars['php_extensions'] = self.php_extensions
             extravars['composer_packages'] = self.args.composer_packages
             extravars['composer_working_directory'] = \
                     self.args.composer_working_directory
+            extravars['composer_project'] = self.args.composer_project
 
         if self.args.action in [
             'wordpress',
             'joomla',
+            'drupal',
         ]:
             extravars['site_title'] = self.args.site_title
             extravars['admin_username'] = self.args.admin_username
@@ -176,6 +179,9 @@ class ArgValidator():
             extravars['laravel_artisan_commands'] = \
                 self.args.laravel_artisan_commands
             extravars['laravel_extra_env_vars'] = self.laravel_extra_env_vars
+
+        elif self.args.action == 'drupal':
+            extravars['drupal_profile'] = self.args.drupal_profile
 
         return extravars
 
@@ -437,6 +443,16 @@ class ArgValidator():
             else:
                 self.apache_vhost_name = self.args.apache_vhost_name
 
+        elif self.args.action == 'drupal':
+            if self.args.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
+                self.apache_document_root = '{}/drupal/web'.format(
+                    DEFAULT_APACHE_DOCUMENT_ROOT
+                )
+            else:
+                self.apache_document_root = self.args.apache_document_root
+
+            self.apache_vhost_name = self.args.apache_vhost_name
+
         elif self.args.action == 'laravel':
             if self.args.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
                 self.apache_document_root = '{}/{}/public'.format(
@@ -486,6 +502,7 @@ class ArgValidator():
         default_database_names = {
             'wordpress': 'wordpress',
             'joomla':    'joomla',
+            'drupal':    'drupal',
             'laravel':   self.args.app_name,
         }
 
@@ -493,6 +510,7 @@ class ArgValidator():
             'wordpress': 'wp_',
             # TODO?
             'joomla':    '',
+            'drupal':    '',
             'laravel':   '',
         }
         if self.args.database_password \
@@ -504,6 +522,7 @@ class ArgValidator():
         if self.args.action in [
             'wordpress',
             'joomla',
+            'drupal',
             'laravel',
         ]:
             self.handle_defaults([
@@ -630,6 +649,15 @@ class ArgValidator():
                 'zip',
                 'gd',
                 'mysql',
+            ]
+
+        elif self.args.action == 'drupal':
+            extensions = [
+                'mysql',
+                'xml',
+                'gd',
+                'curl',
+                'mbstring',
             ]
 
         elif self.args.action == 'laravel':
@@ -809,6 +837,58 @@ class ArgValidator():
         return 0
 
 
+    def validate_drupal_args(self):
+
+        if self.args.action != 'drupal':
+            return 0
+
+        if float(self.args.php_version) < 8.3:
+            print('The latest version of Drupal requires minimum PHP 8.3.')
+            return 1
+
+        self.args.composer_project = 'drupal/recommended-project'
+        self.args.composer_working_directory = '{}/drupal'.format(
+            DEFAULT_APACHE_DOCUMENT_ROOT
+        )
+        try:
+            self.args.composer_packages.append('drush/drush')
+        except AttributeError:
+            self.args.composer_packages = ['drush/drush']
+
+        self.handle_defaults([
+            {
+                'arg_name': 'site_title',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_SITE_TITLE,
+            },
+            {
+                'arg_name': 'admin_username',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_ADMIN_USERNAME,
+            },
+            {
+                'arg_name': 'admin_email',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_ADMIN_EMAIL,
+            },
+        ], True, True)
+
+        # TODO: If instead of returning 1 we throw an exception, we could make
+        # a small helper function out of this, see validate_wordpress_args.
+        if self.args.admin_password \
+            and not self.args.insecure_cli_password:
+            print(INSECURE_CLI_PASS_WARNING)
+            return 1
+
+        if not self.args.admin_password:
+            self.args.admin_password = self.get_pass_and_check(
+                "Please choose a password for the website's admin user: ",
+                8,
+                True
+            )
+        return 0
+
+
     def validate_app_args(self):
         if self.args.action not in [
             'laravel',
@@ -891,6 +971,7 @@ class ArgValidator():
             'validate_php_args',
             'validate_wordpress_args',
             'validate_joomla_args',
+            'validate_drupal_args',
             'validate_app_args',
             'validate_misc_args',
         ]

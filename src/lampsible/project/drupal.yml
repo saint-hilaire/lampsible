@@ -1,0 +1,36 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - include_role:
+        name: "{{ item }}"
+      loop:
+        - apt
+        - apache2
+        - php
+        - composer
+        - pip
+        - mysql
+        - drupal
+
+    - include_role:
+        name: ssl-selfsigned
+      when: ssl_selfsigned
+
+    # It's important that this runs after the selfsigned certificates,
+    # if those are being used, but before Certbot, if that's being used.
+    - include_role:
+        name: apache-vhosts
+
+    - include_role:
+        name: ssl-certbot
+      when: ssl_certbot
+
+    - include_role:
+        name: apache-conf
+      when: ssl_selfsigned
+
+    - include_role:
+        name: fail2ban
+      when: not insecure_skip_fail2ban

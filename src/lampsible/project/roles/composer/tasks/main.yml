@@ -5,6 +5,29 @@
     state: present
   when: composer_packages
 
+- name: Create Composer project directory, if needed
+  file:
+    path: "{{ composer_working_directory }}"
+    state: directory
+    owner: www-data
+    group: www-data
+  when: composer_project
+
+# This is because of idempotency issues in the Composer module.
+# See https://github.com/ansible-collections/community.general/issues/725
+- name: Check for composer.json
+  stat:
+    path: "{{ composer_working_directory }}/composer.json"
+  register: composer_json
+
+- name: Create Composer project
+  community.general.composer:
+    command: create-project
+    arguments: "{{ composer_project }} {{ composer_working_directory }}"
+    working_dir: "{{ composer_working_directory }}"
+  become_user: www-data
+  when: composer_project and not composer_json.stat.exists
+
 - name: Install Composer packages
   community.general.composer:
     command: require
@@ -13,6 +36,5 @@
   loop: "{{ composer_packages }}"
   loop_control:
     loop_var: package
-  environment:
-    COMPOSER_ALLOW_SUPERUSER: 1
+  become_user: www-data
   when: composer_packages

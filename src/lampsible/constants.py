@@ -25,6 +25,7 @@ SUPPORTED_ACTIONS = [
     # PHP CMS
     'wordpress',
     'joomla',
+    'drupal',
     # PHP frameworks
     'laravel',
     # Local debugging
@@ -84,6 +85,12 @@ RECENT_WORDPRESS_VERSIONS = [
 # ------
 DEFAULT_JOOMLA_VERSION         = '5.1.4'
 DEFAULT_JOOMLA_ADMIN_FULL_NAME = 'Sample User'
+
+# DRUPAL
+
+AVAILABLE_DRUPAL_PROFILES = ['standard', 'minimal']
+DEFAULT_DRUPAL_PROFILE    = 'standard'
+# ------
 
 # Web applications
 # ----------------

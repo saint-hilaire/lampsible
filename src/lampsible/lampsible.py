@@ -187,6 +187,16 @@ def main():
         default=DEFAULT_JOOMLA_VERSION)
     parser.add_argument('--joomla-admin-full-name', '-J')
 
+    # Drupal
+    # ------
+
+    parser.add_argument('--drupal-profile', choices=AVAILABLE_DRUPAL_PROFILES,
+        default=DEFAULT_DRUPAL_PROFILE, help="Drupal supports various \"profiles\". Out of the box, these are available: {}. Defaults to {}".format(
+            ', '.join(AVAILABLE_DRUPAL_PROFILES),
+            DEFAULT_DRUPAL_PROFILE
+        )
+    )
+
     # Web applications
     # ----------------
     parser.add_argument('--app-name', default='laravel-app', help="the name of your Laravel app, if you're installing one. Leave blank to default to 'laravel-app'")
@@ -243,6 +253,7 @@ def main():
     parser.add_argument('--php-extensions', help="A comma separated list of PHP extensions to install. For example, if you pass '--php-version 8.2 --php-extensions mysql,mbstring', Lampsible will install the packages php8.2-mysql and php8.2-mbstring. However, it's best to leave this blank, and let Lampsible pick sensible defaults depending on what you are installing.")
     parser.add_argument('--composer-packages', help="A comma separated list of PHP packages to install with Composer.")
     parser.add_argument('--composer-working-directory', help="If you provide '--composer-packages', this will be the directory in which packages are installed.")
+    parser.add_argument('--composer-project', help="Pass this flag to create the specified Composer project.")
 
     # All CMS
     # -------
