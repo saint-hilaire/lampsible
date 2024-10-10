@@ -1,4 +1,7 @@
 ---
+
+# TODO: This playbook might not be needed, because Ansible Runner has the
+# method get_fact_cache to do the same thing.
 - hosts: all
   become: true
   gather_facts: true
