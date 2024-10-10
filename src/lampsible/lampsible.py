@@ -106,7 +106,7 @@ def main():
     #                      -
     # ----------------------
 
-    parser.add_argument('user_at_host', nargs='?',
+    parser.add_argument('web_user_host', nargs='?',
         help="example: someuser@somehost.com"
     )
     parser.add_argument('action', choices=SUPPORTED_ACTIONS, nargs='?')
@@ -133,8 +133,11 @@ def main():
     # --------
     parser.add_argument('-d', '--database-username', help="database user - If your website requires a database, and you leave this blank, you will be prompted to enter a value, or default to '{}'. If no database is required, and you leave this blank, no database user will be created.".format(DEFAULT_DATABASE_USERNAME))
     parser.add_argument('-n', '--database-name', help="name of your database - If your website requires a database, and you leave this blank, you will be prompted to enter a value, or default to a sensible default, depending on your app. If no database is required, and you leave this blank, no database will be created.")
+    # TODO: These aren't working yet, but it might be because of some configuration
+    # on the remote side (connection refused).
+    parser.add_argument('--database-host', default=DEFAULT_DATABASE_HOST)
+    parser.add_argument('--database-system-user-host', help="If database server is different than web server, pass this, and Ansible will install database stuff here. Otherwise, leave blank, and Ansible will install database stuff on web server, like in v1.")
     # TODO
-    # parser.add_argument('--database-host', default=DEFAULT_DATABASE_HOST)
     # parser.add_argument('--database-engine', default=DEFAULT_DATABASE_ENGINE)
 
     # PHP
@@ -338,20 +341,6 @@ def main():
 
     validator = ArgValidator(args, private_data_dir, project_dir)
     result = validator.validate_args()
-
-    # TODO: In version 1, this is something like 'user@host,' - note the comma at the end.
-    # It's an ugly hack, that makes it quick and easy to force Ansible to accept our
-    # parameters as an "inventory".
-    # As of version 2, it should be a proper "inventory", what that exactly is, I'm
-    # still trying to figure out... Some dictionary, or some YAML read from
-    # an "inventory file"..? Or both?
-    # IIRC, I wanted it to be a dictionary, but I wasn't sure
-    # if Ansible would accept that. Because writing an "inventory file" to the file
-    # system seems quite cumbersome, for such a simple thing, I wanted to:
-    # * Check if it's possible to directly pass a dictionary to Ansible/Ansible-Runner
-    # * If it's not possible, reach out to the Ansible people and try to contribute that issue.
-    # See how it was done from versions 0.7.5 until 0.12, also, see the implementation in
-    # arg_validator.py for the essay I wrote about all of this stuff.
 
     inventory = validator.get_inventory()
 

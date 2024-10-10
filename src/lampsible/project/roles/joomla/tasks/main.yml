@@ -55,7 +55,7 @@
       # TODO
       - "--db-type=mysqli"
       # TODO
-      - "--db-host=localhost"
+      - "--db-host={{ database_host }}"
       - "--db-user={{ database_username }}"
       - "--db-pass={{ database_password }}"
       - "--db-name={{ database_name }}"

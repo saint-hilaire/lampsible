@@ -13,15 +13,16 @@ authors = [
 ]
 description = "Deploy and set up LAMP stacks with Ansible"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
     "ansible-core",
     "ansible-runner",
+    "ansible-directory-helper@git+https://github.com/saint-hilaire/ansible-directory-helper",
     "requests>=2.32.3",
     "fqdn",
 ]
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 2 - Pre-Alpha",
     "Environment :: Console",
     "Framework :: Ansible",
     "Programming Language :: Python :: 3",
