@@ -340,20 +340,6 @@ def main():
     validator = ArgValidator(args, private_data_dir, project_dir)
     result = validator.validate_args()
 
-    # TODO: In version 1, this is something like 'user@host,' - note the comma at the end.
-    # It's an ugly hack, that makes it quick and easy to force Ansible to accept our
-    # parameters as an "inventory".
-    # As of version 2, it should be a proper "inventory", what that exactly is, I'm
-    # still trying to figure out... Some dictionary, or some YAML read from
-    # an "inventory file"..? Or both?
-    # IIRC, I wanted it to be a dictionary, but I wasn't sure
-    # if Ansible would accept that. Because writing an "inventory file" to the file
-    # system seems quite cumbersome, for such a simple thing, I wanted to:
-    # * Check if it's possible to directly pass a dictionary to Ansible/Ansible-Runner
-    # * If it's not possible, reach out to the Ansible people and try to contribute that issue.
-    # See how it was done from versions 0.7.5 until 0.12, also, see the implementation in
-    # arg_validator.py for the essay I wrote about all of this stuff.
-
     inventory = validator.get_inventory()
 
     if result != 0:
@@ -385,8 +371,6 @@ def main():
     if not os.path.exists(os.path.join(project_dir, playbook)):
         # TODO: In the future we will have to change how this is validated.
         raise NotImplementedError()
-
-    # import pdb; pdb.set_trace()
 
     rc = RunnerConfig(
         private_data_dir=private_data_dir,

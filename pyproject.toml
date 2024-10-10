@@ -17,6 +17,10 @@ requires-python = ">=3.8"
 dependencies = [
     "ansible-core",
     "ansible-runner",
+    # TODO: This does not work. Instead, install it locally before installing
+    # Lampsible into the venv.
+    # "ansible-inventory-helper @ file://../ansible-inventory-helper/",
+    "ansible-inventory-helper@git+https://github.com/saint-hilaire/ansible-inventory-helper",
     "requests>=2.32.3",
     "fqdn",
 ]
