@@ -354,7 +354,6 @@ def main():
     # See how it was done from versions 0.7.5 until 0.12, also, see the implementation in
     # arg_validator.py for the essay I wrote about all of this stuff.
 
-    inventory = validator.get_inventory()
 
     if result != 0:
         print('FATAL! Got invalid user input, and cannot continue. Please fix the issues listed above and try again.')
@@ -369,17 +368,19 @@ def main():
 
 
     if args.action == 'dump-ansible-facts':
+        pass
+        return 0
         # TODO
         # TODO: Perhaps we can improve this. For example, if we refactor
         # the handling of inventories, we could do this with Ansible Runner's
         # 'module' feature (that is, pass the kwargs module='setup' to the
         # configuration).
         # However, for now, this also works quite well.
-        run_command(
-            executable_cmd='ansible',
-            cmdline_args=['-i', inventory, 'ungrouped', '-m', 'setup'],
-        )
-        return 0
+        # run_command(
+        #     executable_cmd='ansible',
+        #     cmdline_args=['-i', inventory, 'ungrouped', '-m', 'setup'],
+        # )
+        # return 0
 
     playbook = '{}.yml'.format(args.action)
     if not os.path.exists(os.path.join(project_dir, playbook)):
@@ -391,7 +392,7 @@ def main():
     rc = RunnerConfig(
         private_data_dir=private_data_dir,
         project_dir=project_dir,
-        inventory=inventory,
+        inventory=validator.inventory,
         extravars=validator.get_extravars_dict(),
         playbook=playbook,
     )

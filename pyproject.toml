@@ -16,7 +16,8 @@ readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "ansible-core",
-    "ansible-runner@git+https://github.com/saint-hilaire/ansible-runner#egg=feature/dictionary-inventories",
+    # TODO: This does not work, but if I install my version locally, then it does.
+    # "ansible-runner@git+https://github.com/saint-hilaire/ansible-runner#egg=feature/dictionary-inventories",
     "requests>=2.32.3",
     "fqdn",
 ]

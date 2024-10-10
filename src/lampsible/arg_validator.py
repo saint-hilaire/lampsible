@@ -188,95 +188,12 @@ class ArgValidator():
         return extravars
 
 
-    # TODO: This is the main thing that I want to improve. The 'user@host,'
-    # with the comma at the end is a hack to make Ansible accept our
-    # parameters as a proper "inventory". See the following thing that
-    # I wrote as a comment in v0.12.
-    ########
-    # TODO #
-    ########
-
-    # Dealing with inventories can be tricky.
-    # This is a big part of what will have to be refactored in the future.
-    # Ideally, it should be possible to pass the inventories to Ansible,
-    # along with all sorts of variables, as a dictionary. However,
-    # that appears not to be possible at the moment. If it truly is not
-    # possible, this might be a worthwhile improvment to Ansible itself.
-    # See the code below.
-
-    # hosts = {hosts_ls[i]: users_ls[i] for i in range(l)}
-    # inventory = {
-    #     'ungrouped': {
-    #         'hosts': {
-    #             host: {'ansible_user': user} for host, user in hosts.items()
-    #         },
-    #         # various variables here...
-    #     },
-    # }
-
-    # Without dictionaries, it would mean that we would have to create
-    # some temporary files on the local filesystem to handle all the
-    # inventory configuration. This is OK, but IMO not ideal. In any case,
-    # I don't want to implement that into this project, but rather, into some
-    # "Python-Ansible-Runner" library.
-
-    # So for the time being, there are no "inventories-per-dictionary" (might
-    # require changes to Ansible itself), nor "inventory-per-tmp-file" (won't
-    # implement in this codebase, but rather in other library).
-
-    # It's possible to pass "work around" the need for the "local inventory
-    # file" by passing a comma separated list to Ansible. The commented out
-    # code below does exactly that. However, dealing with multiple users and
-    # hosts this way introduces unnecessary and unwieldy complexities, which
-    # most of the time wouldn't be needed by a tool as simple as Lampsible
-    # anyway. Funny thing... doing hosts and users this way works for the
-    # ansible_runner module when we use it in this script, but does not work
-    # for the ansible-runner as a CLI tool... even though in the venv 
-    # they should be the same versions.
-
-    # hosts_ls = hosts.split(',')
-    # users_ls = users.split(',')
-    # l = len(hosts_ls)
-    # if len(users_ls) != l:
-    #     raise NotImplementedError('For now, you have to pass users and hosts as lists that match one to one exactly. This will be improved in a future version.')
-
-    # if l > 1: 
-    #     hosts = ['{}@{}'.format(users_ls[i], hosts_ls[i]) for i in range(l)]
-    #     return ','.join(hosts)
-    # elif l == 1:
-    #     return '{}@{},'.format(users_ls[0], hosts_ls[0])
-    # else:
-    #     raise ValueError('Got bad value for --users or --hosts.')
-
-    # For these reasons, we confine ourselves for now to the simple
-    # "one user, one host" inventory. Note the comma at the end of the
-    # inventory string - that is needed, in order for Ansible to process it
-    # this way.
-
-    # To do the inventories "The Right Way", I want to find out, if it maybe
-    # isn't possible to configure the entire invetory in one single
-    # dictionary, and pass that directly to Ansible-Runner - and possibly
-    # contribute those changes to the maintainers of Ansible itself. Failing
-    # that, I want to implement some small library to handle tasks like
-    # 'writing Anisble inventory file temporarily to local filesystem', which
-    # would then be required by this application. 
-
-    # Another thing that will be important in the future is for the web-
-    # and database-servers to run on different hosts.
-    def get_inventory(self):
-        return os.path.abspath(os.path.join(self.private_data_dir, 'inventory'))
-        # try:
-        #     return '{}@{},'.format(self.web_user, self.web_host)
-        # except AttributeError:
-        #     return None
-
-
     # TODO
     def fetch_ansible_facts(self):
         rc = RunnerConfig(
             private_data_dir=self.private_data_dir,
             project_dir=self.project_dir,
-            # inventory=self.get_inventory(),
+            inventory=self.inventory,
             playbook='get-ansible-facts.yml',
         )
 
@@ -395,21 +312,6 @@ class ArgValidator():
     # TODO
     def prepare_inventory(self):
         try:
-            os.mkdir(os.path.join(self.private_data_dir, 'inventory'))
-        except FileExistsError:
-            pass
-
-        # import pdb; pdb.set_trace()
-        # inventory = {
-        #     'ungrouped': {
-        #         'hosts': {
-        #             host: {'ansible_user': user}
-        #         },
-        #     },
-        # }
-        # with open(os.path.join(private_data_dir, 'inventory', 'hosts'), 'w') as fh:
-        #     fh.write(yaml.dump(inventory))
-        try:
             web_user_host = self.args.web_user_host.split('@')
             # TODO: Ideally, we shouldn't even need to set these variables, but apparently
             # we might still need them for get_fact_cache (See method fetch_ansible_facts).
@@ -431,32 +333,24 @@ class ArgValidator():
             db_sys_user = self.web_user
             db_sys_host = self.web_host
 
-        inventory = {
-            'web_servers'     : {
-                'hosts': {
-                    self.web_host: {
-                        'ansible_user': self.web_user,
+        self.inventory = {
+            'hosts': {
+                'web_servers'     : {
+                    'hosts': {
+                        self.web_host: {
+                            'ansible_user': self.web_user,
+                        },
                     },
                 },
-            },
-            'database_servers': {
-                'hosts': {
-                    db_sys_host: {
-                        'ansible_user': db_sys_user,
+                'database_servers': {
+                    'hosts': {
+                        db_sys_host: {
+                            'ansible_user': db_sys_user,
+                        },
                     },
                 },
-            },
+            }
         }
-
-        with open(
-            os.path.join(
-                self.private_data_dir,
-                'inventory',
-                'hosts'
-            ),
-            'w'
-        ) as fh:
-            fh.write(yaml.dump(inventory))
 
         return 0
 
