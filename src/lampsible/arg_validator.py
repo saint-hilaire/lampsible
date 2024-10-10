@@ -8,6 +8,7 @@ from getpass import getpass
 from requests import head as requests_head
 from fqdn import FQDN
 from ansible_runner import Runner, RunnerConfig
+from ansible_dictionary_inventories.inventory_manager import InventoryManager
 from lampsible.constants import *
 
 
@@ -448,15 +449,25 @@ class ArgValidator():
             },
         }
 
-        with open(
+        inv_man = InventoryManager(
             os.path.join(
                 self.private_data_dir,
                 'inventory',
                 'hosts'
             ),
-            'w'
-        ) as fh:
-            fh.write(yaml.dump(inventory))
+            inventory
+        )
+
+        inv_man.write_inventory()
+        # with open(
+        #     os.path.join(
+        #         self.private_data_dir,
+        #         'inventory',
+        #         'hosts'
+        #     ),
+        #     'w'
+        # ) as fh:
+        #     fh.write(yaml.dump(inventory))
 
         return 0
 
