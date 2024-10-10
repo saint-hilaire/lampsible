@@ -1,5 +1,14 @@
 ---
-- hosts: all
+- hosts: database_servers
+  gather_facts: true
+  tasks:
+    - include_role:
+        name: "{{ item }}"
+      loop:
+        - pip
+        - mysql
+
+- hosts: web_servers
   become: true
   gather_facts: true
   tasks:
@@ -10,8 +19,6 @@
         - apache2
         - php
         - composer
-        - pip
-        - mysql
 
     - include_role:
         name: ssl-selfsigned
