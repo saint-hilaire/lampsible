@@ -106,7 +106,7 @@ def main():
     #                      -
     # ----------------------
 
-    parser.add_argument('user_at_host', nargs='?',
+    parser.add_argument('web_user_host', nargs='?',
         help="example: someuser@somehost.com"
     )
     parser.add_argument('action', choices=SUPPORTED_ACTIONS, nargs='?')
@@ -133,8 +133,9 @@ def main():
     # --------
     parser.add_argument('-d', '--database-username', help="database user - If your website requires a database, and you leave this blank, you will be prompted to enter a value, or default to '{}'. If no database is required, and you leave this blank, no database user will be created.".format(DEFAULT_DATABASE_USERNAME))
     parser.add_argument('-n', '--database-name', help="name of your database - If your website requires a database, and you leave this blank, you will be prompted to enter a value, or default to a sensible default, depending on your app. If no database is required, and you leave this blank, no database will be created.")
+    parser.add_argument('--database-host', default=DEFAULT_DATABASE_HOST)
+    parser.add_argument('--database-system-user-host', help="If database server is different than web server, pass this, and Ansible will install database stuff here. Otherwise, leave blank, and Ansible will install database stuff on web server, like in v1.")
     # TODO
-    # parser.add_argument('--database-host', default=DEFAULT_DATABASE_HOST)
     # parser.add_argument('--database-engine', default=DEFAULT_DATABASE_ENGINE)
 
     # PHP
@@ -384,6 +385,8 @@ def main():
     if not os.path.exists(os.path.join(project_dir, playbook)):
         # TODO: In the future we will have to change how this is validated.
         raise NotImplementedError()
+
+    # import pdb; pdb.set_trace()
 
     rc = RunnerConfig(
         private_data_dir=private_data_dir,

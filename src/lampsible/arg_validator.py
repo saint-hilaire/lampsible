@@ -1,3 +1,5 @@
+import os
+import yaml
 from re import match
 from copy import copy
 from secrets import token_hex
@@ -262,10 +264,11 @@ class ArgValidator():
     # Another thing that will be important in the future is for the web-
     # and database-servers to run on different hosts.
     def get_inventory(self):
-        try:
-            return '{}@{},'.format(self.web_host_user, self.web_host)
-        except AttributeError:
-            return None
+        return os.path.abspath(os.path.join(self.private_data_dir, 'inventory'))
+        # try:
+        #     return '{}@{},'.format(self.web_user, self.web_host)
+        # except AttributeError:
+        #     return None
 
 
     # TODO
@@ -273,7 +276,7 @@ class ArgValidator():
         rc = RunnerConfig(
             private_data_dir=self.private_data_dir,
             project_dir=self.project_dir,
-            inventory=self.get_inventory(),
+            # inventory=self.get_inventory(),
             playbook='get-ansible-facts.yml',
         )
 
@@ -294,7 +297,7 @@ class ArgValidator():
         # that I want to get rid of by version 2...
         self.ansible_facts = r.get_fact_cache(
             '{}@{}'.format(
-                self.web_host_user,
+                self.web_user,
                 self.web_host
             )
         )
@@ -392,13 +395,70 @@ class ArgValidator():
     # TODO
     def prepare_inventory(self):
         try:
-            user_at_host = self.args.user_at_host.split('@')
-            self.web_host_user = user_at_host[0]
-            self.web_host      = user_at_host[1]
-            return 0
+            os.mkdir(os.path.join(self.private_data_dir, 'inventory'))
+        except FileExistsError:
+            pass
+
+        # import pdb; pdb.set_trace()
+        # inventory = {
+        #     'ungrouped': {
+        #         'hosts': {
+        #             host: {'ansible_user': user}
+        #         },
+        #     },
+        # }
+        # with open(os.path.join(private_data_dir, 'inventory', 'hosts'), 'w') as fh:
+        #     fh.write(yaml.dump(inventory))
+        try:
+            web_user_host = self.args.web_user_host.split('@')
+            # TODO: Ideally, we shouldn't even need to set these variables, but apparently
+            # we might still need them for get_fact_cache (See method fetch_ansible_facts).
+            self.web_user = web_user_host[0]
+            self.web_host = web_user_host[1]
         except (IndexError, AttributeError):
-            print('FATAL! First positional argument must be in the format of \'user@host\'')
+            print("FATAL! First positional argument must be in the format of 'user@host'")
             return 1
+
+        if self.args.database_system_user_host:
+            try:
+                db_sys_user_host = self.args.database_system_user_host.split('@')
+                db_sys_user = db_sys_user_host[0]
+                db_sys_host = db_sys_user_host[1]
+            except IndexError:
+                print("FATAL! --database-system-user-host must be in the format of 'user@host'. Alternatively, omit it to install database on web server.")
+                return 1
+        else:
+            db_sys_user = self.web_user
+            db_sys_host = self.web_host
+
+        inventory = {
+            'web_servers'     : {
+                'hosts': {
+                    self.web_host: {
+                        'ansible_user': self.web_user,
+                    },
+                },
+            },
+            'database_servers': {
+                'hosts': {
+                    db_sys_host: {
+                        'ansible_user': db_sys_user,
+                    },
+                },
+            },
+        }
+
+        with open(
+            os.path.join(
+                self.private_data_dir,
+                'inventory',
+                'hosts'
+            ),
+            'w'
+        ) as fh:
+            fh.write(yaml.dump(inventory))
+
+        return 0
 
 
     def validate_ansible_runner_args(self):
