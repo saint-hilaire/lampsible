@@ -372,24 +372,26 @@ def main():
         # TODO: In the future we will have to change how this is validated.
         raise NotImplementedError()
 
-    rc = RunnerConfig(
-        private_data_dir=private_data_dir,
-        project_dir=project_dir,
-        inventory=inventory,
-        extravars=validator.get_extravars_dict(),
-        playbook=playbook,
-    )
+    # rc = RunnerConfig(
+    #     private_data_dir=private_data_dir,
+    #     project_dir=project_dir,
+    #     inventory=inventory,
+    #     extravars= validator.get_extravars_dict(),
+    #     playbook=  playbook,
+    # )
+    validator.runner_config.extravars = validator.get_extravars_dict()
+    validator.runner_config.playbook = playbook
 
-    if args.ssh_key_file:
-        try:
-            with open(os.path.abspath(args.ssh_key_file), 'r') as key_file:
-                key_data = key_file.read()
-            rc.ssh_key_data = key_data
-        except FileNotFoundError:
-            print('Warning! SSH key file not found!')
+    # if args.ssh_key_file:
+    #     try:
+    #         with open(os.path.abspath(args.ssh_key_file), 'r') as key_file:
+    #             key_data = key_file.read()
+    #         rc.ssh_key_data = key_data
+    #     except FileNotFoundError:
+    #         print('Warning! SSH key file not found!')
 
-    rc.prepare()
-    r = Runner(config=rc)
+    validator.runner_config.prepare()
+    r = Runner(config=validator.runner_config)
     r.run()
 
     # TODO: Deal with these better.

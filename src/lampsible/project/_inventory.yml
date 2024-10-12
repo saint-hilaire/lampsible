@@ -1,0 +1,5 @@
+plugin: dynamic_inventory
+web_host: "{{ web_host }}"
+web_user: "{{ web_user }}"
+db_sys_host: "{{ db_sys_host }}"
+db_sys_user: "{{ db_sys_user }}"

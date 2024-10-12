@@ -17,6 +17,16 @@ class ArgValidator():
         self.args             = args
         self.private_data_dir = private_data_dir
         self.project_dir      = project_dir
+        self.extravars = {}
+        self.runner_config = RunnerConfig(
+            private_data_dir=self.private_data_dir,
+            project_dir=self.project_dir,
+            extravars=self.extravars,
+            inventory=os.path.join(
+                self.project_dir,
+                '_inventory.yml'
+            )
+        )
 
 
     def get_args(self):
@@ -101,27 +111,46 @@ class ArgValidator():
         return '--test-cert' if self.args.test_cert else ''
 
 
+    # TODO: Rename this
     def get_extravars_dict(self):
-        extravars = {
-            'web_host': self.web_host,
-            'apache_vhosts': self.get_apache_vhosts(),
-            'apache_document_root': self.apache_document_root,
-            'apache_vhost_name': self.apache_vhost_name,
-            'apache_custom_conf_name': self.get_apache_custom_conf_name(),
-            'database_username': self.args.database_username,
-            'database_password': self.args.database_password,
-            'database_host': DEFAULT_DATABASE_HOST,
-            'database_name': self.args.database_name,
-            'database_table_prefix': self.args.database_table_prefix,
-            'ssl_certbot': self.args.ssl_certbot,
-            'ssl_selfsigned': self.args.ssl_selfsigned,
-            'email_for_ssl': self.args.email_for_ssl,
-            'certbot_domains_string': self.get_certbot_domains_string(),
-            'certbot_test_cert_string': self.get_certbot_test_cert_string(),
-            'insecure_skip_fail2ban': self.args.insecure_skip_fail2ban,
-            'extra_packages': self.args.extra_packages,
-            'extra_env_vars': self.extra_env_vars,
-        }
+        self.extravars['web_host'] = self.web_host
+        self.extravars['apache_vhosts'] = self.get_apache_vhosts()
+        self.extravars['apache_document_root'] = self.apache_document_root
+        self.extravars['apache_vhost_name'] = self.apache_vhost_name
+        self.extravars['apache_custom_conf_name'] = self.get_apache_custom_conf_name()
+        self.extravars['database_username'] = self.args.database_username
+        self.extravars['database_password'] = self.args.database_password
+        self.extravars['database_host'] = DEFAULT_DATABASE_HOST
+        self.extravars['database_name'] = self.args.database_name
+        self.extravars['database_table_prefix'] = self.args.database_table_prefix
+        self.extravars['ssl_certbot'] = self.args.ssl_certbot
+        self.extravars['ssl_selfsigned'] = self.args.ssl_selfsigned
+        self.extravars['email_for_ssl'] = self.args.email_for_ssl
+        self.extravars['certbot_domains_string'] = self.get_certbot_domains_string()
+        self.extravars['certbot_test_cert_string'] = self.get_certbot_test_cert_string()
+        self.extravars['insecure_skip_fail2ban'] = self.args.insecure_skip_fail2ban
+        self.extravars['extra_packages'] = self.args.extra_packages
+        self.extravars['extra_env_vars'] = self.extra_env_vars
+        # extravars = {
+        #     'web_host': self.web_host,
+        #     'apache_vhosts': self.get_apache_vhosts(),
+        #     'apache_document_root': self.apache_document_root,
+        #     'apache_vhost_name': self.apache_vhost_name,
+        #     'apache_custom_conf_name': self.get_apache_custom_conf_name(),
+        #     'database_username': self.args.database_username,
+        #     'database_password': self.args.database_password,
+        #     'database_host': DEFAULT_DATABASE_HOST,
+        #     'database_name': self.args.database_name,
+        #     'database_table_prefix': self.args.database_table_prefix,
+        #     'ssl_certbot': self.args.ssl_certbot,
+        #     'ssl_selfsigned': self.args.ssl_selfsigned,
+        #     'email_for_ssl': self.args.email_for_ssl,
+        #     'certbot_domains_string': self.get_certbot_domains_string(),
+        #     'certbot_test_cert_string': self.get_certbot_test_cert_string(),
+        #     'insecure_skip_fail2ban': self.args.insecure_skip_fail2ban,
+        #     'extra_packages': self.args.extra_packages,
+        #     'extra_env_vars': self.extra_env_vars,
+        # }
         if self.args.remote_sudo_password:
             # TODO
             # TODO: It would be better to not include this as an extravar, but to
@@ -188,27 +217,29 @@ class ArgValidator():
         return extravars
 
 
-    def get_inventory(self):
-        return os.path.abspath(os.path.join(self.private_data_dir, 'inventory'))
+    # def get_inventory(self):
+    #     return os.path.abspath(os.path.join(self.project_dir, '_inventory.yml'))
 
 
-    def fetch_ansible_facts(self):
-        rc = RunnerConfig(
-            private_data_dir=self.private_data_dir,
-            project_dir=self.project_dir,
-            playbook='get-ansible-facts.yml',
-        )
+    def prepare_inventory(self):
+        self.extravars['web_host'] = self.web_host
+        self.extravars['web_user'] = self.web_user
+        self.extravars['db_sys_host'] = self.db_sys_host
+        self.extravars['db_sys_user'] = self.db_sys_user
+
+        self.runner_config.inventory = self.get_inventory()
+        self.runner_config.playbook = 'get-ansible-facts.yml'
 
         if self.args.ssh_key_file:
             try:
                 with open(os.path.abspath(self.args.ssh_key_file), 'r') as key_file:
                     key_data = key_file.read()
-                rc.ssh_key_data = key_data
+                self.runner_config.ssh_key_data = key_data
             except FileNotFoundError:
                 print('Warning! SSH key file not found!')
 
-        rc.prepare()
-        r = Runner(config=rc)
+        self.runner_config.prepare()
+        r = Runner(config=self.runner_config)
         r.run()
 
         self.ansible_facts = r.get_fact_cache(self.web_host)
@@ -304,11 +335,9 @@ class ArgValidator():
 
 
     # TODO
-    def prepare_inventory(self):
+    def extract_inventory_data(self):
         try:
             web_user_host = self.args.web_user_host.split('@')
-            # TODO: Ideally, we shouldn't even need to set these variables, but apparently
-            # we might still need them for get_fact_cache (See method fetch_ansible_facts).
             self.web_user = web_user_host[0]
             self.web_host = web_user_host[1]
         except (IndexError, AttributeError):
@@ -317,42 +346,42 @@ class ArgValidator():
 
         if self.args.database_system_user_host:
             try:
-                db_sys_user_host = self.args.database_system_user_host.split('@')
-                db_sys_user = db_sys_user_host[0]
-                db_sys_host = db_sys_user_host[1]
+                self.db_sys_user_host = self.args.database_system_user_host.split('@')
+                self.db_sys_user = db_sys_user_host[0]
+                self.db_sys_host = db_sys_user_host[1]
             except IndexError:
                 print("FATAL! --database-system-user-host must be in the format of 'user@host'. Alternatively, omit it to install database on web server.")
                 return 1
         else:
-            db_sys_user = self.web_user
-            db_sys_host = self.web_host
+            self.db_sys_user = self.web_user
+            self.db_sys_host = self.web_host
 
-        inventory = {
-            'web_servers'     : {
-                'hosts': {
-                    self.web_host: {
-                        'ansible_user': self.web_user,
-                    },
-                },
-            },
-            'database_servers': {
-                'hosts': {
-                    db_sys_host: {
-                        'ansible_user': db_sys_user,
-                    },
-                },
-            },
-        }
+        # inventory = {
+        #     'web_servers'     : {
+        #         'hosts': {
+        #             self.web_host: {
+        #                 'ansible_user': self.web_user,
+        #             },
+        #         },
+        #     },
+        #     'database_servers': {
+        #         'hosts': {
+        #             db_sys_host: {
+        #                 'ansible_user': db_sys_user,
+        #             },
+        #         },
+        #     },
+        # }
 
-        with open(
-            os.path.join(
-                self.private_data_dir,
-                'inventory',
-                'hosts'
-            ),
-            'w'
-        ) as fh:
-            fh.write(yaml.dump(inventory))
+        # with open(
+        #     os.path.join(
+        #         self.private_data_dir,
+        #         'inventory',
+        #         'hosts'
+        #     ),
+        #     'w'
+        # ) as fh:
+        #     fh.write(yaml.dump(inventory))
 
         return 0
 
@@ -914,11 +943,11 @@ class ArgValidator():
 
 
     def validate_args(self):
-        result = self.prepare_inventory()
+        result = self.extract_inventory_data()
         if result != 0:
             return result
 
-        self.fetch_ansible_facts()
+        self.prepare_inventory()
         validate_methods = [
             'validate_ansible_runner_args',
             'validate_apache_args',
