@@ -112,7 +112,7 @@ class ArgValidator():
 
 
     # TODO: Rename this
-    def get_extravars_dict(self):
+    def set_extravars(self):
         self.extravars['web_host'] = self.web_host
         self.extravars['apache_vhosts'] = self.get_apache_vhosts()
         self.extravars['apache_document_root'] = self.apache_document_root
@@ -156,7 +156,7 @@ class ArgValidator():
             # TODO: It would be better to not include this as an extravar, but to
             # make use of Ansible Runner's password feature in the
             # Input Directory Hierarchy.
-            extravars['ansible_sudo_pass'] = self.args.remote_sudo_password
+            self.extravars['ansible_sudo_pass'] = self.args.remote_sudo_password
 
         if self.args.action in [
             'lamp-stack',
@@ -166,55 +166,53 @@ class ArgValidator():
             'laravel',
             'drupal',
         ]:
-            extravars['php_version'] = self.args.php_version
-            extravars['php_extensions'] = self.php_extensions
-            extravars['composer_packages'] = self.args.composer_packages
-            extravars['composer_working_directory'] = \
+            self.extravars['php_version'] = self.args.php_version
+            self.extravars['php_extensions'] = self.php_extensions
+            self.extravars['composer_packages'] = self.args.composer_packages
+            self.extravars['composer_working_directory'] = \
                     self.args.composer_working_directory
-            extravars['composer_project'] = self.args.composer_project
+            self.extravars['composer_project'] = self.args.composer_project
 
         if self.args.action in [
             'wordpress',
             'joomla',
             'drupal',
         ]:
-            extravars['site_title'] = self.args.site_title
-            extravars['admin_username'] = self.args.admin_username
-            extravars['admin_email'] = self.args.admin_email
-            extravars['admin_password'] = self.args.admin_password
+            self.extravars['site_title'] = self.args.site_title
+            self.extravars['admin_username'] = self.args.admin_username
+            self.extravars['admin_email'] = self.args.admin_email
+            self.extravars['admin_password'] = self.args.admin_password
 
         if self.args.action == 'wordpress':
-            extravars['wordpress_version'] = self.args.wordpress_version
-            extravars['wordpress_locale'] = self.args.wordpress_locale
+            self.extravars['wordpress_version'] = self.args.wordpress_version
+            self.extravars['wordpress_locale'] = self.args.wordpress_locale
 
             # TODO: This should be deprecated in favor of
             # letting WP-CLI handlethese.
-            extravars['wordpress_auth_vars'] = self.get_wordpress_auth_vars()
+            self.extravars['wordpress_auth_vars'] = self.get_wordpress_auth_vars()
 
-            extravars['wordpress_insecure_allow_xmlrpc'] = \
+            self.extravars['wordpress_insecure_allow_xmlrpc'] = \
                 self.args.wordpress_insecure_allow_xmlrpc
-            extravars['wordpress_url'] = self.get_wordpress_url()
-            extravars['wordpress_manual_install'] = \
+            self.extravars['wordpress_url'] = self.get_wordpress_url()
+            self.extravars['wordpress_manual_install'] = \
                 self.args.wordpress_manual_install
 
         elif self.args.action == 'joomla':
             # TODO: We could do something like 'cms_version' instead.
-            extravars['joomla_version'] = self.args.joomla_version
-            extravars['joomla_admin_full_name'] = \
+            self.extravars['joomla_version'] = self.args.joomla_version
+            self.extravars['joomla_admin_full_name'] = \
                 self.args.joomla_admin_full_name
 
         elif self.args.action == 'laravel':
-            extravars['app_build_path'] = self.args.app_build_path
-            extravars['app_source_root'] = self.app_source_root
-            extravars['app_local_env'] = self.args.app_local_env
-            extravars['laravel_artisan_commands'] = \
+            self.xtravars['app_build_path'] = self.args.app_build_path
+            self.xtravars['app_source_root'] = self.app_source_root
+            self.xtravars['app_local_env'] = self.args.app_local_env
+            self.xtravars['laravel_artisan_commands'] = \
                 self.args.laravel_artisan_commands
-            extravars['laravel_extra_env_vars'] = self.laravel_extra_env_vars
+            self.extravars['laravel_extra_env_vars'] = self.laravel_extra_env_vars
 
         elif self.args.action == 'drupal':
-            extravars['drupal_profile'] = self.args.drupal_profile
-
-        return extravars
+            self.extravars['drupal_profile'] = self.args.drupal_profile
 
 
     # def get_inventory(self):
@@ -227,7 +225,6 @@ class ArgValidator():
         self.extravars['db_sys_host'] = self.db_sys_host
         self.extravars['db_sys_user'] = self.db_sys_user
 
-        self.runner_config.inventory = self.get_inventory()
         self.runner_config.playbook = 'get-ansible-facts.yml'
 
         if self.args.ssh_key_file:
@@ -242,6 +239,7 @@ class ArgValidator():
         r = Runner(config=self.runner_config)
         r.run()
 
+        import pdb; pdb.set_trace()
         self.ansible_facts = r.get_fact_cache(self.web_host)
 
 
@@ -965,6 +963,8 @@ class ArgValidator():
             result = method()
             if result != 0:
                 return result
+
+        self.set_extravars()
 
         self.print_warnings()
         return 0

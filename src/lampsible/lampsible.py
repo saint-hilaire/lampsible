@@ -340,7 +340,7 @@ def main():
     validator = ArgValidator(args, private_data_dir, project_dir)
     result = validator.validate_args()
 
-    inventory = validator.get_inventory()
+    # inventory = validator.get_inventory()
 
     if result != 0:
         print('FATAL! Got invalid user input, and cannot continue. Please fix the issues listed above and try again.')
@@ -361,11 +361,12 @@ def main():
         # 'module' feature (that is, pass the kwargs module='setup' to the
         # configuration).
         # However, for now, this also works quite well.
-        run_command(
-            executable_cmd='ansible',
-            cmdline_args=['-i', inventory, 'ungrouped', '-m', 'setup'],
-        )
-        return 0
+        # run_command(
+        #     executable_cmd='ansible',
+        #     cmdline_args=['-i', inventory, 'ungrouped', '-m', 'setup'],
+        # )
+        # return 0
+        pass
 
     playbook = '{}.yml'.format(args.action)
     if not os.path.exists(os.path.join(project_dir, playbook)):
@@ -379,7 +380,6 @@ def main():
     #     extravars= validator.get_extravars_dict(),
     #     playbook=  playbook,
     # )
-    validator.runner_config.extravars = validator.get_extravars_dict()
     validator.runner_config.playbook = playbook
 
     # if args.ssh_key_file:
