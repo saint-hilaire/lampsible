@@ -319,40 +319,54 @@ class ArgValidator():
         if self.args.database_system_user_host:
             try:
                 db_sys_user_host = self.args.database_system_user_host.split('@')
-                db_sys_user = db_sys_user_host[0]
-                db_sys_host = db_sys_user_host[1]
+                self.db_sys_user = db_sys_user_host[0]
+                self.db_sys_host = db_sys_user_host[1]
             except IndexError:
                 print("FATAL! --database-system-user-host must be in the format of 'user@host'. Alternatively, omit it to install database on web server.")
                 return 1
         else:
-            db_sys_user = self.web_user
-            db_sys_host = self.web_host
+            self.db_sys_user = self.web_user
+            self.db_sys_host = self.web_host
 
-        inventory = {
-            'web_servers'     : {
-                'hosts': {
-                    self.web_host: {
-                        'ansible_user': self.web_user,
-                    },
-                },
-            },
-            'database_servers': {
-                'hosts': {
-                    db_sys_host: {
-                        'ansible_user': db_sys_user,
-                    },
-                },
-            },
-        }
+        # inventory = {
+        #     'web_servers'     : {
+        #         'hosts': {
+        #             self.web_host: {
+        #                 'ansible_user': self.web_user,
+        #             },
+        #         },
+        #     },
+        #     'database_servers': {
+        #         'hosts': {
+        #             db_sys_host: {
+        #                 'ansible_user': db_sys_user,
+        #             },
+        #         },
+        #     },
+        # }
+
 
         inventory_file = InventoryFile(
             os.path.join(
                 self.private_data_dir,
                 'inventory',
                 'hosts'
-            ),
-            inventory
+            )
+            # inventory
         )
+
+        import pdb; pdb.set_trace()
+
+        inventory_file.add_groups([
+            'web_servers',
+            'database_servers',
+        ])
+        # inventory_file.add_group('database_servers')
+        inventory_file.add_host(self.web_host, 'web_servers')
+        inventory_file.add_host(self.db_sys_host, 'database_servers')
+        # TODO: Not working?
+        inventory_file.set_ansible_user(self.web_host, self.web_user)
+        inventory_file.set_ansible_user(self.db_sys_host, self.db_sys_user)
 
         inventory_file.write_inventory()
 
