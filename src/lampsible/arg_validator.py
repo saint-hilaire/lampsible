@@ -188,8 +188,8 @@ class ArgValidator():
         return extravars
 
 
-    def get_inventory(self):
-        return os.path.abspath(os.path.join(self.private_data_dir, 'inventory'))
+    # def get_inventory(self):
+    #     return os.path.abspath(os.path.join(self.private_data_dir, 'inventory'))
 
 
     def fetch_ansible_facts(self):
