@@ -15,6 +15,7 @@ class Lampsible:
     def __init__(self, web_user, web_host, action,
             private_data_dir=DEFAULT_PRIVATE_DATA_DIR,
             apache_server_admin=DEFAULT_APACHE_SERVER_ADMIN,
+            database_root_password=None,
             database_username=None,
             database_name=None, database_host=None, database_system_user=None,
             database_system_host=None, php_version=DEFAULT_PHP_VERSION, site_title=DEFAULT_SITE_TITLE,
@@ -84,11 +85,12 @@ class Lampsible:
 
         self.apache_custom_conf_name = apache_custom_conf_name
 
-        self.database_username     = database_username
-        self.database_password     = database_password
-        self.database_name         = database_name
-        self.database_host         = database_host
-        self.database_table_prefix = database_table_prefix
+        self.database_root_password = database_root_password
+        self.database_username      = database_username
+        self.database_password      = database_password
+        self.database_name          = database_name
+        self.database_host          = database_host
+        self.database_table_prefix  = database_table_prefix
 
         self.php_version                = php_version
         self.php_extensions             = php_extensions
@@ -273,11 +275,12 @@ class Lampsible:
             'apache_document_root',
             'apache_server_admin',
             'apache_custom_conf_name',
-            'database_username',
             # TODO: Ansible Runner has a dedicated feature for dealing
             # with passwords. Likely we'll have to implement support
             # for that in ansible-directory-helper.
             # For the time being, however, treat it as an extravar.
+            'database_root_password',
+            'database_username',
             'database_password',
             'database_name',
             'database_host',

@@ -26,6 +26,7 @@ class TestLampsible(unittest.TestCase):
                 'test',
                 'tmp-private-data',
             ),
+            database_root_password='rootpassword',
             database_username=DEFAULT_DATABASE_USERNAME,
             database_password='password',
             database_host=DEFAULT_DATABASE_HOST,
