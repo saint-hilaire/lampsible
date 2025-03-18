@@ -207,9 +207,18 @@ class ArgValidator():
             'drupal':    '',
             'laravel':   '',
         }
-        if self.args.database_password \
-            and not self.args.insecure_cli_password:
 
+        if self.args.database_username == 'root':
+            print(dedent("""
+                'root' is an invalid database username. You probably want to
+                rerun this command with '--ask-database-root'.
+            """))
+            return 1
+
+        if (
+            self.args.database_password \
+                or self.args.database_root_password \
+        ) and not self.args.insecure_cli_password:
             print(INSECURE_CLI_PASS_WARNING)
             return 1
 
@@ -238,6 +247,14 @@ class ArgValidator():
                         self.args.action],
                 },
             ], True, True)
+
+        if self.args.ask_database_root_password \
+                and not self.validated_args.database_root_password:
+            self.validated_args.database_root_password = self.get_pass_and_check(
+                'Please enter a database root password: ',
+                0,
+                True
+            )
 
         if self.validated_args.database_username and not self.validated_args.database_password:
             self.validated_args.database_password = self.get_pass_and_check(

@@ -81,6 +81,15 @@ def main():
         stuff on web server, like in v1.
         """
     )
+    # TODO: In the next major version, ask for database root password by default,
+    # and offer a new flag to skip this - like '--no-database-root-password'.
+    parser.add_argument('--ask-database-root-password', action='store_true',
+        help="""
+        Pass this flag to be prompted for the database root password.
+        In a future version, you will be asked for the database root password
+        by default.
+        """
+    )
     # TODO
     # parser.add_argument('--database-engine', default=DEFAULT_DATABASE_ENGINE)
 
@@ -275,6 +284,14 @@ def main():
         and Lampsible will prompt you for a password.
         """
     )
+    parser.add_argument('--database-root-password',
+        help="""
+        Use this flag to pass in the database root password directly. This is
+        not advised, and will only work if you also pass
+        '--insecure-cli-password'. You should leave this blank instead,
+        and Lampsible will prompt you for a password.
+        """
+    )
     parser.add_argument('--database-table-prefix',
         default=DEFAULT_DATABASE_TABLE_PREFIX,
         help="""
@@ -435,6 +452,7 @@ def main():
         ssl_selfsigned=args.ssl_selfsigned,
         ssl_test_cert=args.ssl_test_cert,
         email_for_ssl=args.email_for_ssl,
+        database_root_password=args.database_root_password,
         database_username=args.database_username,
         database_password=args.database_password,
         database_name=args.database_name,
