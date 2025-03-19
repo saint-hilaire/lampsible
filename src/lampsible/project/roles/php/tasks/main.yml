@@ -11,3 +11,4 @@
   loop: "{{ php_extensions }}"
   loop_control:
     loop_var: extension
+  ignore_errors: true
