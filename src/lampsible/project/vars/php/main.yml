@@ -1,0 +1,13 @@
+# php extensions
+php_packages_extra: "{{ php_packages_extra }}"
+
+# php.ini
+php_memory_limit        : "{{ php_memory_limit }}"
+php_upload_max_filesize : "{{ php_upload_max_filesize }}"
+php_post_max_size       : "{{ php_post_max_size }}"
+php_max_execution_time  : "{{ php_max_execution_time }}"
+php_max_input_time      : "{{ php_max_input_time }}"
+php_max_file_uploads    : "{{ php_max_file_uploads }}"
+php_allow_url_fopen     : "{{ php_allow_url_fopen }}"
+php_error_reporting     : "{{ php_error_reporting }}"
+php_display_errors      : "{{ php_display_errors }}"

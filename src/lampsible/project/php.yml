@@ -7,6 +7,8 @@
         name: "{{ item }}"
       loop:
         - apt
-        - php
+        - geerlingguy.php
         - composer
         - fail2ban
+  vars_files:
+    - vars/php/main.yml

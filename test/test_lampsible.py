@@ -69,6 +69,13 @@ class TestLampsible(unittest.TestCase):
 
     def test_full_php(self):
         self.lampsible.set_action('php')
+        # You can test this further by building a VPS with Ubuntu 20,
+        # then leaving this unchanged - that should fail.
+        # Then change it to 7.4, and it should work.
+        # This php_version stuff is pretty cumbersome... and most of the time,
+        # it can be left blank... I think I want to drop support for
+        # this in the next major version.
+        self.lampsible.php_version = '8.3'
         self.lampsible.php_extensions = [
             'php-mysql',
             'php-xml',
@@ -76,6 +83,17 @@ class TestLampsible(unittest.TestCase):
             'php-curl',
             'php-mbstring',
         ]
+        self.lampsible.php_memory_limit = '512M'
+        self.lampsible.php_upload_max_filesize = '8M'
+        self.lampsible.php_post_max_size = '8M'
+        self.lampsible.php_max_execution_time = '66'
+        self.lampsible.php_max_input_time = '66'
+        self.lampsible.php_max_file_uploads = '21'
+        self.lampsible.php_allow_url_fopen = False
+        self.lampsible.php_error_reporting = 'E_ALL'
+        # Very important that this ends up 'Off' on server,
+        # unless we explicitly set the following to True.
+        #self.lampsible.php_display_errors = True
         self.lampsible.composer_packages = ['drush/drush', 'guzzlehttp/guzzle']
         self.lampsible.composer_project = 'drupal/recommended-project'
         self.lampsible.composer_working_directory = '/var/www/html/test-app'
