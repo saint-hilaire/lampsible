@@ -298,6 +298,12 @@ class ArgValidator():
 
     def validate_php_args(self):
 
+        if self.args.php_version:
+            print(dedent("""
+                Warning! '--php-version' has been deprecated, and will be
+                removed in v3.
+                """))
+
         if self.args.action in [
             'apache',
             # TODO: But if 'mysql' was passed with '--php-myadmin',
