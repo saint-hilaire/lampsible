@@ -44,6 +44,8 @@ SUPPORTED_ACTIONS = [
     'drupal',
     # PHP frameworks
     'laravel',
+    # Other applications
+    'suitecrm',
     # Local debugging
     'dump-ansible-facts',
 ]
@@ -103,6 +105,19 @@ REQUIRED_PHP_EXTENSIONS = {
         'xml',
         'mbstring',
     ],
+    'suitecrm': [
+        'curl',
+        'intl',
+        'json',
+        'gd',
+        'mbstring',
+        'mysql',
+        'soap',
+        'xml',
+        'zip',
+        'imap',
+        'ldap',
+    ],
 }
 DEFAULT_PHP_MEMORY_LIMIT        = '256M'
 DEFAULT_PHP_UPLOAD_MAX_FILESIZE = '64M'
@@ -138,7 +153,7 @@ RECENT_WORDPRESS_VERSIONS = [
 DEFAULT_JOOMLA_VERSION         = '5.2.5'
 DEFAULT_JOOMLA_ADMIN_FULL_NAME = 'Sample User'
 
-# DRUPAL
+# Drupal
 
 AVAILABLE_DRUPAL_PROFILES = ['standard', 'minimal']
 DEFAULT_DRUPAL_PROFILE    = 'standard'
@@ -151,6 +166,12 @@ DEFAULT_LARAVEL_ARTISAN_COMMANDS = [
     'migrate',
     'db:seed',
 ]
+SUPPORTED_SUITECRM_VERSIONS = ['7', '8']
+DEFAULT_SUITECRM_VERSION = '8'
+SUITECRM_BUILD_URLS = {
+    '7': 'https://suitecrm.com/download/141/suite714/564663/suitecrm-7-14-6.zip',
+    '8': 'https://suitecrm.com/download/165/suite88/565090/suitecrm-8-8-0.zip',
+}
 
 # Misc
 # ----
