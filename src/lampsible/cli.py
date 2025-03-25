@@ -97,6 +97,7 @@ def main():
     # ---
     parser.add_argument('-p', '--php-version', default=DEFAULT_PHP_VERSION,
         help="""
+        Deprecated. This flag will be dropped in v3.
         the version of PHP to be installed, defaults to '{}'.
         Leave it blank to let Lampsible pick the right version
         based on your remote server
@@ -305,12 +306,68 @@ def main():
     parser.add_argument('--php-extensions',
         help="""
         A comma separated list of PHP extensions to install.
-        For example, if you pass
-        '--php-version 8.2 --php-extensions mysql,mbstring',
-        Lampsible will install the packages php8.2-mysql and php8.2-mbstring.
+        Do not prepend them with 'php-', so simply pass in something like
+        '--php-extensions mysql,mbstring,gd', and Lampsible will install the
+        proper packages.
         However, it's best to leave this blank, and let Lampsible pick
-        sensible defaults depending on what you are installing.
+        sensible defaults depending on what you are installing, and only use
+        this, if you have a specific use case that Lampsible's default
+        behavior does not cover.
         """
+    )
+    parser.add_argument('--php-memory-limit',
+        default=DEFAULT_PHP_MEMORY_LIMIT,
+        help="""
+        'memory_limit' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_MEMORY_LIMIT)
+    )
+    parser.add_argument('--php-upload-max-filesize',
+        default=DEFAULT_PHP_UPLOAD_MAX_FILESIZE,
+        help="""
+        'upload_max_filesize' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_UPLOAD_MAX_FILESIZE)
+    )
+    parser.add_argument('--php-post-max-size',
+        default=DEFAULT_PHP_POST_MAX_SIZE,
+        help="""
+        'post_max_size' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_POST_MAX_SIZE)
+    )
+    parser.add_argument('--php-max-execution-time',
+        default=DEFAULT_PHP_MAX_EXECUTION_TIME,
+        help="""
+        'max_execution_time' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_MAX_EXECUTION_TIME)
+    )
+    parser.add_argument('--php-max-input-time',
+        default=DEFAULT_PHP_MAX_INPUT_TIME,
+        help="""
+        'max_input_time' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_MAX_INPUT_TIME)
+    )
+    parser.add_argument('--php-max-file-uploads',
+        default=DEFAULT_PHP_MAX_FILE_UPLOADS,
+        help="""
+        'max_file_uploads' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_MAX_FILE_UPLOADS)
+    )
+    parser.add_argument('--php-allow-url-fopen',
+        default=DEFAULT_PHP_ALLOW_URL_FOPEN,
+        help="""
+        'allow_url_fopen' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_ALLOW_URL_FOPEN)
+    )
+    parser.add_argument('--php-error-reporting',
+        default=DEFAULT_PHP_ERROR_REPORTING,
+        help="""
+        'error_reporting' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_ERROR_REPORTING)
+    )
+    parser.add_argument('--php-display-errors',
+        default=DEFAULT_PHP_DISPLAY_ERRORS,
+        help="""
+        'display_errors' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_DISPLAY_ERRORS)
     )
     parser.add_argument('--composer-packages',
         help="""
@@ -462,6 +519,15 @@ def main():
         database_system_host=args.database_system_host,
         php_version=args.php_version,
         php_extensions=args.php_extensions,
+        php_memory_limit=args.php_memory_limit,
+        php_upload_max_filesize=args.php_upload_max_filesize,
+        php_post_max_size=args.php_post_max_size,
+        php_max_execution_time=args.php_max_execution_time,
+        php_max_input_time=args.php_max_input_time,
+        php_max_file_uploads=args.php_max_file_uploads,
+        php_allow_url_fopen=args.php_allow_url_fopen,
+        php_error_reporting=args.php_error_reporting,
+        php_display_errors=args.php_display_errors,
         composer_packages=args.composer_packages,
         composer_working_directory=args.composer_working_directory,
         composer_project=args.composer_project,

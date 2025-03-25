@@ -2,3 +2,8 @@ collections:
   - name: community.general
   - name: community.mysql
   - name: community.crypto
+# TODO: Might be better to do this with git submodules...
+# Could be easier to manage updates.
+# But might be harder with the builds...
+roles:
+  - name: geerlingguy.php
