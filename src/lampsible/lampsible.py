@@ -54,6 +54,8 @@ class Lampsible:
             wordpress_insecure_allow_xmlrpc=False,
             app_local_env=False,
             laravel_artisan_commands=DEFAULT_LARAVEL_ARTISAN_COMMANDS,
+            suitecrm_version=DEFAULT_SUITECRM_VERSION,
+            suitecrm_demo_data=False,
             email_for_ssl=None,
             domains_for_ssl=[], ssl_test_cert=False,
             extra_packages=[], extra_env_vars={},
@@ -125,8 +127,6 @@ class Lampsible:
         self.composer_project           = composer_project
         self.composer_working_directory = composer_working_directory
 
-        self.set_action(action)
-
         self.site_title     = site_title
         self.admin_username = admin_username
         self.admin_password = admin_password
@@ -145,6 +145,10 @@ class Lampsible:
         self.app_build_path = app_build_path
         self.laravel_artisan_commands = laravel_artisan_commands
         self.app_local_env = app_local_env
+
+        self.suitecrm_version   = suitecrm_version
+        self.suitecrm_demo_data = suitecrm_demo_data
+
         self.extra_packages = extra_packages
         self.extra_env_vars = extra_env_vars
 
@@ -161,6 +165,8 @@ class Lampsible:
         self.banner = LAMPSIBLE_BANNER
         self.ansible_galaxy_ok = ansible_galaxy_ok
         self.interactive = interactive
+
+        self.set_action(action)
 
 
     def set_action(self, action):
@@ -190,6 +196,8 @@ class Lampsible:
                     self.composer_packages.append('drush/drush')
             except AttributeError:
                 self.composer_packages = ['drush/drush']
+        elif action == 'suitecrm':
+            self.extra_packages.append('unzip')
 
         for ext in required_php_extensions:
             if ext not in self.php_extensions:
@@ -199,10 +207,7 @@ class Lampsible:
 
 
     def _set_apache_vars(self):
-        if self.action in [
-            'wordpress',
-            'joomla',
-        ]:
+        if self.action in ['wordpress', 'joomla']:
             if self.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
                 self.apache_document_root = '{}/{}'.format(
                     DEFAULT_APACHE_DOCUMENT_ROOT,
@@ -218,12 +223,25 @@ class Lampsible:
                     DEFAULT_APACHE_DOCUMENT_ROOT
                 )
 
-        elif self.action == 'laravel':
+            if self.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
+                self.apache_vhost_name = self.action
+
+        elif self.action in ['laravel', 'suitecrm']:
+
+            if self.action == 'suitecrm':
+                self.app_name = 'suitecrm'
+
             if self.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
-                self.apache_document_root = '{}/{}/public'.format(
-                    DEFAULT_APACHE_DOCUMENT_ROOT,
-                    self.app_name
-                )
+                if self.action == 'suitecrm' and self.suitecrm_version == '7':
+                    self.apache_document_root = '{}/{}'.format(
+                        DEFAULT_APACHE_DOCUMENT_ROOT,
+                        self.app_name
+                    )
+                else:
+                    self.apache_document_root = '{}/{}/public'.format(
+                        DEFAULT_APACHE_DOCUMENT_ROOT,
+                        self.app_name
+                    )
 
             if self.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
                 self.apache_vhost_name = self.app_name
@@ -272,6 +290,10 @@ class Lampsible:
                 self.action == 'wordpress'
                 # TODO: Deprecate this.
                 and not self.wordpress_insecure_allow_xmlrpc
+            )
+            or (
+                self.action == 'suitecrm'
+                and self.suitecrm_version == '8'
             )
         )
 
@@ -356,6 +378,14 @@ class Lampsible:
                 'laravel_artisan_commands',
                 'app_local_env',
             ])
+        elif self.action == 'suitecrm':
+            extravars.extend([
+                'app_source_root',
+                'app_local_env',
+                'suitecrm_version',
+                'suitecrm_build_url',
+                'suitecrm_demo_data',
+            ])
 
         extravars.extend([
             'ssl_certbot',
@@ -434,6 +464,9 @@ class Lampsible:
                     DEFAULT_APACHE_DOCUMENT_ROOT,
                     self.app_name
                 )
+
+            elif varname == 'suitecrm_build_url':
+                value = SUITECRM_BUILD_URLS[self.suitecrm_version]
 
             elif varname == 'ansible_sudo_pass':
                 if self.remote_sudo_password:

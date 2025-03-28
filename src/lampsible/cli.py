@@ -174,13 +174,31 @@ def main():
         Leave blank to default to 'laravel-app'
         """
     )
-
     parser.add_argument('--app-build-path',
         help="""
         If you are installing a Laravel app,
         use this option to specify the local path of a production ready
         build-archive of your app,
         for example /path/to/some-app-2.0.tar.gz
+        """
+    )
+    parser.add_argument('--suitecrm-version',
+        choices=SUPPORTED_SUITECRM_VERSIONS,
+        default=DEFAULT_SUITECRM_VERSION,
+        help="""
+        If installing SuiteCRM, this is the version that will be installed.
+        Default value is '{}', and this the the preferred version.
+        Available choices are: {}.
+        """.format(
+            DEFAULT_SUITECRM_VERSION,
+            "'" + "', '".join(SUPPORTED_SUITECRM_VERSIONS) + "'"
+        )
+    )
+    parser.add_argument('--suitecrm-demo-data', action='store_true',
+        help="""
+        If installing SuiteCRM, pass this flag to populate your
+        installation with some demo data. This is a feature supplied by
+        SuiteCRM, and works in version 8 or newer.
         """
     )
 
@@ -416,9 +434,10 @@ def main():
     # ----------------
     parser.add_argument('--app-local-env', action='store_true',
         help="""
-        Pass this flag if you want your Laravel app to have the configurations
-        'APP_ENV=local' and 'APP_DEBUG=true'. Otherwise, they'll default to
-        'APP_ENV=production' and 'APP_DEBUG=false'.
+        Pass this flag if you want your web app to run with a "local" or "dev"
+        type of configuration. Currently this affects the actions 'laravel'
+        and 'suitecrm'. Only use this in internal test environments with no
+        sensitive data, never on production environments!
         """
     )
     parser.add_argument('--laravel-artisan-commands',
@@ -545,6 +564,8 @@ def main():
         app_build_path=args.app_build_path,
         laravel_artisan_commands=args.laravel_artisan_commands,
         app_local_env=args.app_local_env,
+        suitecrm_version=args.suitecrm_version,
+        suitecrm_demo_data=args.suitecrm_demo_data,
         extra_env_vars=args.extra_env_vars,
         extra_packages=args.extra_packages,
         ssh_key_file=args.ssh_key_file,
