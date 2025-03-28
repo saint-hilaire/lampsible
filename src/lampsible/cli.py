@@ -81,6 +81,15 @@ def main():
         stuff on web server, like in v1.
         """
     )
+    # TODO: In the next major version, ask for database root password by default,
+    # and offer a new flag to skip this - like '--no-database-root-password'.
+    parser.add_argument('--ask-database-root-password', action='store_true',
+        help="""
+        Pass this flag to be prompted for the database root password.
+        In a future version, you will be asked for the database root password
+        by default.
+        """
+    )
     # TODO
     # parser.add_argument('--database-engine', default=DEFAULT_DATABASE_ENGINE)
 
@@ -88,6 +97,7 @@ def main():
     # ---
     parser.add_argument('-p', '--php-version', default=DEFAULT_PHP_VERSION,
         help="""
+        Deprecated. This flag will be dropped in v3.
         the version of PHP to be installed, defaults to '{}'.
         Leave it blank to let Lampsible pick the right version
         based on your remote server
@@ -164,13 +174,31 @@ def main():
         Leave blank to default to 'laravel-app'
         """
     )
-
     parser.add_argument('--app-build-path',
         help="""
         If you are installing a Laravel app,
         use this option to specify the local path of a production ready
         build-archive of your app,
         for example /path/to/some-app-2.0.tar.gz
+        """
+    )
+    parser.add_argument('--suitecrm-version',
+        choices=SUPPORTED_SUITECRM_VERSIONS,
+        default=DEFAULT_SUITECRM_VERSION,
+        help="""
+        If installing SuiteCRM, this is the version that will be installed.
+        Default value is '{}', and this the the preferred version.
+        Available choices are: {}.
+        """.format(
+            DEFAULT_SUITECRM_VERSION,
+            "'" + "', '".join(SUPPORTED_SUITECRM_VERSIONS) + "'"
+        )
+    )
+    parser.add_argument('--suitecrm-demo-data', action='store_true',
+        help="""
+        If installing SuiteCRM, pass this flag to populate your
+        installation with some demo data. This is a feature supplied by
+        SuiteCRM, and works in version 8 or newer.
         """
     )
 
@@ -275,6 +303,14 @@ def main():
         and Lampsible will prompt you for a password.
         """
     )
+    parser.add_argument('--database-root-password',
+        help="""
+        Use this flag to pass in the database root password directly. This is
+        not advised, and will only work if you also pass
+        '--insecure-cli-password'. You should leave this blank instead,
+        and Lampsible will prompt you for a password.
+        """
+    )
     parser.add_argument('--database-table-prefix',
         default=DEFAULT_DATABASE_TABLE_PREFIX,
         help="""
@@ -288,12 +324,68 @@ def main():
     parser.add_argument('--php-extensions',
         help="""
         A comma separated list of PHP extensions to install.
-        For example, if you pass
-        '--php-version 8.2 --php-extensions mysql,mbstring',
-        Lampsible will install the packages php8.2-mysql and php8.2-mbstring.
+        Do not prepend them with 'php-', so simply pass in something like
+        '--php-extensions mysql,mbstring,gd', and Lampsible will install the
+        proper packages.
         However, it's best to leave this blank, and let Lampsible pick
-        sensible defaults depending on what you are installing.
+        sensible defaults depending on what you are installing, and only use
+        this, if you have a specific use case that Lampsible's default
+        behavior does not cover.
         """
+    )
+    parser.add_argument('--php-memory-limit',
+        default=DEFAULT_PHP_MEMORY_LIMIT,
+        help="""
+        'memory_limit' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_MEMORY_LIMIT)
+    )
+    parser.add_argument('--php-upload-max-filesize',
+        default=DEFAULT_PHP_UPLOAD_MAX_FILESIZE,
+        help="""
+        'upload_max_filesize' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_UPLOAD_MAX_FILESIZE)
+    )
+    parser.add_argument('--php-post-max-size',
+        default=DEFAULT_PHP_POST_MAX_SIZE,
+        help="""
+        'post_max_size' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_POST_MAX_SIZE)
+    )
+    parser.add_argument('--php-max-execution-time',
+        default=DEFAULT_PHP_MAX_EXECUTION_TIME,
+        help="""
+        'max_execution_time' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_MAX_EXECUTION_TIME)
+    )
+    parser.add_argument('--php-max-input-time',
+        default=DEFAULT_PHP_MAX_INPUT_TIME,
+        help="""
+        'max_input_time' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_MAX_INPUT_TIME)
+    )
+    parser.add_argument('--php-max-file-uploads',
+        default=DEFAULT_PHP_MAX_FILE_UPLOADS,
+        help="""
+        'max_file_uploads' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_MAX_FILE_UPLOADS)
+    )
+    parser.add_argument('--php-allow-url-fopen',
+        default=DEFAULT_PHP_ALLOW_URL_FOPEN,
+        help="""
+        'allow_url_fopen' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_ALLOW_URL_FOPEN)
+    )
+    parser.add_argument('--php-error-reporting',
+        default=DEFAULT_PHP_ERROR_REPORTING,
+        help="""
+        'error_reporting' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_ERROR_REPORTING)
+    )
+    parser.add_argument('--php-display-errors',
+        default=DEFAULT_PHP_DISPLAY_ERRORS,
+        help="""
+        'display_errors' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_DISPLAY_ERRORS)
     )
     parser.add_argument('--composer-packages',
         help="""
@@ -342,9 +434,10 @@ def main():
     # ----------------
     parser.add_argument('--app-local-env', action='store_true',
         help="""
-        Pass this flag if you want your Laravel app to have the configurations
-        'APP_ENV=local' and 'APP_DEBUG=true'. Otherwise, they'll default to
-        'APP_ENV=production' and 'APP_DEBUG=false'.
+        Pass this flag if you want your web app to run with a "local" or "dev"
+        type of configuration. Currently this affects the actions 'laravel'
+        and 'suitecrm'. Only use this in internal test environments with no
+        sensitive data, never on production environments!
         """
     )
     parser.add_argument('--laravel-artisan-commands',
@@ -435,6 +528,7 @@ def main():
         ssl_selfsigned=args.ssl_selfsigned,
         ssl_test_cert=args.ssl_test_cert,
         email_for_ssl=args.email_for_ssl,
+        database_root_password=args.database_root_password,
         database_username=args.database_username,
         database_password=args.database_password,
         database_name=args.database_name,
@@ -444,6 +538,15 @@ def main():
         database_system_host=args.database_system_host,
         php_version=args.php_version,
         php_extensions=args.php_extensions,
+        php_memory_limit=args.php_memory_limit,
+        php_upload_max_filesize=args.php_upload_max_filesize,
+        php_post_max_size=args.php_post_max_size,
+        php_max_execution_time=args.php_max_execution_time,
+        php_max_input_time=args.php_max_input_time,
+        php_max_file_uploads=args.php_max_file_uploads,
+        php_allow_url_fopen=args.php_allow_url_fopen,
+        php_error_reporting=args.php_error_reporting,
+        php_display_errors=args.php_display_errors,
         composer_packages=args.composer_packages,
         composer_working_directory=args.composer_working_directory,
         composer_project=args.composer_project,
@@ -461,6 +564,8 @@ def main():
         app_build_path=args.app_build_path,
         laravel_artisan_commands=args.laravel_artisan_commands,
         app_local_env=args.app_local_env,
+        suitecrm_version=args.suitecrm_version,
+        suitecrm_demo_data=args.suitecrm_demo_data,
         extra_env_vars=args.extra_env_vars,
         extra_packages=args.extra_packages,
         ssh_key_file=args.ssh_key_file,

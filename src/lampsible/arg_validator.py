@@ -195,21 +195,32 @@ class ArgValidator():
 
         default_database_names = {
             'wordpress': 'wordpress',
-            'joomla':    'joomla',
-            'drupal':    'drupal',
-            'laravel':   self.args.app_name,
+            'joomla'   : 'joomla',
+            'drupal'   : 'drupal',
+            'laravel'  : self.args.app_name,
+            'suitecrm' : 'suitecrm',
         }
 
         default_database_table_prefixes = {
             'wordpress': 'wp_',
             # TODO?
-            'joomla':    '',
-            'drupal':    '',
-            'laravel':   '',
+            'joomla'   : '',
+            'drupal'   : '',
+            'laravel'  : '',
+            'suitecrm' : '',
         }
-        if self.args.database_password \
-            and not self.args.insecure_cli_password:
 
+        if self.args.database_username == 'root':
+            print(dedent("""
+                'root' is an invalid database username. You probably want to
+                rerun this command with '--ask-database-root'.
+            """))
+            return 1
+
+        if (
+            self.args.database_password \
+                or self.args.database_root_password \
+        ) and not self.args.insecure_cli_password:
             print(INSECURE_CLI_PASS_WARNING)
             return 1
 
@@ -218,6 +229,7 @@ class ArgValidator():
             'joomla',
             'drupal',
             'laravel',
+            'suitecrm',
         ]:
             self.handle_defaults([
                 {
@@ -238,6 +250,14 @@ class ArgValidator():
                         self.args.action],
                 },
             ], True, True)
+
+        if self.args.ask_database_root_password \
+                and not self.validated_args.database_root_password:
+            self.validated_args.database_root_password = self.get_pass_and_check(
+                'Please enter a database root password: ',
+                0,
+                True
+            )
 
         if self.validated_args.database_username and not self.validated_args.database_password:
             self.validated_args.database_password = self.get_pass_and_check(
@@ -280,6 +300,12 @@ class ArgValidator():
 
 
     def validate_php_args(self):
+
+        if self.args.php_version:
+            print(dedent("""
+                Warning! '--php-version' has been deprecated, and will be
+                removed in v3.
+                """))
 
         if self.args.action in [
             'apache',
@@ -515,6 +541,51 @@ class ArgValidator():
         return 0
 
 
+    def validate_suitecrm_args(self):
+        if self.args.action != 'suitecrm':
+            return 0
+
+        if self.args.suitecrm_version == '8':
+            self.handle_defaults([
+                {
+                    'arg_name': 'admin_username',
+                    'cli_default_value': None,
+                    'override_default_value': DEFAULT_ADMIN_USERNAME,
+                },
+            ], True, True)
+
+            if self.args.admin_password \
+                and not self.args.insecure_cli_password:
+                print(INSECURE_CLI_PASS_WARNING)
+                return 1
+
+            if not self.args.admin_password:
+                self.validated_args.admin_password = self.get_pass_and_check(
+                    "Please choose a password for the website's admin user: ",
+                    0,
+                    True
+                )
+
+        elif self.args.suitecrm_version == '7':
+            print(dedent("""
+                Warning! With SuiteCRM version 7, the admin credentials must
+                be supplied via web UI, which means anyone with web access to
+                the host can do it.
+                PLEASE IMMEDIATELY NAVIGATE TO YOUR WEB HOST, and complete the
+                installation... before someone else does it for you! ;-)
+                Also, you should use version 8 instead.
+                """))
+            print(dedent("""
+                Warning! Please be aware that SuiteCRM version 7 will not work
+                with PHP 8.3 or newer. Also, Lampsible's '--php-version' flag
+                is being deprecated, so you should set up your remote server
+                with a distro that uses PHP 8.2 or older by default,
+                like for example Ubuntu 22.
+                """))
+
+        return 0
+
+
     def validate_misc_args(self):
         try:
             self.validated_args.extra_packages = self.args.extra_packages.split(',')
@@ -584,6 +655,7 @@ class ArgValidator():
             'validate_joomla_args',
             'validate_drupal_args',
             'validate_app_args',
+            'validate_suitecrm_args',
             'validate_misc_args',
         ]
         for method_name in validate_methods:

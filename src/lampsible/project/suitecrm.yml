@@ -20,7 +20,7 @@
         - apache2
         - geerlingguy.php
         - composer
-        - wordpress
+        - suitecrm
 
     - include_role:
         name: ssl-selfsigned
@@ -38,10 +38,6 @@
     - include_role:
         name: apache-conf
       when: ssl_selfsigned
-
-    - include_role:
-        name: wordpress-block-xmlrpc
-      when: not wordpress_insecure_allow_xmlrpc
 
     - include_role:
         name: fail2ban

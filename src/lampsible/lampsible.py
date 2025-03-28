@@ -15,9 +15,12 @@ class Lampsible:
     def __init__(self, web_user, web_host, action,
             private_data_dir=DEFAULT_PRIVATE_DATA_DIR,
             apache_server_admin=DEFAULT_APACHE_SERVER_ADMIN,
+            database_root_password=None,
             database_username=None,
             database_name=None, database_host=None, database_system_user=None,
-            database_system_host=None, php_version=DEFAULT_PHP_VERSION, site_title=DEFAULT_SITE_TITLE,
+            database_system_host=None,
+            php_version=DEFAULT_PHP_VERSION,
+            site_title=DEFAULT_SITE_TITLE,
             admin_username=DEFAULT_ADMIN_USERNAME, admin_email=DEFAULT_ADMIN_EMAIL,
             wordpress_version=DEFAULT_WORDPRESS_VERSION,
             wordpress_locale=DEFAULT_WORDPRESS_LOCALE,
@@ -29,13 +32,30 @@ class Lampsible:
             ssl_certbot=True,
             ssl_selfsigned=False, remote_sudo_password=None,
             ssh_key_file=None, apache_vhost_name=DEFAULT_APACHE_VHOST_NAME,
-            apache_document_root=DEFAULT_APACHE_DOCUMENT_ROOT, database_password=None,
-            database_table_prefix=DEFAULT_DATABASE_TABLE_PREFIX, php_extensions=[],
+            apache_document_root=DEFAULT_APACHE_DOCUMENT_ROOT,
+            database_password=None,
+            database_table_prefix=DEFAULT_DATABASE_TABLE_PREFIX,
+            php_extensions=[],
+            # TODO: In a future version, it should be possible to make these
+            # settings default to None, and then dynamically exclude them from the
+            # vars_file, and let the third party role fall back to its own
+            # defaults.
+            php_memory_limit=DEFAULT_PHP_MEMORY_LIMIT,
+            php_upload_max_filesize=DEFAULT_PHP_UPLOAD_MAX_FILESIZE,
+            php_post_max_size=DEFAULT_PHP_POST_MAX_SIZE,
+            php_max_execution_time=DEFAULT_PHP_MAX_EXECUTION_TIME,
+            php_max_input_time=DEFAULT_PHP_MAX_INPUT_TIME,
+            php_max_file_uploads=DEFAULT_PHP_MAX_FILE_UPLOADS,
+            php_allow_url_fopen=DEFAULT_PHP_ALLOW_URL_FOPEN,
+            php_error_reporting=DEFAULT_PHP_ERROR_REPORTING,
+            php_display_errors=DEFAULT_PHP_DISPLAY_ERRORS,
             composer_packages=[], composer_working_directory=None,
             composer_project=None, admin_password=None,
             wordpress_insecure_allow_xmlrpc=False,
             app_local_env=False,
             laravel_artisan_commands=DEFAULT_LARAVEL_ARTISAN_COMMANDS,
+            suitecrm_version=DEFAULT_SUITECRM_VERSION,
+            suitecrm_demo_data=False,
             email_for_ssl=None,
             domains_for_ssl=[], ssl_test_cert=False,
             extra_packages=[], extra_env_vars={},
@@ -84,19 +104,28 @@ class Lampsible:
 
         self.apache_custom_conf_name = apache_custom_conf_name
 
-        self.database_username     = database_username
-        self.database_password     = database_password
-        self.database_name         = database_name
-        self.database_host         = database_host
-        self.database_table_prefix = database_table_prefix
+        self.database_root_password = database_root_password
+        self.database_username      = database_username
+        self.database_password      = database_password
+        self.database_name          = database_name
+        self.database_host          = database_host
+        self.database_table_prefix  = database_table_prefix
 
-        self.php_version                = php_version
-        self.php_extensions             = php_extensions
+        self.php_version             = php_version
+        self.php_extensions          = php_extensions
+        self.php_memory_limit        = php_memory_limit
+        self.php_upload_max_filesize = php_upload_max_filesize
+        self.php_post_max_size       = php_post_max_size
+        self.php_max_execution_time  = php_max_execution_time
+        self.php_max_input_time      = php_max_input_time
+        self.php_max_file_uploads    = php_max_file_uploads
+        self.php_allow_url_fopen     = php_allow_url_fopen
+        self.php_error_reporting     = php_error_reporting
+        self.php_display_errors      = php_display_errors
+
         self.composer_packages          = composer_packages
         self.composer_project           = composer_project
         self.composer_working_directory = composer_working_directory
-
-        self.set_action(action)
 
         self.site_title     = site_title
         self.admin_username = admin_username
@@ -116,6 +145,10 @@ class Lampsible:
         self.app_build_path = app_build_path
         self.laravel_artisan_commands = laravel_artisan_commands
         self.app_local_env = app_local_env
+
+        self.suitecrm_version   = suitecrm_version
+        self.suitecrm_demo_data = suitecrm_demo_data
+
         self.extra_packages = extra_packages
         self.extra_env_vars = extra_env_vars
 
@@ -132,6 +165,8 @@ class Lampsible:
         self.banner = LAMPSIBLE_BANNER
         self.ansible_galaxy_ok = ansible_galaxy_ok
         self.interactive = interactive
+
+        self.set_action(action)
 
 
     def set_action(self, action):
@@ -161,6 +196,8 @@ class Lampsible:
                     self.composer_packages.append('drush/drush')
             except AttributeError:
                 self.composer_packages = ['drush/drush']
+        elif action == 'suitecrm':
+            self.extra_packages.append('unzip')
 
         for ext in required_php_extensions:
             if ext not in self.php_extensions:
@@ -170,10 +207,7 @@ class Lampsible:
 
 
     def _set_apache_vars(self):
-        if self.action in [
-            'wordpress',
-            'joomla',
-        ]:
+        if self.action in ['wordpress', 'joomla']:
             if self.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
                 self.apache_document_root = '{}/{}'.format(
                     DEFAULT_APACHE_DOCUMENT_ROOT,
@@ -189,12 +223,25 @@ class Lampsible:
                     DEFAULT_APACHE_DOCUMENT_ROOT
                 )
 
-        elif self.action == 'laravel':
+            if self.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
+                self.apache_vhost_name = self.action
+
+        elif self.action in ['laravel', 'suitecrm']:
+
+            if self.action == 'suitecrm':
+                self.app_name = 'suitecrm'
+
             if self.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
-                self.apache_document_root = '{}/{}/public'.format(
-                    DEFAULT_APACHE_DOCUMENT_ROOT,
-                    self.app_name
-                )
+                if self.action == 'suitecrm' and self.suitecrm_version == '7':
+                    self.apache_document_root = '{}/{}'.format(
+                        DEFAULT_APACHE_DOCUMENT_ROOT,
+                        self.app_name
+                    )
+                else:
+                    self.apache_document_root = '{}/{}/public'.format(
+                        DEFAULT_APACHE_DOCUMENT_ROOT,
+                        self.app_name
+                    )
 
             if self.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
                 self.apache_vhost_name = self.app_name
@@ -244,6 +291,10 @@ class Lampsible:
                 # TODO: Deprecate this.
                 and not self.wordpress_insecure_allow_xmlrpc
             )
+            or (
+                self.action == 'suitecrm'
+                and self.suitecrm_version == '8'
+            )
         )
 
 
@@ -273,17 +324,27 @@ class Lampsible:
             'apache_document_root',
             'apache_server_admin',
             'apache_custom_conf_name',
-            'database_username',
             # TODO: Ansible Runner has a dedicated feature for dealing
             # with passwords. Likely we'll have to implement support
             # for that in ansible-directory-helper.
             # For the time being, however, treat it as an extravar.
+            'database_root_password',
+            'database_username',
             'database_password',
             'database_name',
             'database_host',
             'database_table_prefix',
             'php_version',
-            'php_extensions',
+            'php_packages_extra',
+            'php_memory_limit',
+            'php_upload_max_filesize',
+            'php_post_max_size',
+            'php_max_execution_time',
+            'php_max_input_time',
+            'php_max_file_uploads',
+            'php_allow_url_fopen',
+            'php_error_reporting',
+            'php_display_errors',
             'composer_packages',
             'composer_project',
             'composer_working_directory',
@@ -317,6 +378,14 @@ class Lampsible:
                 'laravel_artisan_commands',
                 'app_local_env',
             ])
+        elif self.action == 'suitecrm':
+            extravars.extend([
+                'app_source_root',
+                'app_local_env',
+                'suitecrm_version',
+                'suitecrm_build_url',
+                'suitecrm_demo_data',
+            ])
 
         extravars.extend([
             'ssl_certbot',
@@ -339,6 +408,24 @@ class Lampsible:
                     value = self.web_host
                 else:
                     value = DEFAULT_APACHE_SERVER_NAME
+
+            elif varname == 'php_packages_extra':
+                value = [
+                    # TODO: This is a somewhat inelegant way to continue
+                    # supporting 'php_version'. geerlingguy.php takes the
+                    # variable 'php_default_version_debian', but it breaks
+                    # if it receives an empty value, which in Lampsible, is
+                    # most often the case.
+                    # Support for php_version will be dropped in the next major
+                    # version, and then the 'php{}' package can be removed.
+                    'php{}'.format(
+                        '' if self.php_version is None else self.php_version
+                    ),
+                    'libapache2-mod-php'
+                ] + self.php_extensions
+
+            elif varname in ['php_allow_url_fopen', 'php_display_errors']:
+                value = 'On' if getattr(self, varname) else 'Off'
 
             elif varname == 'wordpress_url':
                 if not self.ssl_certbot or self.web_host[:4] == 'www.':
@@ -378,6 +465,9 @@ class Lampsible:
                     self.app_name
                 )
 
+            elif varname == 'suitecrm_build_url':
+                value = SUITECRM_BUILD_URLS[self.suitecrm_version]
+
             elif varname == 'ansible_sudo_pass':
                 if self.remote_sudo_password:
                     value = self.remote_sudo_password
@@ -404,11 +494,20 @@ class Lampsible:
 
 
     def _ensure_galaxy_dependencies(self):
+        required_collections = []
+        required_roles = []
+        tmp_collections = []
+        tmp_roles = []
+
         with open(GALAXY_REQUIREMENTS_FILE, 'r') as stream:
-            required_collections = []
             tmp_collections = safe_load(stream)['collections']
-            for tmp_dict in tmp_collections:
-                required_collections.append(tmp_dict['name'])
+        with open(GALAXY_REQUIREMENTS_FILE, 'r') as stream:
+            tmp_roles       = safe_load(stream)['roles']
+
+        for tmp_dict in tmp_collections:
+            required_collections.append(tmp_dict['name'])
+        for tmp_dict in tmp_roles:
+            required_roles.append(tmp_dict['name'])
 
         # TODO There might be a more elegant way to do this - Right now,
         # we're expecting required_collections to always be a tuple,
@@ -424,38 +523,70 @@ class Lampsible:
             ],
             quiet=True
         )[0]
+        installed_roles = run_command(
+            executable_cmd='ansible-galaxy',
+            cmdline_args=[
+                'role',
+                'list',
+                '--roles-path',
+                os.path.join(USER_HOME_DIR, '.ansible'),
+            ],
+            quiet=True
+        )[0]
+
         missing_collections = []
         for required in required_collections:
             if required not in installed_collections:
                 missing_collections.append(required)
         if len(missing_collections) == 0:
+            result = 0
+        else:
+            result = self._install_galaxy_dependencies(
+                missing_collections,
+                'collection'
+            )
+
+        if result != 0:
+            return result
+
+        missing_roles = []
+        for required in required_roles:
+            if required not in installed_roles:
+                missing_roles.append(required)
+        if len(missing_roles) == 0:
             return 0
         else:
-            return self._install_galaxy_collections(missing_collections)
+            return self._install_galaxy_dependencies(
+                missing_roles,
+                'role'
+            )
 
 
-    def _install_galaxy_collections(self, collections):
+    def _install_galaxy_dependencies(self, dependencies, dependency_type):
+        plural = '{}s'.format(dependency_type)
         if not self.ansible_galaxy_ok:
-            formatted_collections_list = '\n- '.join(collections)
+            formatted_dependency_list = '\n- '.join(dependencies)
 
             if not self.interactive:
                 print(dedent("""
-The following Ansible Galaxy dependencies are missing,
+The following Ansible Galaxy {} are missing,
 and need to be installed into {}:\n- {}\n
 Please set the attribute 'Lampsible.ansible_galaxy_ok=True'.
                 """.format(
+                    plural,
                     USER_HOME_DIR,
-                    formatted_collections_list
+                    formatted_dependency_list
                 )))
                 return 1
 
             ok_to_install = input(dedent(
                 """
 I have to download and install the following
-Ansible Galaxy dependencies into {}:\n- {}\nIs this OK (yes/no)?
+Ansible Galaxy {} into {}:\n- {}\nIs this OK (yes/no)?
                 """).format(
+                plural,
                 os.path.join(USER_HOME_DIR, '.ansible/'),
-                formatted_collections_list
+                formatted_dependency_list
             )).lower()
             while ok_to_install != 'yes' and ok_to_install != 'no':
                 ok_to_install = input("Please type 'yes' or 'no': ")
@@ -463,14 +594,15 @@ Ansible Galaxy dependencies into {}:\n- {}\nIs this OK (yes/no)?
             if ok_to_install != 'yes':
                 return 1
 
-        print('\nInstalling Ansible Galaxy collections into {} ...'.format(
+        print('\nInstalling Ansible Galaxy {} into {} ...'.format(
+            plural,
             os.path.join(USER_HOME_DIR, '.ansible')
         ))
         run_command(
             executable_cmd='ansible-galaxy',
-            cmdline_args=['collection', 'install'] + collections,
+            cmdline_args=[dependency_type, 'install'] + dependencies,
         )
-        print('\n... collections installed.')
+        print('\n... {} installed.'.format(plural))
         return 0
 
 

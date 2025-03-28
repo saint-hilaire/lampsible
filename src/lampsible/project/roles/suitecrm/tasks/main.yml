@@ -1,0 +1,97 @@
+---
+
+- name: Delete placeholder index.html
+  file:
+    path: /var/www/html/index.html
+    state: absent
+
+- name: Create directory for suitecrm
+  file:
+    path: "{{ app_source_root }}"
+    state: directory
+  when: suitecrm_version == '8'
+
+- name: Make sure we have a clean /var/www/html
+  file:
+    path: "{{ app_source_root }}"
+    state: absent
+  when: suitecrm_version == '7'
+
+- name: Download SuiteCRM
+  get_url:
+    url: "{{ suitecrm_build_url }}"
+    dest: /var/www/html/suitecrm.zip
+
+- name: Extract SuiteCRM build archive
+  unarchive:
+    src: /var/www/html/suitecrm.zip
+    dest: "{{ '/var/www/html' if suitecrm_version == '7' else app_source_root }}"
+    remote_src: true
+
+- name: Rename SuiteCRM root directory (v7)
+  command:
+  args:
+    argv:
+      - mv
+      - /var/www/html/SuiteCRM-7.14.6
+      - "{{ app_source_root }}"
+  ignore_errors: true
+  when: suitecrm_version == '7'
+
+- name: Set file permissions (v8)
+  command: "{{ item }}"
+  args:
+    chdir: "{{ app_source_root }}"
+  with_items:
+    - find . -type d -not -perm 2755 -exec chmod 2755 {} \;
+    - find . -type f -not -perm 0644 -exec chmod 0644 {} \;
+    - find . ! -user www-data -exec chown www-data:www-data {} \;
+    - chmod +x bin/console
+  when: suitecrm_version == '8'
+
+- name: Set file permissions (v7)
+  command: "{{ item }}"
+  args:
+    chdir: "{{ app_source_root }}"
+  with_items:
+    - chown -R www-data:www-data .
+    - chmod -R 755 .
+    - chmod -R 775 cache custom modules themes data upload
+    - chmod 775 config_override.php 2>/dev/null
+  ignore_errors: true
+  when: suitecrm_version == '7'
+
+- name: Run CLI installer (v8)
+  command:
+  args:
+    argv:
+      - ./bin/console
+      - suitecrm:app:install
+      - "--db_username={{ database_username }}"
+      - "--db_password={{ database_password }}"
+      - "--db_host={{ database_host }}"
+      - "--db_name={{ database_name }}"
+      - "--site_username={{ admin_username }}"
+      - "--site_password={{ admin_password }}"
+      - "--site_host={{ 'https' if ssl_certbot or ssl_selfsigned else 'http' }}://{{ web_host }}"
+      - "--demoData={{ 'yes' if suitecrm_demo_data else 'no' }}"
+      - "--env={{ 'qa' if app_local_env else 'prod' }}"
+      - --no-interaction
+    chdir: "{{ app_source_root }}"
+  when: suitecrm_version == '8'
+
+- name: Reset file permissions after CLI installer ran
+  command: "{{ item }}"
+  args:
+    chdir: "{{ app_source_root }}"
+  with_items:
+    - find . -type d -not -perm 2755 -exec chmod 2755 {} \;
+    - find . -type f -not -perm 0644 -exec chmod 0644 {} \;
+    - find . ! -user www-data -exec chown www-data:www-data {} \;
+    - chmod +x bin/console
+  when: suitecrm_version == '8'
+
+- name: Delete build archive
+  file:
+    path: /var/www/html/suitecrm.zip
+    state: absent
