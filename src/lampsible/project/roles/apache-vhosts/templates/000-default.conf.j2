@@ -32,6 +32,8 @@
 		Options FollowSymLinks
 		AllowOverride All
 		Require all granted
+		Order Allow,Deny
+		Allow from All
 	</Directory>
 	{% endif %}
 </VirtualHost>

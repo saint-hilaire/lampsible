@@ -162,6 +162,17 @@ class TestLampsible(unittest.TestCase):
         self._do_test_run()
 
 
+    def test_suitecrm(self):
+        self.lampsible.set_action('suitecrm')
+        self.lampsible.database_name = 'suitecrm'
+        self.lampsible.admin_password = 'password'
+        # Uncomment this to test SuiteCRM 7.
+        # Otherwise, it will default to version 8.
+        #self.lampsible.suitecrm_version = '7'
+        self.lampsible.suitecrm_demo_data = True
+        self._do_test_run()
+
+
     def _do_test_run(self):
         result = self.lampsible.run()
         self.assertEqual(result, 0)
