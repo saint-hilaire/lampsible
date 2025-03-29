@@ -5,3 +5,4 @@ dist
 *.egg-info
 artifacts
 env
+docs/_build
