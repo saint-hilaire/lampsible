@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'Lampsible'
-copyright = '2025, Brian St. Hilaire'
+copyright = '2024 - 2025, Brian St. Hilaire'
 author = 'Brian St. Hilaire'
 
 # -- General configuration ---------------------------------------------------
