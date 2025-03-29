@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Lampsible documentation &#8212; Lampsible  documentation</title>
+    <title>Lampsible &#8212; Lampsible  documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
@@ -31,13 +31,210 @@
 
           <div class="body" role="main">
             
-  <section id="lampsible-documentation">
-<h1>Lampsible documentation<a class="headerlink" href="#lampsible-documentation" title="Link to this heading">¶</a></h1>
-<p>Add your content using <code class="docutils literal notranslate"><span class="pre">reStructuredText</span></code> syntax. See the
-<a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html">reStructuredText</a>
-documentation for details.</p>
-<div class="toctree-wrapper compound">
+  <p>.. Lampsible documentation master file, created by
+sphinx-quickstart on Sat Mar 29 18:48:21 2025.
+You can adapt this file completely to your liking, but it should at least
+contain the root <code class="docutils literal notranslate"><span class="pre">toctree</span></code> directive.</p>
+<section id="lampsible">
+<h1>Lampsible<a class="headerlink" href="#lampsible" title="Link to this heading">¶</a></h1>
+<section id="about">
+<h2>About<a class="headerlink" href="#about" title="Link to this heading">¶</a></h2>
+<p>Complete LAMP stack setup, with a single CLI command. Powered by Ansible under the hood.
+This tool can automate almost anything that you’d expect from a LAMP stack.</p>
+<section id="features">
+<h3>Features<a class="headerlink" href="#features" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Out of the box LAMP stack</p></li>
+<li><p>Custom Apache configuration (custom webroot, vhosts, etc.)</p></li>
+<li><p>Apache or MySQL by itself</p></li>
+<li><p>WordPress</p></li>
+<li><p>Joomla</p></li>
+<li><p>Drupal</p></li>
+<li><p>Custom Laravel app</p></li>
+<li><p>SuiteCRM</p></li>
+<li><p>Production ready SSL via Certbot</p></li>
+<li><p>SSL for test servers (to avoid being rate limited by Let’s Encrypt)</p></li>
+<li><p>Self signed SSL, good for local test networks</p></li>
+<li><p>Custom PHP extensions, php.ini settings, Composer packages, etc.</p></li>
+<li><p>And so on…</p></li>
+</ul>
+</section>
+</section>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h2>
+<p>Depends on the use case. The original use case was “via SSH”, like most Ansible situations.
+This means you have a remote server (or 2 of them, if web and database servers
+run on different hosts), where you want to deploy your website. This must be reachable via SSH.
+Lampsible will be installed on your local machine.
+<br>
+However, since v2.1, you can run Lampsible “locally”, which means you install Lampsible on the same machine that
+will host your website.</p>
+<section id="via-ssh">
+<h3>Via SSH<a class="headerlink" href="#via-ssh" title="Link to this heading">¶</a></h3>
+<p>This is the preferred way to use Lampsible.</p>
+<ul class="simple">
+<li><p>Local: Unix system with Python 3.11 or newer. Tested on Ubuntu and Gentoo Linux.
+Might work on macOS, but I haven’t tested that. Won’t work on Windows,
+because Ansible requires a Unix like system.</p></li>
+<li><p>Remote: Ubuntu 20 or newer. You need SSH access and root privilege, or ability to elevate privilege to root.
+Might work on older versions, but I doubt it. Support for other distros is planned in a future version.</p></li>
+</ul>
+</section>
+<section id="alternative-running-locally">
+<h3>Alternative: running locally<a class="headerlink" href="#alternative-running-locally" title="Link to this heading">¶</a></h3>
+<p>Your machine should be similar to the “Remote” outlined above, Ubuntu Linux. Also, you need root access on that machine.
+Ideally, you’ll run as a nonprivileged user, and be asked for the root password. Finally, if you run this way, this
+should not be some kind production server, but some local test server in a private network.</p>
+</section>
+</section>
+<section id="installing">
+<h2>Installing<a class="headerlink" href="#installing" title="Link to this heading">¶</a></h2>
+<p>Install with Pip: <code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">lampsible</span></code></p>
+<p>Or from source:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">saint</span><span class="o">-</span><span class="n">hilaire</span><span class="o">/</span><span class="n">lampsible</span>
+<span class="n">cd</span> <span class="n">lampsible</span>
+<span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">.</span>
+</pre></div>
 </div>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
+<p>There are 2 ways to use Lampsible: as a CLI tool, or as a Python library.</p>
+<section id="cli-tool">
+<h3>CLI tool<a class="headerlink" href="#cli-tool" title="Link to this heading">¶</a></h3>
+<p>Once you’ve installed Lampsible onto your local environment, you can run the <code class="docutils literal notranslate"><span class="pre">lampsible</span></code> command.</p>
+<p>It takes the format: <code class="docutils literal notranslate"><span class="pre">lampsible</span> <span class="pre">user&#64;host</span> <span class="pre">ACTION</span> <span class="pre">[OPTIONS]</span></code></p>
+<p>If you are running locally, you can simply do: <code class="docutils literal notranslate"><span class="pre">lampsible</span> <span class="pre">localhost</span> <span class="pre">ACTION</span> <span class="pre">[OPTIONS]</span></code></p>
+<p>It is designed to be very simple to use. If you omit some important parameter,
+like admin user, password, site title, etc, you will be prompted to enter a value,
+or fall back to a default.</p>
+<p>Below are some examples:</p>
+<ul class="simple">
+<li><p>Install a production ready WordPress site:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lampsible</span> <span class="n">someuser</span><span class="nd">@somehost</span><span class="o">.</span><span class="n">com</span> <span class="n">wordpress</span> \
+    <span class="o">--</span><span class="n">email</span><span class="o">-</span><span class="k">for</span><span class="o">-</span><span class="n">ssl</span> <span class="n">you</span><span class="nd">@yourdomain</span><span class="o">.</span><span class="n">com</span>
+</pre></div>
+</div>
+<p>Install a production ready Joomla site:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lampsible</span> <span class="n">someuser</span><span class="nd">@somehost</span><span class="o">.</span><span class="n">com</span> <span class="n">joomla</span> \
+    <span class="o">--</span><span class="n">email</span><span class="o">-</span><span class="k">for</span><span class="o">-</span><span class="n">ssl</span> <span class="n">you</span><span class="nd">@yourdomain</span><span class="o">.</span><span class="n">com</span>
+</pre></div>
+</div>
+<p>Install Drupal on a test server. Certbot will set up a
+test certificate. Also, Apache and MySQL will run on two separate hosts.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lampsible</span> <span class="n">someuser</span><span class="nd">@somehost</span><span class="o">.</span><span class="n">com</span> <span class="n">drupal</span> \
+    <span class="o">--</span><span class="n">database</span><span class="o">-</span><span class="n">system</span><span class="o">-</span><span class="n">user</span><span class="o">-</span><span class="n">host</span> <span class="n">otheruser</span><span class="nd">@dbserver</span><span class="o">.</span><span class="n">somehost</span><span class="o">.</span><span class="n">com</span> \
+    <span class="o">--</span><span class="n">database</span><span class="o">-</span><span class="n">host</span> <span class="mf">10.0.1.2</span> \
+    <span class="o">--</span><span class="n">database</span><span class="o">-</span><span class="n">username</span> <span class="n">dbuser</span>
+    <span class="o">--</span><span class="n">ssl</span><span class="o">-</span><span class="n">test</span><span class="o">-</span><span class="n">cert</span> \
+    <span class="o">--</span><span class="n">apache</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">admin</span> <span class="n">you</span><span class="nd">@yourdomain</span><span class="o">.</span><span class="n">com</span> \
+</pre></div>
+</div>
+<p>Set up a LAMP stack with various custom configuration and a self signed SSL certificate on some local VM:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lampsible</span> <span class="n">someuser</span><span class="o">@</span><span class="mf">192.168.123.123</span> <span class="n">lamp</span><span class="o">-</span><span class="n">stack</span> \
+    <span class="o">--</span><span class="n">ask</span><span class="o">-</span><span class="n">remote</span><span class="o">-</span><span class="n">sudo</span> \
+    <span class="o">--</span><span class="n">ssl</span><span class="o">-</span><span class="n">selfsigned</span> \
+    <span class="o">--</span><span class="n">database</span><span class="o">-</span><span class="n">username</span> <span class="n">dbuser</span> \
+    <span class="o">--</span><span class="n">database</span><span class="o">-</span><span class="n">name</span> <span class="n">testdb</span> \
+    <span class="o">--</span><span class="n">apache</span><span class="o">-</span><span class="n">vhost</span><span class="o">-</span><span class="n">name</span> <span class="n">some</span><span class="o">-</span><span class="n">legacy</span><span class="o">-</span><span class="n">app</span> \
+    <span class="o">--</span><span class="n">apache</span><span class="o">-</span><span class="n">document</span><span class="o">-</span><span class="n">root</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">www</span><span class="o">/</span><span class="n">html</span><span class="o">/</span><span class="n">some</span><span class="o">-</span><span class="n">legacy</span><span class="o">-</span><span class="n">app</span><span class="o">/</span><span class="n">some</span><span class="o">-</span><span class="nb">dir</span><span class="o">/</span><span class="n">public</span> \
+    <span class="o">--</span><span class="n">php</span><span class="o">-</span><span class="n">extensions</span> <span class="n">mysql</span><span class="p">,</span><span class="n">xml</span><span class="p">,</span><span class="n">mbstring</span><span class="p">,</span><span class="n">xdebug</span><span class="p">,</span><span class="n">gd</span>
+</pre></div>
+</div>
+<p>Run <code class="docutils literal notranslate"><span class="pre">lampsible</span> <span class="pre">--help</span></code> for a full list of options.</p>
+</section>
+<section id="python-library">
+<h3>Python library<a class="headerlink" href="#python-library" title="Link to this heading">¶</a></h3>
+<p>Lampsible can be used as a Python library, so if you want to build your own tool,
+and want to leverage Lampsible’s features to automate various Apache webserver setups,
+you can do that.</p>
+<p>It could look something like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_automation_tool.py</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">lampsible.lampsible</span><span class="w"> </span><span class="kn">import</span> <span class="n">Lampsible</span>
+
+<span class="c1"># Simple WordPress setup</span>
+<span class="n">lampsible</span> <span class="o">=</span> <span class="n">Lampsible</span><span class="p">(</span>
+    <span class="n">web_user</span><span class="o">=</span><span class="s1">&#39;someuser&#39;</span><span class="p">,</span>
+    <span class="n">web_host</span><span class="o">=</span><span class="s1">&#39;somehost.example.com&#39;</span><span class="p">,</span>
+    <span class="n">action</span><span class="o">=</span><span class="s1">&#39;wordpress&#39;</span><span class="p">,</span>
+    <span class="c1"># Required for Certbot. You can also use email_for_ssl</span>
+    <span class="n">apache_server_admin</span><span class="o">=</span><span class="s1">&#39;someuser@example.com&#39;</span><span class="p">,</span>
+    <span class="n">database_name</span><span class="o">=</span><span class="s1">&#39;wordpress&#39;</span><span class="p">,</span>
+    <span class="n">database_username</span><span class="o">=</span><span class="s1">&#39;db-user&#39;</span><span class="p">,</span>
+    <span class="n">database_password</span><span class="o">=</span><span class="s1">&#39;topsecret&#39;</span><span class="p">,</span>
+    <span class="n">admin_username</span><span class="o">=</span><span class="s1">&#39;your-wordpress-admin&#39;</span><span class="p">,</span>
+    <span class="n">admin_email</span><span class="o">=</span><span class="s1">&#39;wp-admin@example.com&#39;</span><span class="p">,</span>
+    <span class="n">admin_password</span><span class="o">=</span><span class="s1">&#39;anothertopsecret&#39;</span><span class="p">,</span>
+    <span class="n">site_title</span><span class="o">=</span><span class="s1">&#39;My WordPress Blog&#39;</span><span class="p">,</span>
+    <span class="c1"># Set this to give your consent to install some required</span>
+    <span class="c1"># Ansible Galaxy Collections. Otherwise, if any of them are missing,</span>
+    <span class="c1"># Lampsible will throw an error. If those collections are already installed,</span>
+    <span class="c1"># this attribute is no longer required.</span>
+    <span class="c1"># See /src/lampsible/project/ansible-galaxy-requirements.yml</span>
+    <span class="n">ansible_galaxy_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">lampsible</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+
+<span class="c1"># Joomla setup. This example is a little more complex,</span>
+<span class="c1"># to showcase some more features. Webserver and</span>
+<span class="c1"># database server are two different hosts,</span>
+<span class="c1"># a database root password will be set.</span>
+<span class="c1"># Certbot will run with the --test-cert flag,</span>
+<span class="c1"># an older version of Joomla will be installed,</span>
+<span class="c1"># some custom PHP extensions will be installed</span>
+<span class="c1"># alongside the ones required by Joomla,</span>
+<span class="c1"># and some extra environment variables will be set.</span>
+<span class="n">lampsible</span> <span class="o">=</span> <span class="n">Lampsible</span><span class="p">(</span>
+    <span class="n">web_user</span><span class="o">=</span><span class="s1">&#39;someuser&#39;</span><span class="p">,</span>
+    <span class="n">web_host</span><span class="o">=</span><span class="s1">&#39;somehost.example.com&#39;</span><span class="p">,</span>
+    <span class="c1"># This assumes that you want your database server</span>
+    <span class="c1"># to be reachable from the outside via the</span>
+    <span class="c1"># domain dbserver.example.com, and within your</span>
+    <span class="c1"># internal network, including your Joomla webserver,</span>
+    <span class="c1"># via the private IP address 10.0.1.2.</span>
+    <span class="n">database_system_user</span><span class="o">=</span><span class="s1">&#39;root&#39;</span><span class="p">,</span>
+    <span class="n">database_system_host</span><span class="o">=</span><span class="s1">&#39;dbserver.example.com&#39;</span><span class="p">,</span>
+    <span class="n">database_host</span><span class="o">=</span><span class="s1">&#39;10.0.1.2&#39;</span><span class="p">,</span>
+    <span class="n">action</span><span class="o">=</span><span class="s1">&#39;joomla&#39;</span><span class="p">,</span>
+    <span class="n">email_for_ssl</span><span class="o">=</span><span class="s1">&#39;someuser@example.com&#39;</span><span class="p">,</span>
+    <span class="n">ssl_test_cert</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">database_name</span><span class="o">=</span><span class="s1">&#39;joomla&#39;</span><span class="p">,</span>
+    <span class="n">database_username</span><span class="o">=</span><span class="s1">&#39;db-user&#39;</span><span class="p">,</span>
+    <span class="n">database_password</span><span class="o">=</span><span class="s1">&#39;topsecret&#39;</span><span class="p">,</span>
+    <span class="n">database_root_password</span><span class="o">=</span><span class="s1">&#39;supertopsecret&#39;</span><span class="p">,</span>
+    <span class="n">admin_username</span><span class="o">=</span><span class="s1">&#39;your-joomla-admin&#39;</span><span class="p">,</span>
+    <span class="n">admin_email</span><span class="o">=</span><span class="s1">&#39;joomla-admin@example.com&#39;</span><span class="p">,</span>
+    <span class="n">admin_password</span><span class="o">=</span><span class="s1">&#39;anothertopsecret&#39;</span><span class="p">,</span>
+    <span class="c1"># These extensions will be appended to the list of</span>
+    <span class="c1"># extensions required by the system you are</span>
+    <span class="c1"># installing (in this case Joomla).</span>
+    <span class="n">php_extensions</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;php-curl&#39;</span><span class="p">,</span> <span class="s1">&#39;php-gd&#39;</span><span class="p">],</span>
+    <span class="n">joomla_admin_full_name</span><span class="o">=</span><span class="s1">&#39;Your Name&#39;</span><span class="p">,</span>
+    <span class="n">joomla_version</span><span class="o">=</span><span class="s1">&#39;5.1.4&#39;</span><span class="p">,</span>
+    <span class="n">site_title</span><span class="o">=</span><span class="s1">&#39;My Joomla Site&#39;</span><span class="p">,</span>
+    <span class="n">extra_env_vars</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;FOO&#39;</span><span class="p">:</span> <span class="s1">&#39;bar&#39;</span><span class="p">,</span> <span class="s1">&#39;HELLO&#39;</span><span class="p">:</span> <span class="s1">&#39;world&#39;</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">lampsible</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+</pre></div>
+</div>
+</section>
+</section>
+<section id="faq">
+<h2>FAQ<a class="headerlink" href="#faq" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Why not just use Docker?</p></li>
+</ul>
+<p>Lampsible is intended to be an homage to the old school: A simple and versatile LAMP stack.
+If you want something similar with Docker, consider using <a class="reference external" href="https://github.com/saint-hilaire/docksible">Docksible</a>,
+another project that I maintain. It will install a web app onto your remote server with Docker Compose.
+It also leverages Ansible locally under the hood.</p>
+</section>
 </section>
 
 
@@ -94,7 +291,7 @@ documentation for details.</p>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
-      <a href="_sources/index.rst.txt"
+      <a href="_sources/index.md.txt"
           rel="nofollow">Page source</a>
     </div>
 
