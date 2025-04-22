@@ -422,7 +422,7 @@ class Lampsible:
                         '' if self.php_version is None else self.php_version
                     ),
                     'libapache2-mod-php'
-                ] + self.php_extensions
+                ] + (self.php_extensions if self.php_extensions else [])
 
             elif varname in ['php_allow_url_fopen', 'php_display_errors']:
                 value = 'On' if getattr(self, varname) else 'Off'
