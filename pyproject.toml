@@ -13,13 +13,12 @@ authors = [
 ]
 description = "Deploy and set up LAMP stacks with Ansible"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = [
-    "ansible-core>=2.18",
-    "ansible-runner>=2.4",
-    "ansible-directory-helper>=0.3",
+    "ansible-core>=2.15.13",
+    "ansible-runner>=2.4.1",
     "requests>=2.32.3",
-    "fqdn",
+    "fqdn>=1.5.1",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
