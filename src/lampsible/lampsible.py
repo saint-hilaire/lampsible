@@ -1,11 +1,9 @@
 import os
 from copy import deepcopy
 from textwrap import dedent
+from shutil import rmtree
 from yaml import safe_load
-from ansible_runner import (
-    Runner, RunnerConfig, run_command, run as ansible_runner_run
-)
-from ansible_directory_helper.private_data import PrivateData
+from ansible_runner import interface as runner_interface, run_command
 from fqdn import FQDN
 from .constants import *
 
@@ -70,6 +68,12 @@ class Lampsible:
             interactive=False,
             ):
 
+        self.private_data_dir = private_data_dir
+        try:
+            os.makedirs(self.private_data_dir)
+        except FileExistsError:
+            pass
+
         self.web_user = web_user
         self.web_host = web_host
 
@@ -82,15 +86,7 @@ class Lampsible:
         else:
             self.database_system_host = self.web_host
 
-        self.private_data_helper = PrivateData(private_data_dir)
         self._init_inventory()
-
-        self.runner_config = RunnerConfig(
-            private_data_dir=private_data_dir,
-            project_dir=PROJECT_DIR,
-        )
-
-        self.runner = Runner(config=self.runner_config)
 
         self.apache_document_root = apache_document_root
         self.apache_vhost_name    = apache_vhost_name
@@ -155,10 +151,12 @@ class Lampsible:
         if ssh_key_file:
             try:
                 with open(os.path.abspath(ssh_key_file), 'r') as key_file:
-                    key_data = key_file.read()
-                self.runner_config.ssh_key_data = key_data
+                    self.ssh_key_data = key_file.read()
             except FileNotFoundError:
+                self.ssh_key_data = None
                 print('Warning! SSH key file not found!')
+        else:
+            self.ssh_key_data = None
 
         self.remote_sudo_password = remote_sudo_password
 
@@ -203,7 +201,7 @@ class Lampsible:
             if ext not in self.php_extensions:
                 self.php_extensions.append(ext)
 
-        self.runner_config.playbook = '{}.yml'.format(self.action)
+        self.playbook = '{}.yml'.format(self.action)
 
 
     def _set_apache_vars(self):
@@ -303,20 +301,32 @@ class Lampsible:
 
 
     def _init_inventory(self):
-        self.private_data_helper.add_inventory_groups([
-            'web_servers',
-            'database_servers',
-        ])
-        self.private_data_helper.add_inventory_host(self.web_host, 'web_servers')
-        self.private_data_helper.add_inventory_host(self.database_system_host,
-                'database_servers')
-        self.private_data_helper.set_inventory_ansible_user(self.web_host, self.web_user)
-        self.private_data_helper.set_inventory_ansible_user(
-                self.database_system_host, self.database_system_user)
-        self.private_data_helper.write_inventory()
+        web_host_dict      = {'ansible_user': self.web_user}
+        database_host_dict = {'ansible_user': self.database_system_user}
+
+        if self.web_host in ['localhost', '127.0.0.1']:
+            web_host_dict['ansible_connection'] = 'local'
+        if self.database_system_host in ['localhost', '127.0.0.1']:
+            database_host_dict['ansible_connection'] = 'local'
+
+        self.inventory = {
+            'all': {'hosts': {}},
+            'ungrouped': {'hosts': {}},
+            'web_servers': {
+                'hosts': {
+                    self.web_host: web_host_dict,
+                },
+            },
+            'database_servers': {
+                'hosts': {
+                    self.database_system_host: database_host_dict,
+                },
+            },
+        }
 
 
     def _update_env(self):
+        self.extravars = {}
         extravars = [
             'web_host',
             'apache_vhosts',
@@ -325,9 +335,7 @@ class Lampsible:
             'apache_server_admin',
             'apache_custom_conf_name',
             # TODO: Ansible Runner has a dedicated feature for dealing
-            # with passwords. Likely we'll have to implement support
-            # for that in ansible-directory-helper.
-            # For the time being, however, treat it as an extravar.
+            # with passwords.
             'database_root_password',
             'database_username',
             'database_password',
@@ -396,8 +404,7 @@ class Lampsible:
             'extra_packages',
             'extra_env_vars',
             # TODO: This one especially... use Ansible Runner's
-            # dedicated password feature, that is, we should add it
-            # ansible-directory-helper.
+            # dedicated password feature.
             'ansible_sudo_pass',
             'open_database',
         ])
@@ -422,7 +429,7 @@ class Lampsible:
                         '' if self.php_version is None else self.php_version
                     ),
                     'libapache2-mod-php'
-                ] + (self.php_extensions if self.php_extensions else [])
+                ] + (self.php_extensions or [])
 
             elif varname in ['php_allow_url_fopen', 'php_display_errors']:
                 value = 'On' if getattr(self, varname) else 'Off'
@@ -453,10 +460,7 @@ class Lampsible:
                 # app, we write the variables to the app's .env file, and not
                 # Apache's envvars file.
                 if self.action == 'laravel':
-                    self.private_data_helper.set_extravar(
-                        'laravel_extra_env_vars',
-                        value
-                    )
+                    self.extravars['laravel_extra_env_vars'] = value
                     value = []
 
             elif varname == 'app_source_root':
@@ -484,13 +488,15 @@ class Lampsible:
             else:
                 value = getattr(self, varname)
 
-            self.private_data_helper.set_extravar(varname, value)
-
-        self.private_data_helper.write_env()
-
-
-    def _prepare_config(self):
-        self.runner_config.prepare()
+            # TODO: This conditional would be very good and important, because this way,
+            # I don't need to worry about messing up settings that are passed
+            # to third party roles (like geerlingguy.php).
+            # However, it would currently break some existing roles.
+            # Otherwise, if passing None to the third party roles causes issues there,
+            # I have to set default values for those variables, which is a little cumbersome.
+            #if value is not None:
+            #    self.extravars[varname] = value
+            self.extravars[varname] = value
 
 
     def _ensure_galaxy_dependencies(self):
@@ -608,6 +614,7 @@ Ansible Galaxy {} into {}:\n- {}\nIs this OK (yes/no)?
 
     # TODO: Do it this way?
     #def dump_ansible_facts(self):
+    #    from ansible_runner import run as ansible_runner_run,
     #    ansible_runner_run(
     #        private_data_dir=self.private_data_dir,
     #        host_pattern=self.web_host,
@@ -616,19 +623,29 @@ Ansible Galaxy {} into {}:\n- {}\nIs this OK (yes/no)?
     #    )
 
 
+    def cleanup_private_data(self):
+        rmtree(self.private_data_dir)
+
+
     def run(self):
         self._set_apache_vars()
         self._update_env()
-        self._prepare_config()
 
         rc = 1
         try:
             assert self._ensure_galaxy_dependencies() == 0
-            self.runner.run()
-            print(self.runner.stats)
-            rc = self.runner.rc
+            runner = runner_interface.run(
+                private_data_dir=self.private_data_dir,
+                playbook=self.playbook,
+                inventory=self.inventory,
+                extravars=self.extravars,
+                project_dir=PROJECT_DIR,
+                ssh_key=self.ssh_key_data,
+            )
+            print(runner.stats)
+            rc = runner.rc
         except (AssertionError, RuntimeError):
-            pass
+            rc = 1
 
-        self.private_data_helper.cleanup_dir()
+        self.cleanup_private_data()
         return rc
