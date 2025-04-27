@@ -36,7 +36,7 @@ will host your website.
 
 This is the preferred way to use Lampsible.
 
-* Local: Unix system with Python 3.11 or newer. Tested on Ubuntu and Gentoo Linux.
+* Local: Unix system with Python 3.9 or newer. Tested on Ubuntu and Gentoo Linux.
   Might work on macOS, but I haven't tested that. Won't work on Windows,
   because Ansible requires a Unix like system.
 * Remote: Ubuntu 20 or newer. You need SSH access and root privilege, or ability to elevate privilege to root.
