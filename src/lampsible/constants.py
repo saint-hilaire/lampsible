@@ -15,6 +15,10 @@ LAMPSIBLE_BANNER = """\
      --------------------------------------------
         LAMP stacks with Ansible  -  v{}
      --------------------------------------------
+     WARNING! LAMPSIBLE V1 IS NO LONGER SUPPORTED!
+     PLEASE UPGRADE TO A NEWER VERSION!
+     (Run 'pip install --upgrade lampsible')
+
 """.format(__version__)
 SUPPORTED_ACTIONS = [
     # LAMP-Stack basics
