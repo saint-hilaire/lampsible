@@ -174,6 +174,8 @@ def main():
         Leave blank to default to 'laravel-app'
         """
     )
+    # TODO: It requires .tar.gz, but it would be good if it could also
+    # handle .zip files.
     parser.add_argument('--app-build-path',
         help="""
         If you are installing a Laravel app,
