@@ -591,13 +591,10 @@ def main():
                 'setup'
             ]
         )
-        lampsible.private_data_helper.cleanup_dir()
+        lampsible.cleanup_private_data()
         return 0
 
-    else:
-        lampsible.run()
-
-    return 0
+    return lampsible.run()
 
 
 if __name__ == '__main__':
