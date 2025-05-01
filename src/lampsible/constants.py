@@ -142,7 +142,7 @@ DEFAULT_WORDPRESS_LOCALE  = 'en_US'
 RECENT_WORDPRESS_VERSIONS = [
     'latest',
     'nightly',
-    '6.8',
+    '6.8.1', '6.8',
     '6.7.2', '6.7.1', '6.7',
     '6.6.2', '6.6.1', '6.6',
     '6.5.5', '6.5.4', '6.5.3', '6.5.2', '6.5',
