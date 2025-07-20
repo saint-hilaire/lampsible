@@ -62,7 +62,7 @@ Or from source:
 
 .. code-block:: shell
 
-    git clone https://github.com/saint-hilaire/lampsible
+    git clone https://github.com/belal-i/lampsible
     cd lampsible
     python3 -m pip install .
 
@@ -214,7 +214,7 @@ FAQ
 * Why not just use Docker?
 
   Lampsible is intended to be an homage to the old school: A simple and versatile LAMP stack.
-  If you want something similar with Docker, consider using `Docksible <https://github.com/saint-hilaire/docksible>`,
+  If you want something similar with Docker, consider using `Docksible <https://github.com/belal-i/docksible>`,
   another project that I maintain. It will install a web app onto your remote server with Docker Compose.
   It also leverages Ansible locally under the hood.
 
