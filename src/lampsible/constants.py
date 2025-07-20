@@ -142,7 +142,7 @@ DEFAULT_WORDPRESS_LOCALE  = 'en_US'
 RECENT_WORDPRESS_VERSIONS = [
     'latest',
     'nightly',
-    '6.8.1', '6.8',
+    '6.8.2', '6.8.1', '6.8',
     '6.7.2', '6.7.1', '6.7',
     '6.6.2', '6.6.1', '6.6',
     '6.5.5', '6.5.4', '6.5.3', '6.5.2', '6.5',
@@ -150,7 +150,7 @@ RECENT_WORDPRESS_VERSIONS = [
 
 # Joomla
 # ------
-DEFAULT_JOOMLA_VERSION         = '5.3.0'
+DEFAULT_JOOMLA_VERSION         = '5.3.2'
 DEFAULT_JOOMLA_ADMIN_FULL_NAME = 'Sample User'
 
 # Drupal

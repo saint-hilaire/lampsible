@@ -504,7 +504,7 @@ def main():
             Please fix the issues listed above and try again.
             """
             ))
-        return 1
+        return result
 
     args = validator.get_validated_args()
 
