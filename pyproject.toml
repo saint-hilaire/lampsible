@@ -7,9 +7,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lampsible"
-version = "2.3.1"
+version = "2.3.2"
 authors = [
-    {name="Brian St. Hilaire", email="brian.st-hilaire@sanctus-tech.com"}
+    {name="Belal Ibrahim", email="belal.ibrahim@proton.me"}
 ]
 description = "Deploy and set up LAMP stacks with Ansible"
 readme = "README.md"
@@ -35,8 +35,8 @@ classifiers = [
 lampsible = "lampsible:cli.main"
 
 [project.urls]
-Homepage = "https://github.com/saint-hilaire/lampsible"
-Issues = "https://github.com/saint-hilaire/lampsible/issues"
+Homepage = "https://github.com/belal-i/lampsible"
+Issues = "https://github.com/belal-i/lampsible/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

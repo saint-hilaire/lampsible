@@ -7,8 +7,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'Lampsible'
-copyright = '2024 - 2025, Brian St. Hilaire'
-author = 'Brian St. Hilaire'
+copyright = '2024 - 2025, Belal Ibrahim'
+author = 'Belal Ibrahim'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

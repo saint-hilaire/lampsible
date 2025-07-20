@@ -139,7 +139,6 @@ class TestLampsible(unittest.TestCase):
         self.lampsible.extra_env_vars = {
             'HELLO': 'world',
             'FOO'  : 'bar',
-
         }
         self._do_test_run()
 
