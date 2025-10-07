@@ -150,7 +150,8 @@ RECENT_WORDPRESS_VERSIONS = [
 
 # Joomla
 # ------
-DEFAULT_JOOMLA_VERSION         = '5.3.4'
+# TODO: See https://github.com/belal-i/lampsible/issues/81
+DEFAULT_JOOMLA_VERSION         = '5.3.3'
 DEFAULT_JOOMLA_ADMIN_FULL_NAME = 'Sample User'
 
 # Drupal
