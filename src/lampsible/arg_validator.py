@@ -4,6 +4,7 @@ from copy import deepcopy
 from getpass import getpass, getuser
 from textwrap import dedent
 from requests import head as requests_head
+from ipaddress import ip_address
 from lampsible.constants import *
 
 
@@ -119,14 +120,14 @@ class ArgValidator():
         except IndexError:
             self.validated_args.web_host = self.validated_args.web_user
             try:
-                assert self.validated_args.web_host in ['localhost',
-                    '127.0.0.1']
+                assert self._host_is_local(self.validated_args.web_host)
                 self.validated_args.web_user = getuser()
             except AssertionError:
                 print(dedent(
                     """
                     FATAL! User can only be omitted if your web host is
-                    localhost. Otherwise, if passing in a remote host,
+                    localhost, ie. 'localhost', '127.0.0.1', etc.
+                    Otherwise, if passing in a remote host,
                     first positional argument needs to be in the format
                     'user@host'.
                     """
@@ -142,7 +143,7 @@ class ArgValidator():
                 ))
             return 1
 
-        if self.validated_args.web_host in ['localhost', '127.0.0.1']:
+        if self._host_is_local(self.validated_args.web_host):
             self.validated_args.web_user = getuser()
             if '@' in self.args.web_user_host:
                 print(dedent(
@@ -154,6 +155,8 @@ class ArgValidator():
                     """.format(self.validated_args.web_user)
                 ))
             self.args.ask_remote_sudo = os.geteuid() != 0
+        elif self._host_is_private(self.validated_args.web_host):
+            self.args.ask_remote_sudo = self.validated_args.web_user != 'root'
 
         if self.args.database_system_user_host:
             try:
@@ -189,6 +192,24 @@ class ArgValidator():
             self.validated_args.remote_sudo_password = self.get_pass_and_check(
                 'Please enter sudo password for web host: ')
         return 0
+
+
+    def _host_is_local(self, host):
+        if host.lower() == 'localhost':
+            return True
+        try:
+            tmp_ip = ip_address(host)
+            return tmp_ip.is_loopback
+        except ValueError:
+            return False
+
+
+    def _host_is_private(self, host):
+        try:
+            tmp_ip = ip_address(host)
+            return tmp_ip.is_private or tmp_ip.is_link_local
+        except ValueError:
+            return False
 
 
     def validate_database_args(self):
