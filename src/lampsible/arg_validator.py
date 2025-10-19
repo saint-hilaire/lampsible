@@ -398,6 +398,12 @@ class ArgValidator():
                 True
             )
 
+        try:
+            self.validated_args.wordpress_plugins = \
+                    self.args.wordpress_plugins.split(',')
+        except AttributeError:
+            self.validated_args.wordpress_plugins = []
+
         return 0
 
 
