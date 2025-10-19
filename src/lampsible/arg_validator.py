@@ -3,9 +3,8 @@ from re import match
 from copy import deepcopy
 from getpass import getpass, getuser
 from textwrap import dedent
-from requests import head as requests_head
-from ipaddress import ip_address
-from lampsible.constants import *
+from .constants import *
+from .helpers import *
 
 
 class ArgValidator():
@@ -120,7 +119,7 @@ class ArgValidator():
         except IndexError:
             self.validated_args.web_host = self.validated_args.web_user
             try:
-                assert self._host_is_local(self.validated_args.web_host)
+                assert host_is_local(self.validated_args.web_host)
                 self.validated_args.web_user = getuser()
             except AssertionError:
                 print(dedent(
@@ -143,7 +142,7 @@ class ArgValidator():
                 ))
             return 1
 
-        if self._host_is_local(self.validated_args.web_host):
+        if host_is_local(self.validated_args.web_host):
             self.validated_args.web_user = getuser()
             if '@' in self.args.web_user_host:
                 print(dedent(
@@ -155,7 +154,7 @@ class ArgValidator():
                     """.format(self.validated_args.web_user)
                 ))
             self.args.ask_remote_sudo = os.geteuid() != 0
-        elif self._host_is_private(self.validated_args.web_host):
+        elif host_is_private(self.validated_args.web_host):
             self.args.ask_remote_sudo = self.validated_args.web_user != 'root'
 
         if self.args.database_system_user_host:
@@ -192,24 +191,6 @@ class ArgValidator():
             self.validated_args.remote_sudo_password = self.get_pass_and_check(
                 'Please enter sudo password for web host: ')
         return 0
-
-
-    def _host_is_local(self, host):
-        if host.lower() == 'localhost':
-            return True
-        try:
-            tmp_ip = ip_address(host)
-            return tmp_ip.is_loopback
-        except ValueError:
-            return False
-
-
-    def _host_is_private(self, host):
-        try:
-            tmp_ip = ip_address(host)
-            return tmp_ip.is_private or tmp_ip.is_link_local
-        except ValueError:
-            return False
 
 
     def validate_database_args(self):
@@ -380,8 +361,11 @@ class ArgValidator():
         if self.args.action != 'wordpress':
             return 0
 
-        if not self.is_valid_wordpress_version(self.args.wordpress_version):
-            print('\nInvalid WordPress version! Leave --wordpress-version blank to default to \'{}\''.format(DEFAULT_WORDPRESS_VERSION))
+        if not is_valid_wordpress_version(self.args.wordpress_version):
+            print(dedent("""
+            \nInvalid WordPress version! Leave --wordpress-version blank to
+            default to '{}'
+            """.format(DEFAULT_WORDPRESS_VERSION)))
             return 1
 
         self.handle_defaults([
@@ -415,20 +399,6 @@ class ArgValidator():
             )
 
         return 0
-
-
-    def is_valid_wordpress_version(self, wp_version):
-        if wp_version in RECENT_WORDPRESS_VERSIONS:
-            return True
-
-        try:
-            r = requests_head(
-                'https://wordpress.org/wordpress-{}.tar.gz'.format(wp_version)
-            )
-            assert r.status_code == 200
-            return True
-        except AssertionError:
-            return False
 
 
     def validate_joomla_args(self):

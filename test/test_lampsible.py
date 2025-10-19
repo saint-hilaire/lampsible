@@ -4,6 +4,7 @@ from getpass import getpass, getuser
 from lampsible import __version__
 from lampsible.lampsible import Lampsible
 from lampsible.constants import *
+from lampsible.helpers import *
 
 class TestLampsible(unittest.TestCase):
 
@@ -34,10 +35,11 @@ class TestLampsible(unittest.TestCase):
             apache_server_admin='me@me.me',
             ansible_galaxy_ok=True,
         )
-        if web_host in ['localhost', '127.0.0.1']:
+        if host_is_local(web_host) or host_is_private(web_host):
             self.lampsible.remote_sudo_password = getpass(
                 'Please enter local sudo password: '
             )
+            self.lampsible.ssl_certbot = False
 
 
     def test_banner(self):
