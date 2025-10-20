@@ -78,8 +78,23 @@
       - "--admin_email={{ admin_email }}"
       - "--locale={{ wordpress_locale }}"
 
+# https://developer.wordpress.org/cli/commands/theme/
+- name: Install and activate optional WordPress theme
+  command:
+  args:
+    argv:
+      - wp
+      - theme
+      - install
+      - "{{ wordpress_theme }}"
+      - --activate
+      - --allow-root
+      - "--path={{ apache_document_root }}"
+  when: wordpress_theme
+
+
 # https://developer.wordpress.org/cli/commands/plugin/
-- name: Install and activate WordPress any plugins
+- name: Install and activate any WordPress plugins
   command:
   args:
     argv:

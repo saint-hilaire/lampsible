@@ -22,6 +22,7 @@ class Lampsible:
             admin_username=DEFAULT_ADMIN_USERNAME, admin_email=DEFAULT_ADMIN_EMAIL,
             wordpress_version=DEFAULT_WORDPRESS_VERSION,
             wordpress_locale=DEFAULT_WORDPRESS_LOCALE,
+            wordpress_theme=None,
             wordpress_plugins=[],
             joomla_version=DEFAULT_JOOMLA_VERSION,
             joomla_admin_full_name=DEFAULT_JOOMLA_ADMIN_FULL_NAME,
@@ -131,6 +132,7 @@ class Lampsible:
 
         self.wordpress_version = wordpress_version
         self.wordpress_locale  = wordpress_locale
+        self.wordpress_theme   = wordpress_theme
         self.wordpress_plugins = wordpress_plugins
         self.wordpress_insecure_allow_xmlrpc  = wordpress_insecure_allow_xmlrpc
 
@@ -368,6 +370,7 @@ class Lampsible:
             extravars.extend([
                 'wordpress_version',
                 'wordpress_locale',
+                'wordpress_theme',
                 'wordpress_plugins',
                 'wordpress_url',
                 'wordpress_insecure_allow_xmlrpc',
