@@ -79,7 +79,7 @@
       - "--locale={{ wordpress_locale }}"
 
 # https://developer.wordpress.org/cli/commands/plugin/
-- name: Install WordPress plugins...
+- name: Install and activate WordPress any plugins
   command:
   args:
     argv:
@@ -87,22 +87,7 @@
       - plugin
       - install
       - "{{ wp_plugin }}"
-      - --allow-root
-      - "--path={{ apache_document_root }}"
-  loop: "{{ wordpress_plugins }}"
-  loop_control:
-    loop_var: wp_plugin
-  when: wordpress_plugins
-
-# https://developer.wordpress.org/cli/commands/plugin/
-- name: ... Activate WordPress plugins
-  command:
-  args:
-    argv:
-      - wp
-      - plugin
-      - activate
-      - "{{ wp_plugin }}"
+      - --activate
       - --allow-root
       - "--path={{ apache_document_root }}"
   loop: "{{ wordpress_plugins }}"
