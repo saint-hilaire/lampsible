@@ -78,6 +78,38 @@
       - "--admin_email={{ admin_email }}"
       - "--locale={{ wordpress_locale }}"
 
+# https://developer.wordpress.org/cli/commands/plugin/
+- name: Install WordPress plugins...
+  command:
+  args:
+    argv:
+      - wp
+      - plugin
+      - install
+      - "{{ wp_plugin }}"
+      - --allow-root
+      - "--path={{ apache_document_root }}"
+  loop: "{{ wordpress_plugins }}"
+  loop_control:
+    loop_var: wp_plugin
+  when: wordpress_plugins
+
+# https://developer.wordpress.org/cli/commands/plugin/
+- name: ... Activate WordPress plugins
+  command:
+  args:
+    argv:
+      - wp
+      - plugin
+      - activate
+      - "{{ wp_plugin }}"
+      - --allow-root
+      - "--path={{ apache_document_root }}"
+  loop: "{{ wordpress_plugins }}"
+  loop_control:
+    loop_var: wp_plugin
+  when: wordpress_plugins
+
 - name: Set file ownership for WordPress directory
   file:
     path: "{{ apache_document_root }}"
