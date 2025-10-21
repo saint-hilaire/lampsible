@@ -149,6 +149,11 @@ lampsible = Lampsible(
     admin_email='wp-admin@example.com',
     admin_password='anothertopsecret',
     site_title='My WordPress Blog',
+    wordpress_plugins=[
+        'akismet',
+        'wordpress-seo',
+        'wordfence',
+    ],
     # Set this to give your consent to install some required
     # Ansible Galaxy Collections. Otherwise, if any of them are missing,
     # Lampsible will throw an error. If those collections are already installed,
