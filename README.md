@@ -10,7 +10,7 @@ This tool can automate almost anything that you'd expect from a LAMP stack.
 * Out of the box LAMP stack
 * Custom Apache configuration (custom webroot, vhosts, etc.)
 * Apache or MySQL by itself
-* WordPress
+* WordPress, including custom themes and plugins
 * Joomla
 * Drupal
 * Custom Laravel app
@@ -24,15 +24,9 @@ This tool can automate almost anything that you'd expect from a LAMP stack.
 
 ## Requirements
 
-Depends on the use case. The original use case was "via SSH", like most Ansible situations.
-This means you have a remote server (or 2 of them, if web and database servers
-run on different hosts), where you want to deploy your website. This must be reachable via SSH.
-Lampsible will be installed on your local machine.
-<br>
-However, since v2.1, you can run Lampsible "locally", which means you install Lampsible on the same machine that
-will host your website.
+Depends on the use case.
 
-### Via SSH
+### If installing web app on remote host
 
 This is the preferred way to use Lampsible.
 
@@ -42,7 +36,7 @@ This is the preferred way to use Lampsible.
 * Remote: Ubuntu 20 or newer. You need SSH access and root privilege, or ability to elevate privilege to root.
   Might work on older versions, but I doubt it. Support for other distros is planned in a future version.
 
-### Alternative: running locally
+### Alternative: installing web app directly on localhost
 
 Your machine should be similar to the "Remote" outlined above, Ubuntu Linux. Also, you need root access on that machine.
 Ideally, you'll run as a nonprivileged user, and be asked for the root password. Finally, if you run this way, this
@@ -50,9 +44,14 @@ should not be some kind production server, but some local test server in a priva
 
 ## Installing
 
-Install with Pip: `python3 -m pip install lampsible`
+### Pip
 
-Or from source:
+```
+pip install lampsible
+```
+
+### Alternative: from source
+
 ```
 git clone https://github.com/belal-i/lampsible
 cd lampsible
@@ -78,43 +77,48 @@ or fall back to a default.
 Below are some examples:
 
 * Install a production ready WordPress site:
+  ```
+  lampsible someuser@somehost.com wordpress \
+      --email-for-ssl you@yourdomain.com
+  ```
 
-```
-lampsible someuser@somehost.com wordpress \
-    --email-for-ssl you@yourdomain.com
-```
+* Install a production ready WooCommerce shop
+  with some other plugins and a custom theme:
+  ```
+  lampsible someuser@somehost.com wordpress \
+      --email-for-ssl you@yourdomain.com \
+      --wordpress-plugins woocommerce,wordpress-seo,akismet,wordfence \
+      --wordpress-theme frutiger-aero
+  ```
 
-Install a production ready Joomla site:
+* Install a production ready Joomla site:
+  ```
+  lampsible someuser@somehost.com joomla \
+      --email-for-ssl you@yourdomain.com
+  ```
 
-```
-lampsible someuser@somehost.com joomla \
-    --email-for-ssl you@yourdomain.com
-```
+* Install Drupal on a test server. Certbot will set up a
+  test certificate. Also, Apache and MySQL will run on two separate hosts.
+  ```
+  lampsible someuser@somehost.com drupal \
+      --database-system-user-host otheruser@dbserver.somehost.com \
+      --database-host 10.0.1.2 \
+      --database-username dbuser
+      --ssl-test-cert \
+      --apache-server-admin you@yourdomain.com \
+  ```
 
-Install Drupal on a test server. Certbot will set up a
-test certificate. Also, Apache and MySQL will run on two separate hosts.
-
-```
-lampsible someuser@somehost.com drupal \
-    --database-system-user-host otheruser@dbserver.somehost.com \
-    --database-host 10.0.1.2 \
-    --database-username dbuser
-    --ssl-test-cert \
-    --apache-server-admin you@yourdomain.com \
-```
-
-Set up a LAMP stack with various custom configuration and a self signed SSL certificate on some local VM:
-
-```
-lampsible someuser@192.168.123.123 lamp-stack \
-    --ask-remote-sudo \
-    --ssl-selfsigned \
-    --database-username dbuser \
-    --database-name testdb \
-    --apache-vhost-name some-legacy-app \
-    --apache-document-root /var/www/html/some-legacy-app/some-dir/public \
-    --php-extensions mysql,xml,mbstring,xdebug,gd
-```
+* Set up a LAMP stack with various custom configuration and a self signed SSL certificate on some local VM:
+  ```
+  lampsible someuser@192.168.123.123 lamp-stack \
+      --ask-remote-sudo \
+      --ssl-selfsigned \
+      --database-username dbuser \
+      --database-name testdb \
+      --apache-vhost-name some-legacy-app \
+      --apache-document-root /var/www/html/some-legacy-app/some-dir/public \
+      --php-extensions mysql,xml,mbstring,xdebug,gd
+  ```
 
 Run `lampsible --help` for a full list of options.
 
