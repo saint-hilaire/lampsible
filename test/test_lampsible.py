@@ -122,6 +122,14 @@ class TestLampsible(unittest.TestCase):
         self._do_test_run()
 
 
+    def test_wordpress_theme(self):
+        self.lampsible.set_action('wordpress')
+        self.lampsible.database_name = 'wordpress'
+        self.lampsible.admin_password = 'password'
+        self.lampsible.wordpress_theme = 'frutiger-aero'
+        self._do_test_run()
+
+
     def test_wordpress_plugins(self):
         self.lampsible.set_action('wordpress')
         self.lampsible.database_name = 'wordpress'
