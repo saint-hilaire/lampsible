@@ -6,6 +6,7 @@ from yaml import safe_load
 from ansible_runner import interface as runner_interface, run_command
 from fqdn import FQDN
 from .constants import *
+from .helpers import *
 
 
 class Lampsible:
@@ -308,9 +309,9 @@ class Lampsible:
         web_host_dict      = {'ansible_user': self.web_user}
         database_host_dict = {'ansible_user': self.database_system_user}
 
-        if self.web_host in ['localhost', '127.0.0.1']:
+        if host_is_local(self.web_host):
             web_host_dict['ansible_connection'] = 'local'
-        if self.database_system_host in ['localhost', '127.0.0.1']:
+        if host_is_local(self.database_system_host):
             database_host_dict['ansible_connection'] = 'local'
 
         self.inventory = {
