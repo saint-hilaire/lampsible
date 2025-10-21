@@ -138,6 +138,7 @@ class TestLampsible(unittest.TestCase):
             'akismet',
             'bbpress',
             'wordpress-seo',
+            'wordfence',
         ]
         self._do_test_run()
 
