@@ -198,8 +198,3 @@ class TestLampsible(unittest.TestCase):
     def _do_test_run(self):
         result = self.lampsible.run()
         self.assertEqual(result, 0)
-
-
-    # TODO?
-    # def test_validator(self):
-    #     self.assertEqual(1, 1)

@@ -90,7 +90,7 @@
       - --activate
       - --allow-root
       - "--path={{ apache_document_root }}"
-  when: wordpress_theme
+  when: wordpress_theme != None
 
 
 # https://developer.wordpress.org/cli/commands/plugin/
@@ -108,7 +108,7 @@
   loop: "{{ wordpress_plugins }}"
   loop_control:
     loop_var: wp_plugin
-  when: wordpress_plugins
+  when: wordpress_plugins != None and wordpress_plugins | length > 0
 
 - name: Set file ownership for WordPress directory
   file:

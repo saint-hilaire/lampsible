@@ -40,7 +40,7 @@
     state: present
     login_unix_socket: /run/mysqld/mysqld.sock
     host: localhost
-  when: database_root_password
+  when: database_root_password != None and database_root_password | length > 0
 
 - name: Save root db password in .my.cnf
   template:
@@ -48,7 +48,7 @@
     dest: /root/.my.cnf
     owner: root
     mode: '0600'
-  when: database_root_password
+  when: database_root_password != None and database_root_password | length > 0
 
 - name: Remove all anonymous user accounts
   community.mysql.mysql_user:
@@ -73,11 +73,11 @@
     priv: '*.*:ALL'
     state: present
     login_unix_socket: /run/mysqld/mysqld.sock
-  when: database_username
+  when: database_username != None and database_username | length > 0
 
 - name: Create database
   community.mysql.mysql_db:
     name: "{{ database_name }}"
     state: present
     login_unix_socket: /run/mysqld/mysqld.sock
-  when: database_name
+  when: database_name != None and database_name | length > 0
