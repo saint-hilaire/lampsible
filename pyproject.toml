@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lampsible"
-version = "2.3.3"
+version = "2.4.0"
 authors = [
     {name="Belal Ibrahim", email="belal.ibrahim@proton.me"}
 ]
@@ -15,7 +15,7 @@ description = "Deploy and set up LAMP stacks with Ansible"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "ansible-core>=2.15.13,<2.19",
+    "ansible-core>=2.15.13",
     "ansible-runner>=2.4.1",
     "requests>=2.32.3",
     "fqdn>=1.5.1",

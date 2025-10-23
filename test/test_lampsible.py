@@ -4,6 +4,7 @@ from getpass import getpass, getuser
 from lampsible import __version__
 from lampsible.lampsible import Lampsible
 from lampsible.constants import *
+from lampsible.helpers import *
 
 class TestLampsible(unittest.TestCase):
 
@@ -34,10 +35,11 @@ class TestLampsible(unittest.TestCase):
             apache_server_admin='me@me.me',
             ansible_galaxy_ok=True,
         )
-        if web_host in ['localhost', '127.0.0.1']:
+        if host_is_local(web_host) or host_is_private(web_host):
             self.lampsible.remote_sudo_password = getpass(
                 'Please enter local sudo password: '
             )
+            self.lampsible.ssl_certbot = False
 
 
     def test_banner(self):
@@ -120,6 +122,27 @@ class TestLampsible(unittest.TestCase):
         self._do_test_run()
 
 
+    def test_wordpress_theme(self):
+        self.lampsible.set_action('wordpress')
+        self.lampsible.database_name = 'wordpress'
+        self.lampsible.admin_password = 'password'
+        self.lampsible.wordpress_theme = 'frutiger-aero'
+        self._do_test_run()
+
+
+    def test_wordpress_plugins(self):
+        self.lampsible.set_action('wordpress')
+        self.lampsible.database_name = 'wordpress'
+        self.lampsible.admin_password = 'password'
+        self.lampsible.wordpress_plugins = [
+            'akismet',
+            'bbpress',
+            'wordpress-seo',
+            'wordfence',
+        ]
+        self._do_test_run()
+
+
     def test_joomla(self):
         self.lampsible.set_action('joomla')
         self.lampsible.database_name = 'joomla'
@@ -175,8 +198,3 @@ class TestLampsible(unittest.TestCase):
     def _do_test_run(self):
         result = self.lampsible.run()
         self.assertEqual(result, 0)
-
-
-    # TODO?
-    # def test_validator(self):
-    #     self.assertEqual(1, 1)

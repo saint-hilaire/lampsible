@@ -3,8 +3,8 @@ from re import match
 from copy import deepcopy
 from getpass import getpass, getuser
 from textwrap import dedent
-from requests import head as requests_head
-from lampsible.constants import *
+from .constants import *
+from .helpers import *
 
 
 class ArgValidator():
@@ -119,14 +119,14 @@ class ArgValidator():
         except IndexError:
             self.validated_args.web_host = self.validated_args.web_user
             try:
-                assert self.validated_args.web_host in ['localhost',
-                    '127.0.0.1']
+                assert host_is_local(self.validated_args.web_host)
                 self.validated_args.web_user = getuser()
             except AssertionError:
                 print(dedent(
                     """
                     FATAL! User can only be omitted if your web host is
-                    localhost. Otherwise, if passing in a remote host,
+                    localhost, ie. 'localhost', '127.0.0.1', etc.
+                    Otherwise, if passing in a remote host,
                     first positional argument needs to be in the format
                     'user@host'.
                     """
@@ -142,7 +142,7 @@ class ArgValidator():
                 ))
             return 1
 
-        if self.validated_args.web_host in ['localhost', '127.0.0.1']:
+        if host_is_local(self.validated_args.web_host):
             self.validated_args.web_user = getuser()
             if '@' in self.args.web_user_host:
                 print(dedent(
@@ -154,6 +154,8 @@ class ArgValidator():
                     """.format(self.validated_args.web_user)
                 ))
             self.args.ask_remote_sudo = os.geteuid() != 0
+        elif host_is_private(self.validated_args.web_host):
+            self.args.ask_remote_sudo = self.validated_args.web_user != 'root'
 
         if self.args.database_system_user_host:
             try:
@@ -359,8 +361,11 @@ class ArgValidator():
         if self.args.action != 'wordpress':
             return 0
 
-        if not self.is_valid_wordpress_version(self.args.wordpress_version):
-            print('\nInvalid WordPress version! Leave --wordpress-version blank to default to \'{}\''.format(DEFAULT_WORDPRESS_VERSION))
+        if not is_valid_wordpress_version(self.args.wordpress_version):
+            print(dedent("""
+            \nInvalid WordPress version! Leave --wordpress-version blank to
+            default to '{}'
+            """.format(DEFAULT_WORDPRESS_VERSION)))
             return 1
 
         self.handle_defaults([
@@ -393,21 +398,13 @@ class ArgValidator():
                 True
             )
 
-        return 0
-
-
-    def is_valid_wordpress_version(self, wp_version):
-        if wp_version in RECENT_WORDPRESS_VERSIONS:
-            return True
-
         try:
-            r = requests_head(
-                'https://wordpress.org/wordpress-{}.tar.gz'.format(wp_version)
-            )
-            assert r.status_code == 200
-            return True
-        except AssertionError:
-            return False
+            self.validated_args.wordpress_plugins = \
+                    self.args.wordpress_plugins.split(',')
+        except AttributeError:
+            self.validated_args.wordpress_plugins = []
+
+        return 0
 
 
     def validate_joomla_args(self):

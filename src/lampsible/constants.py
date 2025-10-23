@@ -1,19 +1,6 @@
 import os
 from . import __version__
-from sys import path as sys_path
-
-def find_package_project_dir():
-    for path_str in sys_path:
-        try:
-            try_path = os.path.join(path_str, 'lampsible', 'project')
-            assert os.path.isdir(try_path)
-            return try_path
-        except AssertionError:
-            pass
-    raise RuntimeError("""
-        Could not find a 'project_dir' for Ansible Runner in the expected
-        location. Your Lampsible installation is likely broken, please reinstall.
-        """)
+from .helpers import find_package_project_dir
 
 # Lampsible
 # ---------

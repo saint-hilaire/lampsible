@@ -144,6 +144,19 @@ def main():
             DEFAULT_WORDPRESS_LOCALE
         )
     )
+    parser.add_argument('--wordpress-theme',
+        help="""
+        optional flag to specify a WordPress theme to install and activate.
+        It must be a valid theme slug, recognizable by WP CLI.
+        """
+    )
+    parser.add_argument('--wordpress-plugins',
+        help="""
+        a comma separated list of additional WordPress plugins to
+        install and activate on your site. They must be valid
+        plugin slugs, recognizable by WP CLI.
+        """
+    )
 
     # Joomla
     # ------
@@ -558,6 +571,8 @@ def main():
         admin_email=args.admin_email,
         wordpress_version=args.wordpress_version,
         wordpress_locale=args.wordpress_locale,
+        wordpress_theme=args.wordpress_theme,
+        wordpress_plugins=args.wordpress_plugins,
         wordpress_insecure_allow_xmlrpc=args.wordpress_insecure_allow_xmlrpc,
         joomla_version=args.joomla_version,
         joomla_admin_full_name=args.joomla_admin_full_name,

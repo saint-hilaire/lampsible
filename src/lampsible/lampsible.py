@@ -6,6 +6,7 @@ from yaml import safe_load
 from ansible_runner import interface as runner_interface, run_command
 from fqdn import FQDN
 from .constants import *
+from .helpers import *
 
 
 class Lampsible:
@@ -22,6 +23,8 @@ class Lampsible:
             admin_username=DEFAULT_ADMIN_USERNAME, admin_email=DEFAULT_ADMIN_EMAIL,
             wordpress_version=DEFAULT_WORDPRESS_VERSION,
             wordpress_locale=DEFAULT_WORDPRESS_LOCALE,
+            wordpress_theme=None,
+            wordpress_plugins=[],
             joomla_version=DEFAULT_JOOMLA_VERSION,
             joomla_admin_full_name=DEFAULT_JOOMLA_ADMIN_FULL_NAME,
             drupal_profile=DEFAULT_DRUPAL_PROFILE,
@@ -130,6 +133,8 @@ class Lampsible:
 
         self.wordpress_version = wordpress_version
         self.wordpress_locale  = wordpress_locale
+        self.wordpress_theme   = wordpress_theme
+        self.wordpress_plugins = wordpress_plugins
         self.wordpress_insecure_allow_xmlrpc  = wordpress_insecure_allow_xmlrpc
 
         self.joomla_version = joomla_version
@@ -304,9 +309,9 @@ class Lampsible:
         web_host_dict      = {'ansible_user': self.web_user}
         database_host_dict = {'ansible_user': self.database_system_user}
 
-        if self.web_host in ['localhost', '127.0.0.1']:
+        if host_is_local(self.web_host):
             web_host_dict['ansible_connection'] = 'local'
-        if self.database_system_host in ['localhost', '127.0.0.1']:
+        if host_is_local(self.database_system_host):
             database_host_dict['ansible_connection'] = 'local'
 
         self.inventory = {
@@ -366,6 +371,8 @@ class Lampsible:
             extravars.extend([
                 'wordpress_version',
                 'wordpress_locale',
+                'wordpress_theme',
+                'wordpress_plugins',
                 'wordpress_url',
                 'wordpress_insecure_allow_xmlrpc',
             ])

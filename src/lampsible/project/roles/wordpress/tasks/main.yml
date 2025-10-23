@@ -78,6 +78,38 @@
       - "--admin_email={{ admin_email }}"
       - "--locale={{ wordpress_locale }}"
 
+# https://developer.wordpress.org/cli/commands/theme/
+- name: Install and activate optional WordPress theme
+  command:
+  args:
+    argv:
+      - wp
+      - theme
+      - install
+      - "{{ wordpress_theme }}"
+      - --activate
+      - --allow-root
+      - "--path={{ apache_document_root }}"
+  when: wordpress_theme != None
+
+
+# https://developer.wordpress.org/cli/commands/plugin/
+- name: Install and activate any WordPress plugins
+  command:
+  args:
+    argv:
+      - wp
+      - plugin
+      - install
+      - "{{ wp_plugin }}"
+      - --activate
+      - --allow-root
+      - "--path={{ apache_document_root }}"
+  loop: "{{ wordpress_plugins }}"
+  loop_control:
+    loop_var: wp_plugin
+  when: wordpress_plugins != None and wordpress_plugins | length > 0
+
 - name: Set file ownership for WordPress directory
   file:
     path: "{{ apache_document_root }}"
