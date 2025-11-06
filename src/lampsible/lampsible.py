@@ -1,10 +1,9 @@
 import os
 from copy import deepcopy
-from textwrap import dedent
 from shutil import rmtree
-from yaml import safe_load
 from ansible_runner import interface as runner_interface, run_command
 from fqdn import FQDN
+import ansible_galaxy_helper
 from .constants import *
 from .helpers import *
 
@@ -506,119 +505,6 @@ class Lampsible:
             self.extravars[varname] = value
 
 
-    def _ensure_galaxy_dependencies(self):
-        required_collections = []
-        required_roles = []
-        tmp_collections = []
-        tmp_roles = []
-
-        with open(GALAXY_REQUIREMENTS_FILE, 'r') as stream:
-            tmp_collections = safe_load(stream)['collections']
-        with open(GALAXY_REQUIREMENTS_FILE, 'r') as stream:
-            tmp_roles       = safe_load(stream)['roles']
-
-        for tmp_dict in tmp_collections:
-            required_collections.append(tmp_dict['name'])
-        for tmp_dict in tmp_roles:
-            required_roles.append(tmp_dict['name'])
-
-        # TODO There might be a more elegant way to do this - Right now,
-        # we're expecting required_collections to always be a tuple,
-        # and searching for requirements in a big string, but yaml/dict
-        # would be better.
-        installed_collections = run_command(
-            executable_cmd='ansible-galaxy',
-            cmdline_args=[
-                'collection',
-                'list',
-                '--collections-path',
-                os.path.join(USER_HOME_DIR, '.ansible'),
-            ],
-            quiet=True
-        )[0]
-        installed_roles = run_command(
-            executable_cmd='ansible-galaxy',
-            cmdline_args=[
-                'role',
-                'list',
-                '--roles-path',
-                os.path.join(USER_HOME_DIR, '.ansible'),
-            ],
-            quiet=True
-        )[0]
-
-        missing_collections = []
-        for required in required_collections:
-            if required not in installed_collections:
-                missing_collections.append(required)
-        if len(missing_collections) == 0:
-            result = 0
-        else:
-            result = self._install_galaxy_dependencies(
-                missing_collections,
-                'collection'
-            )
-
-        if result != 0:
-            return result
-
-        missing_roles = []
-        for required in required_roles:
-            if required not in installed_roles:
-                missing_roles.append(required)
-        if len(missing_roles) == 0:
-            return 0
-        else:
-            return self._install_galaxy_dependencies(
-                missing_roles,
-                'role'
-            )
-
-
-    def _install_galaxy_dependencies(self, dependencies, dependency_type):
-        plural = '{}s'.format(dependency_type)
-        if not self.ansible_galaxy_ok:
-            formatted_dependency_list = '\n- '.join(dependencies)
-
-            if not self.interactive:
-                print(dedent("""
-The following Ansible Galaxy {} are missing,
-and need to be installed into {}:\n- {}\n
-Please set the attribute 'Lampsible.ansible_galaxy_ok=True'.
-                """.format(
-                    plural,
-                    USER_HOME_DIR,
-                    formatted_dependency_list
-                )))
-                return 1
-
-            ok_to_install = input(dedent(
-                """
-I have to download and install the following
-Ansible Galaxy {} into {}:\n- {}\nIs this OK (yes/no)?
-                """).format(
-                plural,
-                os.path.join(USER_HOME_DIR, '.ansible/'),
-                formatted_dependency_list
-            )).lower()
-            while ok_to_install != 'yes' and ok_to_install != 'no':
-                ok_to_install = input("Please type 'yes' or 'no': ")
-
-            if ok_to_install != 'yes':
-                return 1
-
-        print('\nInstalling Ansible Galaxy {} into {} ...'.format(
-            plural,
-            os.path.join(USER_HOME_DIR, '.ansible')
-        ))
-        run_command(
-            executable_cmd='ansible-galaxy',
-            cmdline_args=[dependency_type, 'install'] + dependencies,
-        )
-        print('\n... {} installed.'.format(plural))
-        return 0
-
-
     # TODO: Do it this way?
     #def dump_ansible_facts(self):
     #    from ansible_runner import run as ansible_runner_run,
@@ -640,7 +526,10 @@ Ansible Galaxy {} into {}:\n- {}\nIs this OK (yes/no)?
 
         rc = 1
         try:
-            assert self._ensure_galaxy_dependencies() == 0
+            # TODO: Restore the interactive user confirmation that this
+            # had before.
+            assert ansible_galaxy_helper.ensure_galaxy_dependencies(
+                    GALAXY_REQUIREMENTS_FILE) == 0
             runner = runner_interface.run(
                 private_data_dir=self.private_data_dir,
                 playbook=self.playbook,
