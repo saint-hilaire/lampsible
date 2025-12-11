@@ -12,6 +12,24 @@ python -m venv .venv
 . .venv/bin/activate
 python -m pip install -e .
 ```
+### Running Lampsible From Source
+
+When contributing, it is recommended to run Lampsible directly from the cloned repository instead of the installed package.
+
+After activating the virtual environment and running `pip install -e .`, you can run Lampsible like this:
+
+python -m lampsible.cli <web_user_host> <action> [arguments]
+Example:
+python -m lampsible.cli localhost drupal --insecure-no-ssl
+This ensures that any changes made inside `src/lampsible/` are used immediately without reinstalling the package.
+
+### Local Testing Notes (WSL / Localhost)
+
+If you are testing on a local Ubuntu or WSL environment, you may need to run SSH on a custom port:
+sudo /usr/sbin/sshd -p 2222
+Then connect using:
+ssh user@127.0.0.1 -p 2222
+This is useful for testing the Ansible playbooks locally.
 
 ## Branching guidelines
 
