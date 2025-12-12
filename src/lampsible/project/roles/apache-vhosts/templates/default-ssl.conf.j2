@@ -1,7 +1,7 @@
 <VirtualHost *:443>
 	ServerAdmin {{ item.server_admin }}
 
-	DocumentRoot {{ item.document_root }}
+	DocumentRoot {{ apache_document_root }}
 
 	ServerName {{ item.server_name }}
 	ServerAlias *.{{ item.server_name }}
