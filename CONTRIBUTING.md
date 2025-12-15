@@ -9,8 +9,8 @@ Something like this should work:
 
 ```bash
 python -m venv .venv
-. .venv/bin/activate
-python -m pip install -e .
+source .venv/bin/activate
+python -m pip install --editable .
 ```
 
 ## Branching guidelines
