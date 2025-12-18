@@ -6,8 +6,10 @@
     - include_role:
         name: "{{ item }}"
       loop:
+        - apt
         - pip
         - mysql
+        - fail2ban
 
 - hosts: web_servers
   become: true
