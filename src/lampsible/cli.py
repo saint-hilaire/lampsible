@@ -103,8 +103,11 @@ def main():
         based on your remote server
         """.format(DEFAULT_PHP_VERSION)
     )
-    # TODO
-    # parser.add_argument('--php-my-admin', action='store_true')
+    parser.add_argument('--phpmyadmin', action='store_true',
+        help="""
+        Pass this flag to install phpMyAdmin onto your webserver.
+        """
+    )
 
     # All CMS
     # -------
@@ -551,6 +554,7 @@ def main():
         database_table_prefix=args.database_table_prefix,
         database_system_user=args.database_system_user,
         database_system_host=args.database_system_host,
+        phpmyadmin=args.phpmyadmin,
         php_version=args.php_version,
         php_extensions=args.php_extensions,
         php_memory_limit=args.php_memory_limit,

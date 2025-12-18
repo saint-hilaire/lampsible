@@ -195,6 +195,14 @@ class TestLampsible(unittest.TestCase):
         self._do_test_run()
 
 
+    def test_phpmyadmin(self):
+        self.lampsible.set_action('lamp-stack')
+        self.lampsible.phpmyadmin = True
+        self.lampsible.database_name = 'test_database'
+        self.lampsible.php_extensions = ['php-mysql']
+        self._do_test_run()
+
+
     def _do_test_run(self):
         result = self.lampsible.run()
         self.assertEqual(result, 0)

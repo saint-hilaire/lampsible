@@ -27,6 +27,10 @@
         name: ssl-selfsigned
       when: ssl_selfsigned
 
+    - include_role:
+        name: phpmyadmin
+      when: phpmyadmin
+
     # It's important that this runs after the selfsigned certificates,
     # if those are being used, but before Certbot, if that's being used.
     - include_role:

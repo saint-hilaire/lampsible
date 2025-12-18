@@ -18,6 +18,7 @@ class Lampsible:
             database_username=None,
             database_name=None, database_host=None, database_system_user=None,
             database_system_host=None,
+            phpmyadmin=False,
             php_version=DEFAULT_PHP_VERSION,
             site_title=DEFAULT_SITE_TITLE,
             admin_username=DEFAULT_ADMIN_USERNAME, admin_email=DEFAULT_ADMIN_EMAIL,
@@ -88,6 +89,8 @@ class Lampsible:
             self.database_system_host = database_system_host
         else:
             self.database_system_host = self.web_host
+
+        self.phpmyadmin = phpmyadmin
 
         self._init_inventory()
 
@@ -265,6 +268,16 @@ class Lampsible:
 
         self.apache_vhosts = [base_vhost_dict]
 
+        if self.phpmyadmin:
+            self.apache_vhosts.append({
+                'base_vhost_file': '{}.conf'.format(DEFAULT_APACHE_VHOST_NAME),
+                'document_root':  '/usr/share/phpmyadmin',
+                'vhost_name':     'phpmyadmin',
+                'server_name':    'phpmyadmin',
+                'server_admin':   self.apache_server_admin,
+                'allow_override': False,
+            })
+
         if self.ssl_certbot:
             if not self.email_for_ssl:
                 self.email_for_ssl = self.apache_server_admin
@@ -347,6 +360,7 @@ class Lampsible:
             'database_name',
             'database_host',
             'database_table_prefix',
+            'phpmyadmin',
             'php_version',
             'php_packages_extra',
             'php_memory_limit',
