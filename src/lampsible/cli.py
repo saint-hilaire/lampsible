@@ -405,6 +405,12 @@ def main():
         'display_errors' setting in php.ini. Defaults to '{}'
         """.format(DEFAULT_PHP_DISPLAY_ERRORS)
     )
+    parser.add_argument('--php-session-save-path',
+        default=DEFAULT_PHP_SESSION_SAVE_PATH,
+        help="""
+        'session.save_path' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_SESSION_SAVE_PATH)
+    )
     parser.add_argument('--composer-packages',
         help="""
         A comma separated list of PHP packages to install with Composer.
@@ -566,6 +572,7 @@ def main():
         php_allow_url_fopen=args.php_allow_url_fopen,
         php_error_reporting=args.php_error_reporting,
         php_display_errors=args.php_display_errors,
+        php_session_save_path=args.php_session_save_path,
         composer_packages=args.composer_packages,
         composer_working_directory=args.composer_working_directory,
         composer_project=args.composer_project,

@@ -51,6 +51,7 @@ class Lampsible:
             php_allow_url_fopen=DEFAULT_PHP_ALLOW_URL_FOPEN,
             php_error_reporting=DEFAULT_PHP_ERROR_REPORTING,
             php_display_errors=DEFAULT_PHP_DISPLAY_ERRORS,
+            php_session_save_path=DEFAULT_PHP_SESSION_SAVE_PATH,
             composer_packages=[], composer_working_directory=None,
             composer_project=None, admin_password=None,
             wordpress_insecure_allow_xmlrpc=False,
@@ -124,6 +125,7 @@ class Lampsible:
         self.php_allow_url_fopen     = php_allow_url_fopen
         self.php_error_reporting     = php_error_reporting
         self.php_display_errors      = php_display_errors
+        self.php_session_save_path   = php_session_save_path
 
         self.composer_packages          = composer_packages
         self.composer_project           = composer_project
@@ -372,6 +374,7 @@ class Lampsible:
             'php_allow_url_fopen',
             'php_error_reporting',
             'php_display_errors',
+            'php_session_save_path',
             'composer_packages',
             'composer_project',
             'composer_working_directory',
