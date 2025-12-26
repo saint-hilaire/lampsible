@@ -61,12 +61,6 @@ DEFAULT_DATABASE_TABLE_PREFIX = ''
 
 # PHP
 # ---
-DEFAULT_PHP_VERSION = None
-SUPPORTED_PHP_VERSIONS = [
-    '8.4', '8.3', '8.2', '8.1', '8.0',
-    '7.4', '7.3', '7.2', '7.1', '7.0',
-    '5.6', '5.5', '5.4',
-]
 REQUIRED_PHP_EXTENSIONS = {
     'lamp-stack': ['mysql'],
     'wordpress': [
@@ -116,6 +110,15 @@ DEFAULT_PHP_ALLOW_URL_FOPEN     = True
 DEFAULT_PHP_ERROR_REPORTING     = 'E_ALL & ~E_DEPRECATED & ~E_STRICT'
 DEFAULT_PHP_DISPLAY_ERRORS      = False
 DEFAULT_PHP_SESSION_SAVE_PATH   = '/var/lib/php/sessions'
+
+# These two are deprecated, should be removed in the next
+# major version.
+DEFAULT_PHP_VERSION = None
+SUPPORTED_PHP_VERSIONS = [
+    '8.4', '8.3', '8.2', '8.1', '8.0',
+    '7.4', '7.3', '7.2', '7.1', '7.0',
+    '5.6', '5.5', '5.4',
+]
 
 # All CMS
 # -------
