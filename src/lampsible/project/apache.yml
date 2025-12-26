@@ -9,6 +9,7 @@
       loop:
         - apt
         - apache2
+        - fail2ban
 
     - include_role:
         name: ssl-selfsigned

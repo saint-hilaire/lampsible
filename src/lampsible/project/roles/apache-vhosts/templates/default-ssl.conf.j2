@@ -140,3 +140,7 @@
 	#	downgrade-1.0 force-response-1.0
 
 </VirtualHost>
+
+{% if item.vhost_name == 'phpmyadmin' %}
+Include /etc/phpmyadmin/apache.conf
+{% endif %}

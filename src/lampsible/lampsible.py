@@ -18,6 +18,7 @@ class Lampsible:
             database_username=None,
             database_name=None, database_host=None, database_system_user=None,
             database_system_host=None,
+            phpmyadmin=False,
             php_version=DEFAULT_PHP_VERSION,
             site_title=DEFAULT_SITE_TITLE,
             admin_username=DEFAULT_ADMIN_USERNAME, admin_email=DEFAULT_ADMIN_EMAIL,
@@ -50,6 +51,7 @@ class Lampsible:
             php_allow_url_fopen=DEFAULT_PHP_ALLOW_URL_FOPEN,
             php_error_reporting=DEFAULT_PHP_ERROR_REPORTING,
             php_display_errors=DEFAULT_PHP_DISPLAY_ERRORS,
+            php_session_save_path=DEFAULT_PHP_SESSION_SAVE_PATH,
             composer_packages=[], composer_working_directory=None,
             composer_project=None, admin_password=None,
             wordpress_insecure_allow_xmlrpc=False,
@@ -89,6 +91,8 @@ class Lampsible:
         else:
             self.database_system_host = self.web_host
 
+        self.phpmyadmin = phpmyadmin
+
         self._init_inventory()
 
         self.apache_document_root = apache_document_root
@@ -121,6 +125,7 @@ class Lampsible:
         self.php_allow_url_fopen     = php_allow_url_fopen
         self.php_error_reporting     = php_error_reporting
         self.php_display_errors      = php_display_errors
+        self.php_session_save_path   = php_session_save_path
 
         self.composer_packages          = composer_packages
         self.composer_project           = composer_project
@@ -265,6 +270,16 @@ class Lampsible:
 
         self.apache_vhosts = [base_vhost_dict]
 
+        if self.phpmyadmin:
+            self.apache_vhosts.append({
+                'base_vhost_file': '{}.conf'.format(DEFAULT_APACHE_VHOST_NAME),
+                'document_root':  '/usr/share/phpmyadmin',
+                'vhost_name':     'phpmyadmin',
+                'server_name':    'phpmyadmin',
+                'server_admin':   self.apache_server_admin,
+                'allow_override': False,
+            })
+
         if self.ssl_certbot:
             if not self.email_for_ssl:
                 self.email_for_ssl = self.apache_server_admin
@@ -347,6 +362,7 @@ class Lampsible:
             'database_name',
             'database_host',
             'database_table_prefix',
+            'phpmyadmin',
             'php_version',
             'php_packages_extra',
             'php_memory_limit',
@@ -358,6 +374,7 @@ class Lampsible:
             'php_allow_url_fopen',
             'php_error_reporting',
             'php_display_errors',
+            'php_session_save_path',
             'composer_packages',
             'composer_project',
             'composer_working_directory',

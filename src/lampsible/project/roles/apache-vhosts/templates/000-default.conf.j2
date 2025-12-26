@@ -37,3 +37,7 @@
 	</Directory>
 	{% endif %}
 </VirtualHost>
+
+{% if item.vhost_name == 'phpmyadmin' %}
+Include /etc/phpmyadmin/apache.conf
+{% endif %}
