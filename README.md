@@ -18,7 +18,7 @@ This tool can automate almost anything that you'd expect from a LAMP stack.
 * Production ready SSL via Certbot
 * SSL for test servers (to avoid being rate limited by Let's Encrypt)
 * Self signed SSL, good for local test networks
-* Custom PHP extensions, php.ini settings, Composer packages, etc.
+* Custom PHP extensions, php.ini settings, phpMyAdmin, Composer packages, etc.
 * And so on...
 
 
