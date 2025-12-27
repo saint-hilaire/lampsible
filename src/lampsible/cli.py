@@ -103,8 +103,11 @@ def main():
         based on your remote server
         """.format(DEFAULT_PHP_VERSION)
     )
-    # TODO
-    # parser.add_argument('--php-my-admin', action='store_true')
+    parser.add_argument('--phpmyadmin', action='store_true',
+        help="""
+        Pass this flag to install phpMyAdmin onto your webserver.
+        """
+    )
 
     # All CMS
     # -------
@@ -402,6 +405,12 @@ def main():
         'display_errors' setting in php.ini. Defaults to '{}'
         """.format(DEFAULT_PHP_DISPLAY_ERRORS)
     )
+    parser.add_argument('--php-session-save-path',
+        default=DEFAULT_PHP_SESSION_SAVE_PATH,
+        help="""
+        'session.save_path' setting in php.ini. Defaults to '{}'
+        """.format(DEFAULT_PHP_SESSION_SAVE_PATH)
+    )
     parser.add_argument('--composer-packages',
         help="""
         A comma separated list of PHP packages to install with Composer.
@@ -551,6 +560,7 @@ def main():
         database_table_prefix=args.database_table_prefix,
         database_system_user=args.database_system_user,
         database_system_host=args.database_system_host,
+        phpmyadmin=args.phpmyadmin,
         php_version=args.php_version,
         php_extensions=args.php_extensions,
         php_memory_limit=args.php_memory_limit,
@@ -562,6 +572,7 @@ def main():
         php_allow_url_fopen=args.php_allow_url_fopen,
         php_error_reporting=args.php_error_reporting,
         php_display_errors=args.php_display_errors,
+        php_session_save_path=args.php_session_save_path,
         composer_packages=args.composer_packages,
         composer_working_directory=args.composer_working_directory,
         composer_project=args.composer_project,

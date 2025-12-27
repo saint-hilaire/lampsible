@@ -61,12 +61,6 @@ DEFAULT_DATABASE_TABLE_PREFIX = ''
 
 # PHP
 # ---
-DEFAULT_PHP_VERSION = None
-SUPPORTED_PHP_VERSIONS = [
-    '8.4', '8.3', '8.2', '8.1', '8.0',
-    '7.4', '7.3', '7.2', '7.1', '7.0',
-    '5.6', '5.5', '5.4',
-]
 REQUIRED_PHP_EXTENSIONS = {
     'lamp-stack': ['mysql'],
     'wordpress': [
@@ -115,6 +109,16 @@ DEFAULT_PHP_MAX_FILE_UPLOADS    = '20'
 DEFAULT_PHP_ALLOW_URL_FOPEN     = True
 DEFAULT_PHP_ERROR_REPORTING     = 'E_ALL & ~E_DEPRECATED & ~E_STRICT'
 DEFAULT_PHP_DISPLAY_ERRORS      = False
+DEFAULT_PHP_SESSION_SAVE_PATH   = '/var/lib/php/sessions'
+
+# These two are deprecated, should be removed in the next
+# major version.
+DEFAULT_PHP_VERSION = None
+SUPPORTED_PHP_VERSIONS = [
+    '8.4', '8.3', '8.2', '8.1', '8.0',
+    '7.4', '7.3', '7.2', '7.1', '7.0',
+    '5.6', '5.5', '5.4',
+]
 
 # All CMS
 # -------
@@ -129,16 +133,15 @@ DEFAULT_WORDPRESS_LOCALE  = 'en_US'
 RECENT_WORDPRESS_VERSIONS = [
     'latest',
     'nightly',
+    '6.9',
     '6.8.3', '6.8.2', '6.8.1', '6.8',
     '6.7.4', '6.7.3', '6.7.2', '6.7.1', '6.7',
     '6.6.4', '6.6.3', '6.6.2', '6.6.1', '6.6',
-    '6.5.7', '6.5.6', '6.5.5', '6.5.4', '6.5.3', '6.5.2', '6.5',
 ]
 
 # Joomla
 # ------
-# TODO: See https://github.com/belal-i/lampsible/issues/81
-DEFAULT_JOOMLA_VERSION         = '5.3.3'
+DEFAULT_JOOMLA_VERSION         = '6.0.1'
 DEFAULT_JOOMLA_ADMIN_FULL_NAME = 'Sample User'
 
 # Drupal

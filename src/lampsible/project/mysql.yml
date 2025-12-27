@@ -10,4 +10,3 @@
         - pip
         - mysql
         - fail2ban
-          # TODO: phpmyadmin option
