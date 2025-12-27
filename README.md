@@ -33,8 +33,10 @@ This is the preferred way to use Lampsible.
 * Local: Unix system with Python 3.9 or newer. Tested on Ubuntu and Gentoo Linux.
   Might work on macOS, but I haven't tested that. Won't work on Windows,
   because Ansible requires a Unix like system.
-* Remote: Ubuntu 20 or newer. You need SSH access and root privilege, or ability to elevate privilege to root.
+* Remote: Ubuntu 20 or newer, Ubuntu 24 or older. You need SSH access and root privilege, or ability to elevate privilege to root.
   Might work on older versions, but I doubt it. Support for other distros is planned in a future version.
+  * Note for Ubuntu 25: It's currently not supported. Still waiting for support in some upstream dependencies.
+    For now, please don't use a more recent version than Ubuntu 24.
 
 ### Alternative: installing web app directly on localhost
 
