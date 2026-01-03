@@ -33,10 +33,11 @@
 
 - name: Set root database password
   community.mysql.mysql_user:
-    name:     root
+    name: root
     # TODO
     #encrypted: true
-    password: "{{ database_root_password }}"
+    plugin: caching_sha2_password
+    plugin_auth_string: "{{ database_root_password }}"
     state: present
     login_unix_socket: /run/mysqld/mysqld.sock
     host: localhost
@@ -66,7 +67,8 @@
 - name: Create database user
   community.mysql.mysql_user:
     name:     "{{ database_username }}"
-    password: "{{ database_password }}"
+    plugin: caching_sha2_password
+    plugin_auth_string: "{{ database_password }}"
     host: "{{ '%' if open_database else 'localhost' }}"
     # TODO
     #encrypted: true
