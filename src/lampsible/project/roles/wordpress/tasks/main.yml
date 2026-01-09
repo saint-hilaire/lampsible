@@ -44,23 +44,6 @@
       - --extra-php
     stdin: "define( 'FS_METHOD', 'direct' );"
 
-# https://developer.wordpress.org/cli/commands/db/create/
-# TODO: Might not even need this...
-- name: Create the WordPress database
-  command:
-  args:
-    argv:
-      - wp
-      - db
-      - create
-      - --allow-root
-      - "--path={{ apache_document_root }}"
-      - "--dbname={{ database_name }}"
-      - "--dbuser={{ database_username }}"
-      - "--dbpass={{ database_password }}"
-      - "--dbhost={{ database_host }}"
-  ignore_errors: true
-
 # https://developer.wordpress.org/cli/commands/core/install/
 - name: Install WordPress
   command:

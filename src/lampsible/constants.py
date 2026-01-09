@@ -141,7 +141,7 @@ RECENT_WORDPRESS_VERSIONS = [
 
 # Joomla
 # ------
-DEFAULT_JOOMLA_VERSION         = '6.0.1'
+DEFAULT_JOOMLA_VERSION         = '6.0.2'
 DEFAULT_JOOMLA_ADMIN_FULL_NAME = 'Sample User'
 
 # Drupal
