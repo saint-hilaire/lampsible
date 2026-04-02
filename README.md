@@ -156,12 +156,6 @@ lampsible = Lampsible(
         'wordpress-seo',
         'wordfence',
     ],
-    # Set this to give your consent to install some required
-    # Ansible Galaxy Collections. Otherwise, if any of them are missing,
-    # Lampsible will throw an error. If those collections are already installed,
-    # this attribute is no longer required.
-    # See /src/lampsible/project/ansible-galaxy-requirements.yml
-    ansible_galaxy_ok=True,
 )
 
 result = lampsible.run()

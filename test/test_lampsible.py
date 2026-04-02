@@ -33,7 +33,6 @@ class TestLampsible(unittest.TestCase):
             database_host=DEFAULT_DATABASE_HOST,
             ssl_test_cert=True,
             apache_server_admin='me@me.me',
-            ansible_galaxy_ok=True,
         )
         if host_is_local(web_host) or host_is_private(web_host):
             self.lampsible.remote_sudo_password = getpass(

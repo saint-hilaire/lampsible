@@ -285,14 +285,6 @@ def main():
         but Lampsible will delete this directory when it finishes.
         """
     )
-    parser.add_argument('--ansible-galaxy-ok', action='store_true',
-        help="""
-        Pass this flag to give your consent to install any missing
-        Ansible Galaxy dependencies onto your local machine.
-        Otherwise, if any Galaxy Collections are missing, you will be asked
-        if it is OK to install them.
-        """
-    )
 
     # Apache
     # ------
@@ -598,7 +590,6 @@ def main():
         extra_packages=args.extra_packages,
         ssh_key_file=args.ssh_key_file,
         remote_sudo_password=args.remote_sudo_password,
-        ansible_galaxy_ok=args.ansible_galaxy_ok,
         interactive=True,
     )
 
