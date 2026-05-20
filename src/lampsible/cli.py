@@ -496,6 +496,20 @@ def main():
         Example: SOME_VARIABLE=some-value,OTHER_VARIABLE=other-value
         """
     )
+    parser.add_argument('--galaxy-force', action='store_true',
+        help="""
+        Pass this flag if you want to include Ansible Galaxy's '--force' flag,
+        when installing local dependencies. Useful for updating local
+        dependencies that may have gotten out of date since they were last
+        installed.
+        """
+    )
+    parser.add_argument('--galaxy-force-with-deps', action='store_true',
+        help="""
+        Pass this flag if you want to include Ansible Galaxy's
+        '--force-with-deps' flag, when installing local dependencies.
+        """
+    )
 
     # Metadata
     # --------
@@ -590,7 +604,8 @@ def main():
         extra_packages=args.extra_packages,
         ssh_key_file=args.ssh_key_file,
         remote_sudo_password=args.remote_sudo_password,
-        interactive=True,
+        galaxy_force=args.galaxy_force,
+        galaxy_force_with_deps=args.galaxy_force_with_deps,
     )
 
     if args.action == 'dump-ansible-facts':

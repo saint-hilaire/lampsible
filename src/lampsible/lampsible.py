@@ -63,13 +63,7 @@ class Lampsible:
             domains_for_ssl=[], ssl_test_cert=False,
             extra_packages=[], extra_env_vars={},
             apache_custom_conf_name='',
-            # TODO: Lots of room for improvement for this one.
-            # For now, just adding it so we can keep the interactive prompt
-            # about installing missing Galaxy Collections, otherwise, it would
-            # be annoying for the user to have to rerun from the beginning.
-            # But "interactive Lampsible" could be a big feature, perhaps something
-            # for v3.
-            interactive=False,
+            galaxy_force=False, galaxy_force_with_deps=False,
             ):
 
         self.private_data_dir = private_data_dir
@@ -169,8 +163,10 @@ class Lampsible:
 
         self.remote_sudo_password = remote_sudo_password
 
+        self.galaxy_force           = galaxy_force
+        self.galaxy_force_with_deps = galaxy_force_with_deps
+
         self.banner = LAMPSIBLE_BANNER
-        self.interactive = interactive
 
         self.set_action(action)
 
@@ -522,7 +518,6 @@ class Lampsible:
 
 
     def _install_galaxy_dependencies(self):
-        print('Installing Ansible Galaxy dependencies...')
         required_collections = []
         required_roles = []
         with open(GALAXY_REQUIREMENTS_FILE, 'r') as stream:
@@ -534,15 +529,28 @@ class Lampsible:
             for role in tmp_roles:
                 required_roles.append(role['name'])
 
+        galaxy_force_flags = []
+        if self.galaxy_force:
+            galaxy_force_flags.append('--force')
+        if self.galaxy_force_with_deps:
+            galaxy_force_flags.append('--force-with-deps')
+
+        print('Installing Ansible Galaxy collections...')
         run_command(
             executable_cmd='ansible-galaxy',
-            cmdline_args=['collection', 'install'] + required_collections,
+            cmdline_args=['collection', 'install'] \
+                + galaxy_force_flags \
+                + required_collections,
         )
+        print('Collections installed.')
+        print('Installing Ansible Galaxy roles...')
         run_command(
             executable_cmd='ansible-galaxy',
-            cmdline_args=['role', 'install'] + required_roles,
+            cmdline_args=['role', 'install'] \
+                + galaxy_force_flags \
+                + required_roles,
         )
-        print('... Ansible Galaxy dependencies installed.')
+        print('Roles installed.')
 
 
     # TODO: Do it this way?

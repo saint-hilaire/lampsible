@@ -202,6 +202,13 @@ class TestLampsible(unittest.TestCase):
         self._do_test_run()
 
 
+    def test_galaxy_force_flags(self):
+        self.lampsible.set_action('php')
+        self.lampsible.galaxy_force = True
+        self.lampsible.galaxy_force_with_deps = True
+        self._do_test_run()
+
+
     def _do_test_run(self):
         result = self.lampsible.run()
         self.assertEqual(result, 0)
