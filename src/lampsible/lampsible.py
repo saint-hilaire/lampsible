@@ -63,14 +63,7 @@ class Lampsible:
             domains_for_ssl=[], ssl_test_cert=False,
             extra_packages=[], extra_env_vars={},
             apache_custom_conf_name='',
-            ansible_galaxy_ok=False,
-            # TODO: Lots of room for improvement for this one.
-            # For now, just adding it so we can keep the interactive prompt
-            # about installing missing Galaxy Collections, otherwise, it would
-            # be annoying for the user to have to rerun from the beginning.
-            # But "interactive Lampsible" could be a big feature, perhaps something
-            # for v3.
-            interactive=False,
+            galaxy_force=False, galaxy_force_with_deps=False,
             ):
 
         self.private_data_dir = private_data_dir
@@ -170,9 +163,10 @@ class Lampsible:
 
         self.remote_sudo_password = remote_sudo_password
 
+        self.galaxy_force           = galaxy_force
+        self.galaxy_force_with_deps = galaxy_force_with_deps
+
         self.banner = LAMPSIBLE_BANNER
-        self.ansible_galaxy_ok = ansible_galaxy_ok
-        self.interactive = interactive
 
         self.set_action(action)
 
@@ -523,117 +517,40 @@ class Lampsible:
             self.extravars[varname] = value
 
 
-    def _ensure_galaxy_dependencies(self):
+    def _install_galaxy_dependencies(self):
         required_collections = []
         required_roles = []
-        tmp_collections = []
-        tmp_roles = []
-
         with open(GALAXY_REQUIREMENTS_FILE, 'r') as stream:
-            tmp_collections = safe_load(stream)['collections']
-        with open(GALAXY_REQUIREMENTS_FILE, 'r') as stream:
-            tmp_roles       = safe_load(stream)['roles']
+            tmp_data = safe_load(stream)
+            tmp_collections = tmp_data.get('collections', [])
+            tmp_roles       = tmp_data.get('roles', [])
+            for collection in tmp_collections:
+                required_collections.append(collection['name'])
+            for role in tmp_roles:
+                required_roles.append(role['name'])
 
-        for tmp_dict in tmp_collections:
-            required_collections.append(tmp_dict['name'])
-        for tmp_dict in tmp_roles:
-            required_roles.append(tmp_dict['name'])
+        galaxy_force_flags = []
+        if self.galaxy_force:
+            galaxy_force_flags.append('--force')
+        if self.galaxy_force_with_deps:
+            galaxy_force_flags.append('--force-with-deps')
 
-        # TODO There might be a more elegant way to do this - Right now,
-        # we're expecting required_collections to always be a tuple,
-        # and searching for requirements in a big string, but yaml/dict
-        # would be better.
-        installed_collections = run_command(
-            executable_cmd='ansible-galaxy',
-            cmdline_args=[
-                'collection',
-                'list',
-                '--collections-path',
-                os.path.join(USER_HOME_DIR, '.ansible'),
-            ],
-            quiet=True
-        )[0]
-        installed_roles = run_command(
-            executable_cmd='ansible-galaxy',
-            cmdline_args=[
-                'role',
-                'list',
-                '--roles-path',
-                os.path.join(USER_HOME_DIR, '.ansible'),
-            ],
-            quiet=True
-        )[0]
-
-        missing_collections = []
-        for required in required_collections:
-            if required not in installed_collections:
-                missing_collections.append(required)
-        if len(missing_collections) == 0:
-            result = 0
-        else:
-            result = self._install_galaxy_dependencies(
-                missing_collections,
-                'collection'
-            )
-
-        if result != 0:
-            return result
-
-        missing_roles = []
-        for required in required_roles:
-            if required not in installed_roles:
-                missing_roles.append(required)
-        if len(missing_roles) == 0:
-            return 0
-        else:
-            return self._install_galaxy_dependencies(
-                missing_roles,
-                'role'
-            )
-
-
-    def _install_galaxy_dependencies(self, dependencies, dependency_type):
-        plural = '{}s'.format(dependency_type)
-        if not self.ansible_galaxy_ok:
-            formatted_dependency_list = '\n- '.join(dependencies)
-
-            if not self.interactive:
-                print(dedent("""
-The following Ansible Galaxy {} are missing,
-and need to be installed into {}:\n- {}\n
-Please set the attribute 'Lampsible.ansible_galaxy_ok=True'.
-                """.format(
-                    plural,
-                    USER_HOME_DIR,
-                    formatted_dependency_list
-                )))
-                return 1
-
-            ok_to_install = input(dedent(
-                """
-I have to download and install the following
-Ansible Galaxy {} into {}:\n- {}\nIs this OK (yes/no)?
-                """).format(
-                plural,
-                os.path.join(USER_HOME_DIR, '.ansible/'),
-                formatted_dependency_list
-            )).lower()
-            while ok_to_install != 'yes' and ok_to_install != 'no':
-                ok_to_install = input("Please type 'yes' or 'no': ")
-
-            if ok_to_install != 'yes':
-                return 1
-
-        print('\nInstalling Ansible Galaxy {} into {} ...'.format(
-            plural,
-            os.path.join(USER_HOME_DIR, '.ansible')
-        ))
+        print('Installing Ansible Galaxy collections...')
         run_command(
             executable_cmd='ansible-galaxy',
-            cmdline_args=[dependency_type, 'install'] + dependencies,
+            cmdline_args=['collection', 'install'] \
+                + galaxy_force_flags \
+                + required_collections,
         )
-        print('\n... {} installed.'.format(plural))
-        return 0
+        print('Collections installed.')
+        print('Installing Ansible Galaxy roles...')
+        run_command(
+            executable_cmd='ansible-galaxy',
+            cmdline_args=['role', 'install'] \
+                + galaxy_force_flags \
+                + required_roles,
+        )
+        print('Roles installed.')
 
 
     # TODO: Do it this way?
@@ -654,10 +571,10 @@ Ansible Galaxy {} into {}:\n- {}\nIs this OK (yes/no)?
     def run(self):
         self._set_apache_vars()
         self._update_env()
+        self._install_galaxy_dependencies()
 
         rc = 1
         try:
-            assert self._ensure_galaxy_dependencies() == 0
             runner = runner_interface.run(
                 private_data_dir=self.private_data_dir,
                 playbook=self.playbook,

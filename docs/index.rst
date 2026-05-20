@@ -161,7 +161,6 @@ It could look something like this:
         # Lampsible will throw an error. If those collections are already installed,
         # this attribute is no longer required.
         # See /src/lampsible/project/ansible-galaxy-requirements.yml
-        ansible_galaxy_ok=True,
     )
 
     result = lampsible.run()
