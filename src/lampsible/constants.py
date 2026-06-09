@@ -115,7 +115,7 @@ DEFAULT_PHP_SESSION_SAVE_PATH   = '/var/lib/php/sessions'
 # major version.
 DEFAULT_PHP_VERSION = None
 SUPPORTED_PHP_VERSIONS = [
-    '8.4', '8.3', '8.2', '8.1', '8.0',
+    '8.5', '8.4', '8.3', '8.2', '8.1', '8.0',
     '7.4', '7.3', '7.2', '7.1', '7.0',
     '5.6', '5.5', '5.4',
 ]
@@ -133,15 +133,15 @@ DEFAULT_WORDPRESS_LOCALE  = 'en_US'
 RECENT_WORDPRESS_VERSIONS = [
     'latest',
     'nightly',
-    '6.9',
-    '6.8.3', '6.8.2', '6.8.1', '6.8',
-    '6.7.4', '6.7.3', '6.7.2', '6.7.1', '6.7',
-    '6.6.4', '6.6.3', '6.6.2', '6.6.1', '6.6',
+    '7.0',
+    '6.9.4', '6.9.3', '6.9.2', '6.9.1', '6.9',
+    '6.8.5', '6.8.4', '6.8.3', '6.8.2', '6.8.1', '6.8',
+    '6.7.5', '6.7.4', '6.7.3', '6.7.2', '6.7.1', '6.7',
 ]
 
 # Joomla
 # ------
-DEFAULT_JOOMLA_VERSION         = '6.0.2'
+DEFAULT_JOOMLA_VERSION         = '6.1.1'
 DEFAULT_JOOMLA_ADMIN_FULL_NAME = 'Sample User'
 
 # Drupal
