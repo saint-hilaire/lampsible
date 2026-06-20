@@ -29,6 +29,7 @@ class Lampsible:
             joomla_version=DEFAULT_JOOMLA_VERSION,
             joomla_admin_full_name=DEFAULT_JOOMLA_ADMIN_FULL_NAME,
             drupal_profile=DEFAULT_DRUPAL_PROFILE,
+            typo3_version=DEFAULT_TYPO3_VERSION,
             app_name=None,
             app_build_path=None,
             ssl_certbot=True,
@@ -140,6 +141,8 @@ class Lampsible:
 
         self.drupal_profile = drupal_profile
 
+        self.typo3_version = typo3_version
+
         self.app_name = app_name
         self.app_build_path = app_build_path
         self.laravel_artisan_commands = laravel_artisan_commands
@@ -186,18 +189,27 @@ class Lampsible:
         if action == 'wordpress':
             if self.database_table_prefix == DEFAULT_DATABASE_TABLE_PREFIX:
                 self.database_table_prefix = 'wp_'
-        elif action == 'drupal':
+
+        elif action in ['drupal', 'typo3']:
+            cms_composer_projects = {
+                'drupal': 'drupal/recommended-project',
+                'typo3': f'typo3/cms-base-distribution:~{self.typo3_version}',
+            }
             if not self.composer_project:
-                self.composer_project = 'drupal/recommended-project'
+                self.composer_project = cms_composer_projects[action]
+
             if not self.composer_working_directory:
-                self.composer_working_directory = '{}/drupal'.format(
-                    self.apache_document_root
+                self.composer_working_directory = '{}/{}'.format(
+                    self.apache_document_root,
+                    action
                 )
-            try:
-                if 'drush/drush' not in self.composer_packages:
+
+            if action == 'drupal' and 'drush/drush' not in self.composer_packages:
+                try:
                     self.composer_packages.append('drush/drush')
-            except AttributeError:
-                self.composer_packages = ['drush/drush']
+                except AttributeError:
+                    self.composer_packages = ['drush/drush']
+
         elif action == 'suitecrm':
             self.extra_packages.append('unzip')
 
@@ -222,6 +234,15 @@ class Lampsible:
         elif self.action == 'drupal':
             if self.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
                 self.apache_document_root = '{}/drupal/web'.format(
+                    DEFAULT_APACHE_DOCUMENT_ROOT
+                )
+
+            if self.apache_vhost_name == DEFAULT_APACHE_VHOST_NAME:
+                self.apache_vhost_name = self.action
+
+        elif self.action == 'typo3':
+            if self.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
+                self.apache_document_root = '{}/typo3/public'.format(
                     DEFAULT_APACHE_DOCUMENT_ROOT
                 )
 

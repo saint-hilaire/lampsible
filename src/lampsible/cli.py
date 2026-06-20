@@ -182,6 +182,11 @@ def main():
                 DEFAULT_DRUPAL_PROFILE)
     )
 
+    # TYPO3
+    # -----
+    parser.add_argument('--typo3-version',
+        default=DEFAULT_TYPO3_VERSION, choices=SUPPORTED_TYPO3_VERSIONS)
+
     # Web applications
     # ----------------
     parser.add_argument('--app-name', default='laravel-app',

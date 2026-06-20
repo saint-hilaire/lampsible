@@ -3,7 +3,8 @@
   apt:
     name: composer
     state: present
-  when: composer_packages != None and composer_packages | length > 0
+  # Removing to fix TYPO3 installation.
+  #when: composer_packages != None and composer_packages | length > 0
 
 - name: Create Composer project directory, if needed
   file:

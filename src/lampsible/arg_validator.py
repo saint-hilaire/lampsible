@@ -1,5 +1,5 @@
 import os
-from re import match
+from re import match, fullmatch
 from copy import deepcopy
 from getpass import getpass, getuser
 from textwrap import dedent
@@ -92,17 +92,23 @@ class ArgValidator():
         return '--{}'.format(var_name.replace('_', '-'))
 
 
-    def get_pass_and_check(self, prompt, min_length=0, confirm=False):
+    def get_pass_and_check(self, prompt, min_length=0, confirm=False,
+            regex_pattern=None):
+
         password = getpass(prompt)
         while min_length > 0 and len(password) < min_length:
             password = getpass('That password is too short. Please enter another password: ')
+
+        while regex_pattern is not None and not fullmatch(regex_pattern, password):
+            password = getpass('That password does not meet the required format. Please enter another password: ')
+
         if confirm:
             double_check = getpass('Please retype password: ')
             if password == double_check:
                 return password
             else:
                 print('\nPasswords don\'t match. Please try again.')
-                return self.get_pass_and_check(prompt, min_length, True)
+                return self.get_pass_and_check(prompt, min_length, True, regex_pattern)
         else:
             return password
 
@@ -199,6 +205,7 @@ class ArgValidator():
             'wordpress': 'wordpress',
             'joomla'   : 'joomla',
             'drupal'   : 'drupal',
+            'typo3'    : 'typo3',
             'laravel'  : self.args.app_name,
             'suitecrm' : 'suitecrm',
         }
@@ -208,6 +215,7 @@ class ArgValidator():
             # TODO?
             'joomla'   : '',
             'drupal'   : '',
+            'typo3'    : '',
             'laravel'  : '',
             'suitecrm' : '',
         }
@@ -230,6 +238,7 @@ class ArgValidator():
             'wordpress',
             'joomla',
             'drupal',
+            'typo3',
             'laravel',
             'suitecrm',
         ]:
@@ -311,8 +320,6 @@ class ArgValidator():
 
         if self.args.action in [
             'apache',
-            # TODO: But if 'mysql' was passed with '--php-myadmin',
-            # then we do need it. But PMA is not implemented currently.
             'mysql',
             'dump-ansible-facts',
         ]:
@@ -514,6 +521,54 @@ class ArgValidator():
         return 0
 
 
+    def validate_typo3_args(self):
+
+        if self.args.action != 'typo3':
+            return 0
+
+        if self.validated_args.php_version \
+                and float(self.validated_args.php_version) < 8.2:
+            print('TYPO3 requires minimum PHP 8.2.')
+            return 1
+
+
+        self.handle_defaults([
+            {
+                'arg_name': 'site_title',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_SITE_TITLE,
+            },
+            {
+                'arg_name': 'admin_username',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_ADMIN_USERNAME,
+            },
+            {
+                'arg_name': 'admin_email',
+                'cli_default_value': None,
+                'override_default_value': DEFAULT_ADMIN_EMAIL,
+            },
+        ], True, True)
+
+        # TODO: If instead of returning 1 we throw an exception, we could make
+        # a small helper function out of this, see validate_wordpress_args.
+        if self.args.admin_password \
+            and not self.args.insecure_cli_password:
+            print(INSECURE_CLI_PASS_WARNING)
+            return 1
+
+        if not self.args.admin_password:
+            self.validated_args.admin_password = self.get_pass_and_check(
+                "Please choose a password for the website's admin user: ",
+                min_length=8,
+                confirm=True,
+                # TYPO3 password must contain one uppercase, one lowercase,
+                # one digit, one special char.
+                regex_pattern=r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$'
+            )
+        return 0
+
+
     def validate_app_args(self):
         if self.args.action not in [
             'laravel',
@@ -651,6 +706,7 @@ class ArgValidator():
             'validate_wordpress_args',
             'validate_joomla_args',
             'validate_drupal_args',
+            'validate_typo3_args',
             'validate_app_args',
             'validate_suitecrm_args',
             'validate_misc_args',

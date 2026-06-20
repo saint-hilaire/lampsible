@@ -29,6 +29,7 @@ SUPPORTED_ACTIONS = [
     'wordpress',
     'joomla',
     'drupal',
+    'typo3',
     # PHP frameworks
     'laravel',
     # Other applications
@@ -80,6 +81,14 @@ REQUIRED_PHP_EXTENSIONS = {
         'gd',
         'curl',
         'mbstring',
+    ],
+    'typo3': [
+        'mysql',
+        'pdo',
+        'xml',
+        'tokenizer',
+        'mbstring',
+        'intl',
     ],
     'laravel': [
         'mysql',
@@ -145,10 +154,19 @@ DEFAULT_JOOMLA_VERSION         = '6.1.1'
 DEFAULT_JOOMLA_ADMIN_FULL_NAME = 'Sample User'
 
 # Drupal
-
+# ------
 AVAILABLE_DRUPAL_PROFILES = ['standard', 'minimal']
 DEFAULT_DRUPAL_PROFILE    = 'standard'
-# ------
+
+# TYPO3
+# -----
+DEFAULT_TYPO3_VERSION = '14.3'
+SUPPORTED_TYPO3_VERSIONS = [
+    '14.3',
+    '13.4',
+    '12.4',
+]
+
 
 # Web applications
 # ----------------
