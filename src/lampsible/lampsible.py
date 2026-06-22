@@ -311,8 +311,10 @@ class Lampsible:
 
             self.apache_custom_conf_name = 'ssl-params'
 
-        # TODO: Do this conditionally, only for actions where we need it?
-        if not self.composer_working_directory:
+        # Composer working directory: Fall back to Apache webroot,
+        # but only if we need it (if there Composer packages).
+        if not self.composer_working_directory \
+                and len(self.composer_packages) > 0:
             self.composer_working_directory = self.apache_document_root
 
 
