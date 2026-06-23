@@ -32,7 +32,7 @@
 #   when: open_database
 
 - name: Set root database password
-  community.mysql.mysql_user:
+  ansible.mysql.mysql_user:
     name: root
     # TODO
     #encrypted: true
@@ -52,7 +52,7 @@
   when: database_root_password != None and database_root_password | length > 0
 
 - name: Remove all anonymous user accounts
-  community.mysql.mysql_user:
+  ansible.mysql.mysql_user:
     name: ''
     host_all: true
     state: absent
@@ -65,7 +65,7 @@
   when: open_database
 
 - name: Create database user
-  community.mysql.mysql_user:
+  ansible.mysql.mysql_user:
     name:     "{{ database_username }}"
     plugin: caching_sha2_password
     plugin_auth_string: "{{ database_password }}"
@@ -78,7 +78,7 @@
   when: database_username != None and database_username | length > 0
 
 - name: Create database
-  community.mysql.mysql_db:
+  ansible.mysql.mysql_db:
     name: "{{ database_name }}"
     state: present
     login_unix_socket: /run/mysqld/mysqld.sock
