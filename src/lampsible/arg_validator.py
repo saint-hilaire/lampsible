@@ -201,25 +201,6 @@ class ArgValidator():
 
     def validate_database_args(self):
 
-        default_database_names = {
-            'wordpress': 'wordpress',
-            'joomla'   : 'joomla',
-            'drupal'   : 'drupal',
-            'typo3'    : 'typo3',
-            'laravel'  : self.args.app_name,
-            'suitecrm' : 'suitecrm',
-        }
-
-        default_database_table_prefixes = {
-            'wordpress': 'wp_',
-            # TODO?
-            'joomla'   : '',
-            'drupal'   : '',
-            'typo3'    : '',
-            'laravel'  : '',
-            'suitecrm' : '',
-        }
-
         if self.args.database_username == 'root':
             print(dedent("""
                 'root' is an invalid database username. You probably want to
@@ -246,8 +227,7 @@ class ArgValidator():
                 {
                     'arg_name': 'database_name',
                     'cli_default_value': None,
-                    'override_default_value': default_database_names[
-                        self.args.action],
+                    'override_default_value': self._get_default_database_name(),
                 },
                 {
                     'arg_name': 'database_username',
@@ -257,8 +237,7 @@ class ArgValidator():
                 {
                     'arg_name': 'database_table_prefix',
                     'cli_default_value': DEFAULT_DATABASE_TABLE_PREFIX,
-                    'override_default_value': default_database_table_prefixes[
-                        self.args.action],
+                    'override_default_value': self._get_default_database_table_prefix(),
                 },
             ], True, True)
 
@@ -278,6 +257,26 @@ class ArgValidator():
             )
 
         return 0
+
+
+    def _get_default_database_name(self):
+        default_database_names = {
+            'laravel'  : self.args.app_name,
+        }
+        try:
+            return default_database_names[self.args.action]
+        except KeyError:
+            return self.args.action
+
+
+    def _get_default_database_table_prefix(self):
+        default_database_table_prefixes = {
+            'wordpress': 'wp_',
+        }
+        try:
+            return default_database_table_prefixes[self.args.action]
+        except KeyError:
+            return ''
 
 
     def validate_ssl_args(self):
