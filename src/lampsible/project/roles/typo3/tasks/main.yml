@@ -1,0 +1,22 @@
+---
+
+- name: Install TYPO3
+  command:
+  args:
+    argv:
+      - "./vendor/bin/typo3"
+      - setup
+      - "--create-site={{ 'https' if ssl_certbot or ssl_selfsigned else 'http' }}://{{ web_host }}"
+      - "--driver=mysqli"
+      - "--host={{ database_host }}"
+      - "--dbname={{ database_name }}"
+      - "--username={{ database_username }}"
+      - "--password={{ database_password }}"
+      - "--admin-username={{ admin_username }}"
+      - "--admin-user-password={{ admin_password }}"
+      - "--admin-email={{ admin_email }}"
+      - "--project-name={{ site_title }}"
+      - "--server-type=apache"
+      - "--force"
+      - "--no-interaction"
+    chdir: "{{ composer_working_directory }}"

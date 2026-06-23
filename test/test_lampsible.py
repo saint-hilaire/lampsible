@@ -156,6 +156,13 @@ class TestLampsible(unittest.TestCase):
         self._do_test_run()
 
 
+    def test_typo3(self):
+        self.lampsible.set_action('typo3')
+        self.lampsible.database_name = 'typo3'
+        self.lampsible.admin_password = 'P@ssword1'
+        self._do_test_run()
+
+
     def test_extra_env_vars(self):
         self.lampsible.set_action('apache')
         self.lampsible.extra_env_vars = {

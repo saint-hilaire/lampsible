@@ -3,7 +3,7 @@
   apt:
     name: composer
     state: present
-  when: composer_packages != None and composer_packages | length > 0
+  when: composer_working_directory != None
 
 - name: Create Composer project directory, if needed
   file:
