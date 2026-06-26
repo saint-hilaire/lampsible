@@ -182,6 +182,11 @@ def main():
                 DEFAULT_DRUPAL_PROFILE)
     )
 
+    # TYPO3
+    # -----
+    parser.add_argument('--typo3-version',
+        default=DEFAULT_TYPO3_VERSION, choices=SUPPORTED_TYPO3_VERSIONS)
+
     # Web applications
     # ----------------
     parser.add_argument('--app-name', default='laravel-app',
@@ -283,14 +288,6 @@ def main():
         Be advised that Ansible Runner will write sensitive data here,
         like your private SSH key and passwords,
         but Lampsible will delete this directory when it finishes.
-        """
-    )
-    parser.add_argument('--ansible-galaxy-ok', action='store_true',
-        help="""
-        Pass this flag to give your consent to install any missing
-        Ansible Galaxy dependencies onto your local machine.
-        Otherwise, if any Galaxy Collections are missing, you will be asked
-        if it is OK to install them.
         """
     )
 
@@ -504,6 +501,20 @@ def main():
         Example: SOME_VARIABLE=some-value,OTHER_VARIABLE=other-value
         """
     )
+    parser.add_argument('--galaxy-force', action='store_true',
+        help="""
+        Pass this flag if you want to include Ansible Galaxy's '--force' flag,
+        when installing local dependencies. Useful for updating local
+        dependencies that may have gotten out of date since they were last
+        installed.
+        """
+    )
+    parser.add_argument('--galaxy-force-with-deps', action='store_true',
+        help="""
+        Pass this flag if you want to include Ansible Galaxy's
+        '--force-with-deps' flag, when installing local dependencies.
+        """
+    )
 
     # Metadata
     # --------
@@ -598,8 +609,8 @@ def main():
         extra_packages=args.extra_packages,
         ssh_key_file=args.ssh_key_file,
         remote_sudo_password=args.remote_sudo_password,
-        ansible_galaxy_ok=args.ansible_galaxy_ok,
-        interactive=True,
+        galaxy_force=args.galaxy_force,
+        galaxy_force_with_deps=args.galaxy_force_with_deps,
     )
 
     if args.action == 'dump-ansible-facts':

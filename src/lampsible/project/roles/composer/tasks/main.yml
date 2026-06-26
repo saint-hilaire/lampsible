@@ -3,7 +3,7 @@
   apt:
     name: composer
     state: present
-  when: composer_packages != None and composer_packages | length > 0
+  when: composer_working_directory != None
 
 - name: Create Composer project directory, if needed
   file:
@@ -11,7 +11,7 @@
     state: directory
     owner: www-data
     group: www-data
-  when: composer_project != None and composer_project | length > 0
+  when: composer_working_directory != None and composer_working_directory | length > 0
 
 # This is because of idempotency issues in the Composer module.
 # See https://github.com/ansible-collections/community.general/issues/725
@@ -48,3 +48,4 @@
     recurse: yes
     owner: www-data
     group: www-data
+  when: composer_working_directory != None and composer_working_directory | length > 0

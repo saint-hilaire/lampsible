@@ -7,42 +7,33 @@ This tool can automate almost anything that you'd expect from a LAMP stack.
 
 ### Features
 
-* Out of the box LAMP stack
+* Production ready web apps, powered by LAMP stacks, in a single command
+* SSL certificates via Certbot / Let's Encrypt
+* Most common CMS applications are supported:
+  * WordPress, including custom themes and plugins
+  * Joomla
+  * Drupal
+  * TYPO3
+* Custom Laravel apps
+* Fresh, out-of-the-box LAMP stacks
 * Custom Apache configuration (custom webroot, vhosts, etc.)
 * Apache or MySQL by itself
-* WordPress, including custom themes and plugins
-* Joomla
-* Drupal
-* Custom Laravel app
-* SuiteCRM
-* Production ready SSL via Certbot
-* SSL for test servers (to avoid being rate limited by Let's Encrypt)
-* Self signed SSL, good for local test networks
+* SSL via test certificates / self signed, ideal for test environments
 * Custom PHP extensions, php.ini settings, phpMyAdmin, Composer packages, etc.
+* Misc. apps: SuiteCRM
 * And so on...
 
 
 ## Requirements
 
-Depends on the use case.
-
-### If installing web app on remote host
-
-This is the preferred way to use Lampsible.
-
-* Local: Unix system with Python 3.9 or newer. Tested on Ubuntu and Gentoo Linux.
+* Local host: Unix system with Python 3.9 or newer. Tested on Ubuntu Linux, Gentoo Linux and Linux Mint.
   Might work on macOS, but I haven't tested that. Won't work on Windows,
   because Ansible requires a Unix like system.
-* Remote: Ubuntu 20 or newer, Ubuntu 24 or older. You need SSH access and root privilege, or ability to elevate privilege to root.
-  Might work on older versions, but I doubt it. Support for other distros is planned in a future version.
-  * Note for Ubuntu 25: It's currently not supported. Still waiting for support in some upstream dependencies.
-    For now, please don't use a more recent version than Ubuntu 24.
-
-### Alternative: installing web app directly on localhost
-
-Your machine should be similar to the "Remote" outlined above, Ubuntu Linux. Also, you need root access on that machine.
-Ideally, you'll run as a nonprivileged user, and be asked for the root password. Finally, if you run this way, this
-should not be some kind production server, but some local test server in a private network.
+* Remote server: Ubuntu >= 20, <= 24. You need SSH access and root privilege.
+* (Optional): Lampsible is designed so that you run it in your local CLI, and it installs a web app
+  on your remote server. However, you can also run it locally. This is useful if you want to install
+  a local test server. In that case, your local machine should be similar as the "remote server"
+  outlined above, ie. Ubuntu Linux.
 
 ## Installing
 
@@ -156,12 +147,6 @@ lampsible = Lampsible(
         'wordpress-seo',
         'wordfence',
     ],
-    # Set this to give your consent to install some required
-    # Ansible Galaxy Collections. Otherwise, if any of them are missing,
-    # Lampsible will throw an error. If those collections are already installed,
-    # this attribute is no longer required.
-    # See /src/lampsible/project/ansible-galaxy-requirements.yml
-    ansible_galaxy_ok=True,
 )
 
 result = lampsible.run()
