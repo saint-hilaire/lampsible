@@ -73,6 +73,7 @@ def main():
         """
     )
     parser.add_argument('--database-host', default=DEFAULT_DATABASE_HOST)
+    parser.add_argument('--database-port', default=DEFAULT_DATABASE_PORT)
     parser.add_argument('--database-system-user-host',
         help="""
         If database server is different than web server,
@@ -568,6 +569,7 @@ def main():
         database_password=args.database_password,
         database_name=args.database_name,
         database_host=args.database_host,
+        database_port=args.database_port,
         database_table_prefix=args.database_table_prefix,
         database_system_user=args.database_system_user,
         database_system_host=args.database_system_host,

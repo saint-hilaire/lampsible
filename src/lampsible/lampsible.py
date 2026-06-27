@@ -16,7 +16,7 @@ class Lampsible:
             apache_server_admin=DEFAULT_APACHE_SERVER_ADMIN,
             database_root_password=None,
             database_username=None,
-            database_name=None, database_host=None, database_system_user=None,
+            database_name=None, database_host=None, database_port=None, database_system_user=None,
             database_system_host=None,
             phpmyadmin=False,
             php_version=DEFAULT_PHP_VERSION,
@@ -106,6 +106,7 @@ class Lampsible:
         self.database_password      = database_password
         self.database_name          = database_name
         self.database_host          = database_host
+        self.database_port          = database_port
         self.database_table_prefix  = database_table_prefix
 
         self.php_version             = php_version
@@ -378,6 +379,7 @@ class Lampsible:
             'database_password',
             'database_name',
             'database_host',
+            'database_port',
             'database_table_prefix',
             'phpmyadmin',
             'php_version',
