@@ -30,13 +30,6 @@
     dest: "{{ apache_document_root }}"
     remote_src: true
 
-- name: Set file ownership and permissions
-  file:
-    path: "{{ apache_document_root }}/administrator/cache"
-    state: directory
-    group: www-data
-    mode: '0775'
-
 - name: Install Joomla
   command:
   args:
@@ -73,6 +66,14 @@
       # - "--db-sslca="
       # # TODO?
       # - "--db-sslcipher="
+
+- name: Set file ownership and permissions
+  file:
+    path: "{{ apache_document_root }}/administrator/cache"
+    state: directory
+    group: www-data
+    mode: '0775'
+    recurse: yes
 
 - name: Delete Joomla archive
   file:
