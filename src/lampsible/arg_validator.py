@@ -256,6 +256,15 @@ class ArgValidator():
                 True
             )
 
+        if self.args.database_port is not None:
+            try:
+                database_port = int(self.args.database_port)
+            except (ValueError, TypeError):
+                print('Invalid database port. It must be an integer.')
+                return 1
+            if not 0 <= database_port <= 65535:
+                print('Invalid database port. It must be an integer between 0 and 65535.')
+                return 1
         return 0
 
 

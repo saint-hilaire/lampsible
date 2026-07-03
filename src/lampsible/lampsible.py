@@ -16,7 +16,7 @@ class Lampsible:
             apache_server_admin=DEFAULT_APACHE_SERVER_ADMIN,
             database_root_password=None,
             database_username=None,
-            database_name=None, database_host=None, database_port=None, database_system_user=None,
+            database_name=None, database_host=None, database_port=DEFAULT_DATABASE_PORT, database_system_user=None,
             database_system_host=None,
             phpmyadmin=False,
             php_version=DEFAULT_PHP_VERSION,
