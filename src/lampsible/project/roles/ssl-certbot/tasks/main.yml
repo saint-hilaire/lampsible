@@ -1,9 +1,21 @@
 ---
 
+- name: Wait for snapd
+  command: snap version
+  register: snap_version
+  retries: 20
+  delay: 3
+  until: snap_version.rc == 0
+
 - name: Install Certbot with Snap
   community.general.snap:
     name: certbot
     classic: true
+    state: present
+  register: certbot_result
+  retries: 5
+  delay: 10
+  until: certbot_result is succeeded
 
 - name: Run Certbot
   raw: "certbot --noninteractive --apache --agree-tos --email {{ email_for_ssl }} {{ certbot_domains_string }} {{ '--test-cert' if ssl_test_cert else '' }}"
