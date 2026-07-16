@@ -38,7 +38,7 @@
       - "--dbname={{ database_name }}"
       - "--dbuser={{ database_username }}"
       - "--dbpass={{ database_password }}"
-      - "--dbhost={{ database_host }}"
+      - "--dbhost={{ database_host }}:{{ database_port }}"
       - "--dbprefix={{ database_table_prefix }}"
       - "--locale={{ wordpress_locale }}"
       - --extra-php

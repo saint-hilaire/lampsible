@@ -19,6 +19,14 @@
     - { regexp: '^bind-address', line: 'bind-address = 0.0.0.0' }
   when: open_database
 
+- name: Configure MySQL to listen on the specified port
+  lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: '^port'
+    line: 'port = {{ database_port }}'
+    state: present
+    backup: yes
+
 # - name: Open MySQL port in firewall
 #   ansible.posix.firewalld:
 #     # TODO: variable database_port
@@ -59,7 +67,6 @@
   service:
     name: mysql
     state: restarted
-  when: open_database
 
 - name: Create database user
   ansible.mysql.mysql_user:
