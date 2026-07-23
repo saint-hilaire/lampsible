@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lampsible"
-version = "2.7.0-beta-1"
+version = "2.7.0-dev"
 authors = [
     {name="Belal Ibrahim", email="belal.ibrahim@proton.me"}
 ]
