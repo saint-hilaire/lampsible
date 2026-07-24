@@ -50,6 +50,11 @@ def main():
         Defaults to '{}' but if you should pass in a real email address.
         """.format(DEFAULT_APACHE_SERVER_ADMIN)
     )
+    parser.add_argument('--www-subdomain', action='store_true',
+        help="""
+        Pass this flag to add the www. subdomain to your website's domain config.
+        """
+    )
 
     # Database
     # --------
@@ -251,6 +256,7 @@ def main():
     )
     parser.add_argument('--domains-for-ssl',
         help="""
+        Deprecated. This flag will be dropped in a future version.
         a comma separated list of domains that will be passed to Certbot.
         If left blank, Lampsible will figure out what to use
         based on your host and action.
@@ -564,6 +570,7 @@ def main():
         ssl_selfsigned=args.ssl_selfsigned,
         ssl_test_cert=args.ssl_test_cert,
         email_for_ssl=args.email_for_ssl,
+        www_subdomain=args.www_subdomain,
         database_root_password=args.database_root_password,
         database_username=args.database_username,
         database_password=args.database_password,

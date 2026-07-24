@@ -61,7 +61,10 @@ class Lampsible:
             suitecrm_version=DEFAULT_SUITECRM_VERSION,
             suitecrm_demo_data=False,
             email_for_ssl=None,
-            domains_for_ssl=[], ssl_test_cert=False,
+            www_subdomain=False,
+            # Deprecated
+            domains_for_ssl=[],
+            ssl_test_cert=False,
             extra_packages=[], extra_env_vars={},
             apache_custom_conf_name='',
             galaxy_force=False, galaxy_force_with_deps=False,
@@ -97,7 +100,10 @@ class Lampsible:
         self.ssl_test_cert   = ssl_test_cert
         self.ssl_selfsigned  = ssl_selfsigned
         self.email_for_ssl   = email_for_ssl
+        # Deprecated
         self.domains_for_ssl = domains_for_ssl
+
+        self.set_www_subdomain(www_subdomain)
 
         self.apache_custom_conf_name = apache_custom_conf_name
 
@@ -221,6 +227,26 @@ class Lampsible:
         self.playbook = '{}.yml'.format(self.action)
 
 
+    def set_www_subdomain(self, www_subdomain):
+        self.www_subdomain = www_subdomain
+
+        # domains_for_ssl is deprecated
+        # This block is included only for backwards compatibility.
+        # domains_for_ssl will be removed in a future version,
+        # and then this block can be removed.
+        # In fact, this whole setter could then be removed, in favor of
+        # implementing something like get_certbot_domains_string
+        # conditionally depending on the boolean www_subdomain
+        if self.domains_for_ssl != []:
+            self._web_domains = self.domains_for_ssl
+            return
+
+        if www_subdomain:
+            self._web_domains = [self.web_host, f'www.{self.web_host}']
+        else:
+            self._web_domains = [self.web_host]
+
+
     def _set_apache_vars(self):
         if self.action in ['wordpress', 'joomla']:
             if self.apache_document_root == DEFAULT_APACHE_DOCUMENT_ROOT:
@@ -299,8 +325,6 @@ class Lampsible:
         if self.ssl_certbot:
             if not self.email_for_ssl:
                 self.email_for_ssl = self.apache_server_admin
-            if not self.domains_for_ssl:
-                self.domains_for_ssl = [self.web_host]
 
         elif self.ssl_selfsigned:
             ssl_vhost_dict = deepcopy(base_vhost_dict)
@@ -409,7 +433,6 @@ class Lampsible:
                 'wordpress_locale',
                 'wordpress_theme',
                 'wordpress_plugins',
-                'wordpress_url',
                 'wordpress_insecure_allow_xmlrpc',
             ])
         elif self.action == 'joomla':
@@ -477,17 +500,8 @@ class Lampsible:
             elif varname in ['php_allow_url_fopen', 'php_display_errors']:
                 value = 'On' if getattr(self, varname) else 'Off'
 
-            elif varname == 'wordpress_url':
-                if not self.ssl_certbot or self.web_host[:4] == 'www.':
-                    value = self.web_host
-                else:
-                    value = 'www.{}'.format(self.web_host)
-
-                if value not in self.domains_for_ssl:
-                    self.domains_for_ssl.append(value)
-
             elif varname == 'certbot_domains_string':
-                value = '-d {}'.format(' -d '.join(self.domains_for_ssl))
+                value = '-d {}'.format(' -d '.join(self._web_domains))
 
             # This lets us pass extra_env_vars to Lampsible in the more sensible dictionary format,
             # while still using them in the more convenient list format.

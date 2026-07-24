@@ -299,11 +299,6 @@ class ArgValidator():
                 ]:
             self.handle_defaults([
                 {
-                    'arg_name': 'domains_for_ssl',
-                    'cli_default_value': None,
-                    'override_default_value': [self.validated_args.web_host],
-                },
-                {
                     'arg_name': 'email_for_ssl',
                     'cli_default_value': None,
                     'override_default_value': self.args.apache_server_admin,
