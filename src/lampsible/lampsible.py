@@ -338,8 +338,7 @@ class Lampsible:
 
         # Composer working directory: Fall back to Apache webroot,
         # but only if we need it (if there Composer packages).
-        if not self.composer_working_directory \
-                and len(self.composer_packages) > 0:
+        if not self.composer_working_directory and self.composer_packages:
             self.composer_working_directory = self.apache_document_root
 
 
