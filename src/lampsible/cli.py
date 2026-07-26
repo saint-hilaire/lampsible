@@ -257,7 +257,8 @@ def main():
     parser.add_argument('--domains-for-ssl',
         help="""
         Deprecated. This flag will be dropped in a future version.
-        a comma separated list of domains that will be passed to Certbot.
+        Please use '--www-subdomain' instead.
+        A comma separated list of domains that will be passed to Certbot.
         If left blank, Lampsible will figure out what to use
         based on your host and action.
         """

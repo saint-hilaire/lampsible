@@ -310,6 +310,11 @@ class ArgValidator():
                     self.args.email_for_ssl))
                 return 1
 
+        if self.args.domains_for_ssl:
+            print(dedent("""
+            Warning! --domains-for-ssl is deprecated, and will be removed in
+            a future version. Please use boolean flag --www-subdomain instead.
+            """))
         return 0
 
 
