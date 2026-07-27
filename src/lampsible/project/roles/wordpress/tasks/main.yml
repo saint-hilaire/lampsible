@@ -54,7 +54,7 @@
       - install
       - --allow-root
       - "--path={{ apache_document_root }}"
-      - "--url={{ wordpress_url }}"
+      - "--url={{ web_host }}"
       - "--title={{ site_title }}"
       - "--admin_user={{ admin_username }}"
       - "--admin_password={{ admin_password }}"
