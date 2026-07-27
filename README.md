@@ -84,19 +84,22 @@ Below are some examples:
       --wordpress-theme frutiger-aero
   ```
 
-* Install a production ready Joomla site:
+* Install a production ready Joomla site, add the www. subdomain to the website's domain config:
   ```
   lampsible someuser@somehost.com joomla \
       --email-for-ssl you@yourdomain.com
+      --www-subdomain
   ```
 
 * Install Drupal on a test server. Certbot will set up a
-  test certificate. Also, Apache and MySQL will run on two separate hosts.
+  test certificate. Also, Apache and MySQL will run on two separate hosts,
+  and MySQL will use a nonstandard port.
   ```
   lampsible someuser@somehost.com drupal \
       --database-system-user-host otheruser@dbserver.somehost.com \
       --database-host 10.0.1.2 \
-      --database-username dbuser
+      --database-username dbuser \
+      --database-port 6033
       --ssl-test-cert \
       --apache-server-admin you@yourdomain.com \
   ```

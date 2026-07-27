@@ -38,7 +38,7 @@
       - "--dbname={{ database_name }}"
       - "--dbuser={{ database_username }}"
       - "--dbpass={{ database_password }}"
-      - "--dbhost={{ database_host }}"
+      - "--dbhost={{ database_host }}:{{ database_port }}"
       - "--dbprefix={{ database_table_prefix }}"
       - "--locale={{ wordpress_locale }}"
       - --extra-php
@@ -54,7 +54,7 @@
       - install
       - --allow-root
       - "--path={{ apache_document_root }}"
-      - "--url={{ wordpress_url }}"
+      - "--url={{ web_host }}"
       - "--title={{ site_title }}"
       - "--admin_user={{ admin_username }}"
       - "--admin_password={{ admin_password }}"

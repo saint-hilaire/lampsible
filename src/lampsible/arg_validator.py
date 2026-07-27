@@ -256,6 +256,15 @@ class ArgValidator():
                 True
             )
 
+        if self.args.database_port is not None:
+            try:
+                database_port = int(self.args.database_port)
+            except (ValueError, TypeError):
+                print('Invalid database port. It must be an integer.')
+                return 1
+            if not 0 <= database_port <= 65535:
+                print('Invalid database port. It must be an integer between 0 and 65535.')
+                return 1
         return 0
 
 
@@ -290,11 +299,6 @@ class ArgValidator():
                 ]:
             self.handle_defaults([
                 {
-                    'arg_name': 'domains_for_ssl',
-                    'cli_default_value': None,
-                    'override_default_value': [self.validated_args.web_host],
-                },
-                {
                     'arg_name': 'email_for_ssl',
                     'cli_default_value': None,
                     'override_default_value': self.args.apache_server_admin,
@@ -306,6 +310,11 @@ class ArgValidator():
                     self.args.email_for_ssl))
                 return 1
 
+        if self.args.domains_for_ssl:
+            print(dedent("""
+            Warning! --domains-for-ssl is deprecated, and will be removed in
+            a future version. Please use boolean flag --www-subdomain instead.
+            """))
         return 0
 
 

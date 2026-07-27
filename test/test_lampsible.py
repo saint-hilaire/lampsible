@@ -216,6 +216,16 @@ class TestLampsible(unittest.TestCase):
         self._do_test_run()
 
 
+    def test_www_subdomain(self):
+        self.lampsible.set_action('apache')
+        self.lampsible.www_subdomain = True
+        self.assertCountEqual(
+            [self.lampsible.web_host, f'www.{self.lampsible.web_host}'],
+            self.lampsible.web_domains
+        )
+        self._do_test_run()
+
+
     def _do_test_run(self):
         result = self.lampsible.run()
         self.assertEqual(result, 0)

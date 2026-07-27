@@ -1,6 +1,5 @@
 import os
 from copy import deepcopy
-from textwrap import dedent
 from shutil import rmtree
 from yaml import safe_load
 from ansible_runner import interface as runner_interface, run_command
@@ -16,7 +15,7 @@ class Lampsible:
             apache_server_admin=DEFAULT_APACHE_SERVER_ADMIN,
             database_root_password=None,
             database_username=None,
-            database_name=None, database_host=None, database_system_user=None,
+            database_name=None, database_host=None, database_port=DEFAULT_DATABASE_PORT, database_system_user=None,
             database_system_host=None,
             phpmyadmin=False,
             php_version=DEFAULT_PHP_VERSION,
@@ -61,7 +60,10 @@ class Lampsible:
             suitecrm_version=DEFAULT_SUITECRM_VERSION,
             suitecrm_demo_data=False,
             email_for_ssl=None,
-            domains_for_ssl=[], ssl_test_cert=False,
+            www_subdomain=False,
+            # Deprecated
+            domains_for_ssl=[],
+            ssl_test_cert=False,
             extra_packages=[], extra_env_vars={},
             apache_custom_conf_name='',
             galaxy_force=False, galaxy_force_with_deps=False,
@@ -97,7 +99,10 @@ class Lampsible:
         self.ssl_test_cert   = ssl_test_cert
         self.ssl_selfsigned  = ssl_selfsigned
         self.email_for_ssl   = email_for_ssl
+        self.www_subdomain   = www_subdomain
+        # Deprecated
         self.domains_for_ssl = domains_for_ssl
+
 
         self.apache_custom_conf_name = apache_custom_conf_name
 
@@ -106,6 +111,7 @@ class Lampsible:
         self.database_password      = database_password
         self.database_name          = database_name
         self.database_host          = database_host
+        self.database_port          = database_port
         self.database_table_prefix  = database_table_prefix
 
         self.php_version             = php_version
@@ -179,9 +185,8 @@ class Lampsible:
 
         try:
             required_php_extensions = [
-                'php-{}'.format(
-                    extension
-                ) for extension in REQUIRED_PHP_EXTENSIONS[self.action]
+                f'php-{extension}' for extension \
+                        in REQUIRED_PHP_EXTENSIONS[self.action]
             ]
         except KeyError:
             required_php_extensions = []
@@ -217,7 +222,24 @@ class Lampsible:
             if ext not in self.php_extensions:
                 self.php_extensions.append(ext)
 
-        self.playbook = '{}.yml'.format(self.action)
+        self.playbook = f'{self.action}.yml'
+
+
+    @property
+    def web_domains(self):
+        # Backwards compatibility
+        if self.domains_for_ssl:
+            return self.domains_for_ssl
+
+        if self.www_subdomain \
+                and not self.web_host.startswith('www.') \
+                and not host_is_local(self.web_host) \
+                and not host_is_private(self.web_host):
+
+            return [self.web_host, f'www.{self.web_host}']
+
+        else:
+            return [self.web_host]
 
 
     def _set_apache_vars(self):
@@ -275,7 +297,7 @@ class Lampsible:
             server_name = DEFAULT_APACHE_SERVER_NAME
 
         base_vhost_dict = {
-            'base_vhost_file': '{}.conf'.format(DEFAULT_APACHE_VHOST_NAME),
+            'base_vhost_file': f'{DEFAULT_APACHE_VHOST_NAME}.conf',
             'document_root':  self.apache_document_root,
             'vhost_name':     self.apache_vhost_name,
             'server_name':    server_name,
@@ -287,7 +309,7 @@ class Lampsible:
 
         if self.phpmyadmin:
             self.apache_vhosts.append({
-                'base_vhost_file': '{}.conf'.format(DEFAULT_APACHE_VHOST_NAME),
+                'base_vhost_file': f'{DEFAULT_APACHE_VHOST_NAME}.conf',
                 'document_root':  '/usr/share/phpmyadmin',
                 'vhost_name':     'phpmyadmin',
                 'server_name':    'phpmyadmin',
@@ -298,8 +320,6 @@ class Lampsible:
         if self.ssl_certbot:
             if not self.email_for_ssl:
                 self.email_for_ssl = self.apache_server_admin
-            if not self.domains_for_ssl:
-                self.domains_for_ssl = [self.web_host]
 
         elif self.ssl_selfsigned:
             ssl_vhost_dict = deepcopy(base_vhost_dict)
@@ -313,8 +333,7 @@ class Lampsible:
 
         # Composer working directory: Fall back to Apache webroot,
         # but only if we need it (if there Composer packages).
-        if not self.composer_working_directory \
-                and len(self.composer_packages) > 0:
+        if not self.composer_working_directory and self.composer_packages:
             self.composer_working_directory = self.apache_document_root
 
 
@@ -378,6 +397,7 @@ class Lampsible:
             'database_password',
             'database_name',
             'database_host',
+            'database_port',
             'database_table_prefix',
             'phpmyadmin',
             'php_version',
@@ -407,7 +427,6 @@ class Lampsible:
                 'wordpress_locale',
                 'wordpress_theme',
                 'wordpress_plugins',
-                'wordpress_url',
                 'wordpress_insecure_allow_xmlrpc',
             ])
         elif self.action == 'joomla':
@@ -475,26 +494,14 @@ class Lampsible:
             elif varname in ['php_allow_url_fopen', 'php_display_errors']:
                 value = 'On' if getattr(self, varname) else 'Off'
 
-            elif varname == 'wordpress_url':
-                if not self.ssl_certbot or self.web_host[:4] == 'www.':
-                    value = self.web_host
-                else:
-                    value = 'www.{}'.format(self.web_host)
-
-                if value not in self.domains_for_ssl:
-                    self.domains_for_ssl.append(value)
-
             elif varname == 'certbot_domains_string':
-                value = '-d {}'.format(' -d '.join(self.domains_for_ssl))
+                value = '-d {}'.format(' -d '.join(self.web_domains))
 
             # This lets us pass extra_env_vars to Lampsible in the more sensible dictionary format,
             # while still using them in the more convenient list format.
             elif varname == 'extra_env_vars':
                 value = [
-                    '{}={}'.format(
-                        key,
-                        val
-                    ) for key, val in self.extra_env_vars.items()
+                    f'{key}={val}' for key, val in self.extra_env_vars.items()
                 ]
 
                 # And this is to make sure that if we're installing a Laravel
@@ -505,10 +512,7 @@ class Lampsible:
                     value = []
 
             elif varname == 'app_source_root':
-                value = '{}/{}'.format(
-                    DEFAULT_APACHE_DOCUMENT_ROOT,
-                    self.app_name
-                )
+                value = f'{DEFAULT_APACHE_DOCUMENT_ROOT}/{self.app_name}'
 
             elif varname == 'suitecrm_build_url':
                 value = SUITECRM_BUILD_URLS[self.suitecrm_version]

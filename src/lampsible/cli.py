@@ -50,6 +50,11 @@ def main():
         Defaults to '{}' but if you should pass in a real email address.
         """.format(DEFAULT_APACHE_SERVER_ADMIN)
     )
+    parser.add_argument('--www-subdomain', action='store_true',
+        help="""
+        Pass this flag to add the www. subdomain to your website's domain config.
+        """
+    )
 
     # Database
     # --------
@@ -73,6 +78,7 @@ def main():
         """
     )
     parser.add_argument('--database-host', default=DEFAULT_DATABASE_HOST)
+    parser.add_argument('--database-port', default=DEFAULT_DATABASE_PORT)
     parser.add_argument('--database-system-user-host',
         help="""
         If database server is different than web server,
@@ -250,7 +256,9 @@ def main():
     )
     parser.add_argument('--domains-for-ssl',
         help="""
-        a comma separated list of domains that will be passed to Certbot.
+        Deprecated. This flag will be dropped in a future version.
+        Please use '--www-subdomain' instead.
+        A comma separated list of domains that will be passed to Certbot.
         If left blank, Lampsible will figure out what to use
         based on your host and action.
         """
@@ -563,11 +571,13 @@ def main():
         ssl_selfsigned=args.ssl_selfsigned,
         ssl_test_cert=args.ssl_test_cert,
         email_for_ssl=args.email_for_ssl,
+        www_subdomain=args.www_subdomain,
         database_root_password=args.database_root_password,
         database_username=args.database_username,
         database_password=args.database_password,
         database_name=args.database_name,
         database_host=args.database_host,
+        database_port=args.database_port,
         database_table_prefix=args.database_table_prefix,
         database_system_user=args.database_system_user,
         database_system_host=args.database_system_host,

@@ -9,6 +9,7 @@
       - "--create-site={{ 'https' if ssl_certbot or ssl_selfsigned else 'http' }}://{{ web_host }}"
       - "--driver=mysqli"
       - "--host={{ database_host }}"
+      - "--port={{ database_port }}"
       - "--dbname={{ database_name }}"
       - "--username={{ database_username }}"
       - "--password={{ database_password }}"
