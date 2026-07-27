@@ -1,6 +1,5 @@
 import os
 from copy import deepcopy
-from textwrap import dedent
 from shutil import rmtree
 from yaml import safe_load
 from ansible_runner import interface as runner_interface, run_command
@@ -186,9 +185,8 @@ class Lampsible:
 
         try:
             required_php_extensions = [
-                'php-{}'.format(
-                    extension
-                ) for extension in REQUIRED_PHP_EXTENSIONS[self.action]
+                f'php-{extension}' for extension \
+                        in REQUIRED_PHP_EXTENSIONS[self.action]
             ]
         except KeyError:
             required_php_extensions = []
@@ -224,7 +222,7 @@ class Lampsible:
             if ext not in self.php_extensions:
                 self.php_extensions.append(ext)
 
-        self.playbook = '{}.yml'.format(self.action)
+        self.playbook = f'{self.action}.yml'
 
 
     @property
@@ -299,7 +297,7 @@ class Lampsible:
             server_name = DEFAULT_APACHE_SERVER_NAME
 
         base_vhost_dict = {
-            'base_vhost_file': '{}.conf'.format(DEFAULT_APACHE_VHOST_NAME),
+            'base_vhost_file': f'{DEFAULT_APACHE_VHOST_NAME}.conf',
             'document_root':  self.apache_document_root,
             'vhost_name':     self.apache_vhost_name,
             'server_name':    server_name,
@@ -311,7 +309,7 @@ class Lampsible:
 
         if self.phpmyadmin:
             self.apache_vhosts.append({
-                'base_vhost_file': '{}.conf'.format(DEFAULT_APACHE_VHOST_NAME),
+                'base_vhost_file': f'{DEFAULT_APACHE_VHOST_NAME}.conf',
                 'document_root':  '/usr/share/phpmyadmin',
                 'vhost_name':     'phpmyadmin',
                 'server_name':    'phpmyadmin',
@@ -503,10 +501,7 @@ class Lampsible:
             # while still using them in the more convenient list format.
             elif varname == 'extra_env_vars':
                 value = [
-                    '{}={}'.format(
-                        key,
-                        val
-                    ) for key, val in self.extra_env_vars.items()
+                    f'{key}={val}' for key, val in self.extra_env_vars.items()
                 ]
 
                 # And this is to make sure that if we're installing a Laravel
@@ -517,10 +512,7 @@ class Lampsible:
                     value = []
 
             elif varname == 'app_source_root':
-                value = '{}/{}'.format(
-                    DEFAULT_APACHE_DOCUMENT_ROOT,
-                    self.app_name
-                )
+                value = f'{DEFAULT_APACHE_DOCUMENT_ROOT}/{self.app_name}'
 
             elif varname == 'suitecrm_build_url':
                 value = SUITECRM_BUILD_URLS[self.suitecrm_version]
